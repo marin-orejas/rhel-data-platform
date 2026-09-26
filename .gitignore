@@ -1,0 +1,16 @@
+# Large lab artifacts
+*.iso
+*.qcow2
+*.img
+
+# Secrets
+*.vault-pass
+.vault_pass*
+*.pem
+*.key
+.env
+
+# Editors
+.vscode/
+.idea/
+*.swp
