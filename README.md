@@ -12,8 +12,8 @@ What I learn here:
 
 ```mermaid
 flowchart LR
-    desk["Desktop (Fedora 44)<br/>workstation, git, Ansible"]
-    subgraph nuc["NUC (RHEL 10.2, KVM + Cockpit)"]
+    desk["Desktop (Fedora 44)<br/>workstation, git"]
+    subgraph nuc["NUC (RHEL 10.2)"]
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
         db2["db2<br/>replica, backup storage"]
@@ -23,9 +23,11 @@ flowchart LR
         db1 -- replication --> db2
     end
     desk -- SSH --> nuc
+    classDef planned stroke-dasharray: 5 5
+    class base,db1,db2,k3s planned
 ```
 
-Details: [docs/architecture.md](docs/architecture.md)
+Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
 
 ## Roadmap
 
