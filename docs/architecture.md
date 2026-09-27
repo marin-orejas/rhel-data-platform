@@ -35,7 +35,8 @@ The system and the VM disks are in separate volume groups. If the VMs fill their
 
 ## Network and access
 
-- The NUC has a static IP on the home network (`192.168.1.50`), set in the kickstart.
+- The NUC is on the home network over Wi-Fi (5 GHz, NetworkManager profile `wifi-5g`) with the static IP `192.168.1.50`. Wi-Fi power saving is off to keep SSH responsive.
+- The wired NIC (`enp85s0`) keeps the same static IP from the kickstart and is the fallback: plug in the cable and reboot. Only one of the two can hold the address at a time.
 - SSH to the NUC works only with a key. Password login and root login are turned off in `/etc/ssh/sshd_config.d/10-hardening.conf`.
 
 Planned:
