@@ -6,7 +6,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [x] Red Hat Developer Subscription for Individuals (free, up to 16 systems)
 - [x] Kickstart file for the NUC (`kickstart/nuc-host.ks`), install from USB
 - [x] Static IP, hostname, SSH key login, sudo user, time sync, firewall
-- [ ] KVM/libvirt and Cockpit on the NUC
+- [x] KVM/libvirt and Cockpit on the NUC
 - [ ] Base VM image from a kickstart file (`kickstart/rhel-base-vm.ks`)
 - [ ] Clone `db1` and `db2`, give each its own hostname, IP and machine-id
 
