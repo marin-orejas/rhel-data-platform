@@ -24,7 +24,7 @@ flowchart LR
     end
     desk -- SSH --> nuc
     classDef planned stroke-dasharray: 5 5
-    class base,db1,db2,k3s planned
+    class db1,db2,k3s planned
 ```
 
 Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
