@@ -88,6 +88,7 @@ A clone starts with the same identity as `rhel-base`. Before the first SSH login
 | Storage pool | `default`: a directory pool on `/var/lib/libvirt/images` (LV `vms/images`, 60 GiB), autostart |
 | Network | `default`: NAT on `virbr0` (`192.168.122.1/24`), autostart, firewalld zone `libvirt` |
 | Tuning | tuned profile `virtual-host` |
+| VM shutdown | `libvirt-guests` shuts down the running VMs cleanly when the NUC shuts down (`ON_SHUTDOWN=shutdown`, up to 120 s each). It does not start VMs at boot (`ON_BOOT=ignore`); autostart does that. Config: `/etc/sysconfig/libvirt-guests`. |
 | Web console | Cockpit with `cockpit-machines`, `https://192.168.1.50:9090` |
 
 ## Network and access
