@@ -13,11 +13,12 @@ I do every step by hand first, then automate it. Every setting must still work a
 *RHCSA topics: install, SSH, network, users and sudo, time, firewall.*
 
 ## Phase 1: PostgreSQL by hand
-- [ ] New disk → GPT partition → PV/VG/LV → XFS → mount by UUID
+- [x] New disk → GPT partition → PV/VG/LV → XFS → mount by UUID
 - [ ] Install `postgresql18-server`, run `initdb`, enable the service
 - [ ] Use a non-default port: SELinux port label and firewall rule
 - [ ] Move the data directory: `semanage fcontext` and `restorecon`
-- [ ] Tuned profile, persistent journal, DBA group, umask, ACLs
+- [x] Persistent journal
+- [ ] Tuned profile, DBA group, umask, ACLs
 - [ ] Backup script (`pg_dump`, tar/gzip) run by a systemd timer (and by cron, to compare)
 - [ ] NFS share on db2, mounted on db1 with autofs
 - [ ] Disk full: extend the LV while the system runs

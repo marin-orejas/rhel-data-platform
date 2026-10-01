@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. PostgreSQL is not installed yet.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 has a data disk mounted on `/pgdata`. PostgreSQL is not installed yet.
 
 ## Machines
 
@@ -9,7 +9,7 @@ Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are clone
 | desktop | Workstation, git, SSH, Ansible (phase 4) | Fedora 44 | i3-12100F / 16 GB | — | in use |
 | nuc | VM host with KVM and Cockpit, no monitor | RHEL 10.2 | i3-1315U / 16 GB | 120 GB SSD | in use |
 | rhel-base | Base VM image. Only used for cloning | RHEL 10.2 | 2 CPU / 2 GB | 20 GB | built |
-| db1 | PostgreSQL primary | clone of rhel-base | 2 CPU / 3 GB | 20 GB | cloned |
+| db1 | PostgreSQL primary | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | cloned |
 | db2 | PostgreSQL replica, backup storage (NFS) | clone of rhel-base | 2 CPU / 3 GB | 20 GB | cloned |
 | k3s | Kubernetes (phase 6) | clone of rhel-base | 2 CPU / 4 GB | 30 GB | planned |
 
@@ -79,6 +79,26 @@ A clone starts with the same identity as `rhel-base`. Before the first SSH login
 | SSH host keys | Copied. All clones would have the same keys. | Delete `/etc/ssh/ssh_host_*`. `sshd-keygen` creates new keys at the next boot. |
 | Subscription | Each system needs its own identity | `subscription-manager register`, after the hostname change |
 
+## db1 data disk
+
+The data goes on a separate disk, because VG `rhel` on the VMs has only about 420 MiB free.
+
+| Part | Setup |
+|---|---|
+| Image | `db1-data.qcow2`, 10 GiB thin qcow2 in the `default` pool |
+| Attached as | `vdb` (virtio), with `virsh attach-disk --live --config` |
+| Partition table | GPT, one partition of type Linux LVM |
+| LVM | PV `/dev/vdb1`, VG `data`, LV `pgdata` (5 GiB) |
+| File system | XFS, label `pgdata` |
+| Mount | `/pgdata`, in `/etc/fstab` by file system UUID |
+
+```
+/dev/vdb (10 GiB)
+└─ vdb1  whole disk  LVM  → VG data
+    └─ LV pgdata  5 GiB  xfs → /pgdata
+       about 5 GiB left free on purpose, to practise extending an LV
+```
+
 ## Virtualization
 
 | Part | Setup |
@@ -90,6 +110,16 @@ A clone starts with the same identity as `rhel-base`. Before the first SSH login
 | Tuning | tuned profile `virtual-host` |
 | VM shutdown | `libvirt-guests` shuts down the running VMs cleanly when the NUC shuts down (`ON_SHUTDOWN=shutdown`, up to 120 s each). It does not start VMs at boot (`ON_BOOT=ignore`); autostart does that. Config: `/etc/sysconfig/libvirt-guests`. |
 | Web console | Cockpit with `cockpit-machines`, `https://192.168.1.50:9090` |
+
+## Journal
+
+The journal is persistent on nuc, db1 and db2, so the logs survive a reboot (`journalctl --list-boots`).
+
+| Part | Setup |
+|---|---|
+| Config | Drop-in `/etc/systemd/journald.conf.d/50-persistent-storage.conf` with `Storage=persistent`. The defaults stay in `/usr/lib/systemd/journald.conf`. |
+| Logs | `/var/log/journal/<machine-id>/` |
+| Access | Group `systemd-journal` and an ACL for `wheel`, set with `systemd-tmpfiles --create --prefix /var/log/journal` |
 
 ## Network and access
 
@@ -103,6 +133,7 @@ A clone starts with the same identity as `rhel-base`. Before the first SSH login
 - From the desktop I reach the VMs through the NUC with `ProxyJump nuc` in `~/.ssh/config`, so `ssh db1` and `ssh db2` work directly.
 
 Planned:
-- A 10 GB data disk for db1 and db2 (phase 1).
+- A data disk for db2, for the NFS backup share (phase 1).
+- The PostgreSQL data directory under `/pgdata` (phase 1).
 - A fixed IP for k3s: `.20`.
 - Each VM opens only the ports it needs (SSH, later PostgreSQL and NFS).

@@ -34,7 +34,7 @@ Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
 | # | Phase | Status |
 |---|---|---|
 | 0 | Lab: install the NUC with kickstart, KVM, base VM, db1/db2 | done |
-| 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | planned |
+| 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | in progress |
 | 2 | Replication and a small ETL job | planned |
 | 3 | RHCSA practice exam | planned |
 | 4 | Ansible: rebuild the lab as code | planned |
