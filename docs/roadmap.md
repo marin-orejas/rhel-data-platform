@@ -14,9 +14,9 @@ I do every step by hand first, then automate it. Every setting must still work a
 
 ## Phase 1: PostgreSQL by hand
 - [x] New disk → GPT partition → PV/VG/LV → XFS → mount by UUID
-- [ ] Install `postgresql18-server`, run `initdb`, enable the service
+- [x] Install `postgresql18-server`, run `initdb`, enable the service
 - [ ] Use a non-default port: SELinux port label and firewall rule
-- [ ] Move the data directory: `semanage fcontext` and `restorecon`
+- [x] Data directory on `/pgdata`: `semanage fcontext` and `restorecon`
 - [x] Persistent journal
 - [ ] Tuned profile, DBA group, umask, ACLs
 - [ ] Backup script (`pg_dump`, tar/gzip) run by a systemd timer (and by cron, to compare)

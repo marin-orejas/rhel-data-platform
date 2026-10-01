@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 has a data disk mounted on `/pgdata`. PostgreSQL is not installed yet.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`.
 
 ## Machines
 
@@ -9,7 +9,7 @@ Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are clone
 | desktop | Workstation, git, SSH, Ansible (phase 4) | Fedora 44 | i3-12100F / 16 GB | — | in use |
 | nuc | VM host with KVM and Cockpit, no monitor | RHEL 10.2 | i3-1315U / 16 GB | 120 GB SSD | in use |
 | rhel-base | Base VM image. Only used for cloning | RHEL 10.2 | 2 CPU / 2 GB | 20 GB | built |
-| db1 | PostgreSQL primary | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | cloned |
+| db1 | PostgreSQL primary | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
 | db2 | PostgreSQL replica, backup storage (NFS) | clone of rhel-base | 2 CPU / 3 GB | 20 GB | cloned |
 | k3s | Kubernetes (phase 6) | clone of rhel-base | 2 CPU / 4 GB | 30 GB | planned |
 
@@ -99,6 +99,27 @@ The data goes on a separate disk, because VG `rhel` on the VMs has only about 42
        about 5 GiB left free on purpose, to practise extending an LV
 ```
 
+## PostgreSQL on db1
+
+PostgreSQL 18 from AppStream. It runs only on db1 for now and accepts only local connections.
+
+| Part | Setup |
+|---|---|
+| Package | `postgresql18-server`. RHEL 10 has no modules: each major version has its own package name, and only one version can be installed. |
+| Service | `postgresql`, enabled. The vendor unit is not changed. A drop-in, `/etc/systemd/system/postgresql.service.d/override.conf`, sets `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`, so the server does not start without the data disk. |
+| Data directory | `/pgdata/pgsql/data`, created with `postgresql-setup --initdb` |
+| SELinux | Local rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon`. The server runs in the `postgresql_t` domain. |
+| Network | Listens only on localhost, port 5432 |
+| Admin access | `sudo -iu postgres psql` |
+
+```
+/pgdata                 root:root           mount point of LV data/pgdata
+└─ pgsql                postgres:postgres   700
+    └─ data             postgres:postgres   700   the cluster (PGDATA)
+```
+
+The data directory is not the mount point itself, and its parent belongs to `postgres`, as the PostgreSQL docs recommend. If the disk is not mounted, `/pgdata/pgsql/data` does not exist, so nothing can create a cluster on the root disk by mistake. The `postgres`-owned parent leaves room for upgrades, which keep the old cluster next to the new one (`data-old`).
+
 ## Virtualization
 
 | Part | Setup |
@@ -134,6 +155,5 @@ The journal is persistent on nuc, db1 and db2, so the logs survive a reboot (`jo
 
 Planned:
 - A data disk for db2, for the NFS backup share (phase 1).
-- The PostgreSQL data directory under `/pgdata` (phase 1).
 - A fixed IP for k3s: `.20`.
 - Each VM opens only the ports it needs (SSH, later PostgreSQL and NFS).
