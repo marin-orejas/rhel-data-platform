@@ -146,6 +146,22 @@ db1 uses its own tuned profile, `postgresql-guest`, in `/etc/tuned/profiles/post
 
 `tuned-adm verify` passes on db1. db2 keeps `virtual-guest` until it becomes a database server in phase 2.
 
+## DBA group and shared directory
+
+The DBA team works under personal accounts in the group `dba`, not as `postgres` or root.
+
+| Part | Setup |
+|---|---|
+| Group | `dba`, GID 2000, on db1 and db2. The GID is fixed because NFS compares numeric IDs, not names. `makilele` is a member and has UID 1000 on both hosts. |
+| Shared directory | `/srv/dba` on db1, owned by `root:dba`, mode `2770`. Others have no access. |
+| setgid | New files and directories get the group `dba`, not the creator's primary group. |
+| Default ACL | `default:group:dba:rwx`. New files are writable by the group whatever the creator's umask is. The tools (`getfacl`, `setfacl`) come from the package `acl`, installed on db1 only. |
+| umask | `0022` in SSH sessions. No file sets it: the shell inherits it from `sshd`. A `umask` in `~/.bashrc` does not apply to systemd services. |
+
+Two cases where a file does not get the group's rights:
+- `cp` creates the file with the source's mode. With a source of `600`, the ACL mask becomes `---` and the group cannot read it. `chmod g+rw` sets the mask again.
+- `mv` within one file system keeps the file's owner, group and mode. The file gets neither the group `dba` nor the ACL. `chgrp dba` and `chmod g+rw` fix it.
+
 ## Virtualization
 
 | Part | Setup |
