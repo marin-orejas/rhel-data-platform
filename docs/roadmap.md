@@ -15,7 +15,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 ## Phase 1: PostgreSQL by hand
 - [x] New disk → GPT partition → PV/VG/LV → XFS → mount by UUID
 - [x] Install `postgresql18-server`, run `initdb`, enable the service
-- [ ] Use a non-default port: SELinux port label and firewall rule
+- [x] Use a non-default port (5433) and connect from db2: SELinux port label, firewall rule, `listen_addresses`, `pg_hba.conf`
 - [x] Data directory on `/pgdata`: `semanage fcontext` and `restorecon`
 - [x] Persistent journal
 - [ ] Tuned profile, DBA group, umask, ACLs

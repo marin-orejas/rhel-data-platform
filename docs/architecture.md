@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433.
 
 ## Machines
 
@@ -101,16 +101,20 @@ The data goes on a separate disk, because VG `rhel` on the VMs has only about 42
 
 ## PostgreSQL on db1
 
-PostgreSQL 18 from AppStream. It runs only on db1 for now and accepts only local connections.
+PostgreSQL 18 from AppStream. It runs only on db1 for now. It accepts local connections, and one role from db2 over the network on port 5433. db2 has only the client package, `postgresql18`.
 
 | Part | Setup |
 |---|---|
 | Package | `postgresql18-server`. RHEL 10 has no modules: each major version has its own package name, and only one version can be installed. |
 | Service | `postgresql`, enabled. The vendor unit is not changed. A drop-in, `/etc/systemd/system/postgresql.service.d/override.conf`, sets `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`, so the server does not start without the data disk. |
 | Data directory | `/pgdata/pgsql/data`, created with `postgresql-setup --initdb` |
-| SELinux | Local rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon`. The server runs in the `postgresql_t` domain. |
-| Network | Listens only on localhost, port 5432 |
-| Admin access | `sudo -iu postgres psql` |
+| Settings | `port = 5433` and `listen_addresses = '*'`, set with `ALTER SYSTEM`. They are in `postgresql.auto.conf`, and `postgresql.conf` stays as `initdb` made it. The server listens on all addresses, not only on the IP of db1: the unit does not wait for the network, so at boot the IP may not exist yet, and the server would start on localhost only. |
+| SELinux | Local rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon`. Local port rule: TCP 5433 → `postgresql_port_t` (`semanage port`). The server runs in the `postgresql_t` domain. |
+| Firewall | `5433/tcp` in the `public` zone. The firewalld service `postgresql` is not used, because it opens 5432. |
+| Client authentication | `pg_hba.conf` keeps the default local rules and has one more line: `host postgres remote_test 192.168.122.12/32 scram-sha-256` |
+| Roles | `remote_test`: login only, no other attributes. It tests remote access from db2. Its password is stored only in `~/.pgpass` on db2 (mode 600). |
+| Logs | The logging collector, on by default in RHEL, writes the server log to `/pgdata/pgsql/data/log/postgresql-<day>.log`. The journal shows only the first lines of each start. |
+| Admin access | `sudo -iu postgres psql`. The postgres user's `/var/lib/pgsql/.bash_profile` (a config file of the package) sets `PGDATA=/pgdata/pgsql/data` and `PGPORT=5433`. |
 
 ```
 /pgdata                 root:root           mount point of LV data/pgdata
@@ -119,6 +123,16 @@ PostgreSQL 18 from AppStream. It runs only on db1 for now and accepts only local
 ```
 
 The data directory is not the mount point itself, and its parent belongs to `postgres`, as the PostgreSQL docs recommend. If the disk is not mounted, `/pgdata/pgsql/data` does not exist, so nothing can create a cluster on the root disk by mistake. The `postgres`-owned parent leaves room for upgrades, which keep the old cluster next to the new one (`data-old`).
+
+A connection from db2 must pass four checks on db1:
+
+```
+db2                                db1
+psql + ~/.pgpass ── TCP 5433 ──►   firewalld     public zone allows 5433/tcp
+                                   SELinux       port 5433 → postgresql_port_t
+                                   postgres      listens on all addresses, port 5433
+                                   pg_hba.conf   remote_test from 192.168.122.12, scram-sha-256
+```
 
 ## Virtualization
 
@@ -152,8 +166,9 @@ The journal is persistent on nuc, db1 and db2, so the logs survive a reboot (`jo
 - The VMs are on the libvirt `default` network. Each VM gets a fixed IP from a DHCP reservation by MAC address: `rhel-base` `.10`, `db1` `.11`, `db2` `.12`.
 - The names in the reservations also work as DNS names inside the network, served by the network's dnsmasq. From db1, `db2` resolves to `192.168.122.12`.
 - From the desktop I reach the VMs through the NUC with `ProxyJump nuc` in `~/.ssh/config`, so `ssh db1` and `ssh db2` work directly.
+- Besides the defaults (`ssh`, `cockpit`, `dhcpv6-client`), db1 opens `5433/tcp` for PostgreSQL. db2 opens nothing extra.
 
 Planned:
 - A data disk for db2, for the NFS backup share (phase 1).
 - A fixed IP for k3s: `.20`.
-- Each VM opens only the ports it needs (SSH, later PostgreSQL and NFS).
+- A firewall rule for NFS on db2 (phase 1).
