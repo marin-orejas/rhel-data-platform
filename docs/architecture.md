@@ -134,6 +134,18 @@ psql + ~/.pgpass ── TCP 5433 ──►   firewalld     public zone allows 54
                                    pg_hba.conf   remote_test from 192.168.122.12, scram-sha-256
 ```
 
+## db1 tuning
+
+db1 uses its own tuned profile, `postgresql-guest`, in `/etc/tuned/profiles/postgresql-guest/tuned.conf`. It is based on the `postgresql` profile from the package `tuned-profiles-postgresql` and removes the parts that cannot work in this VM. Profiles in `/etc/tuned/profiles/` take priority over the ones from packages in `/usr/lib/tuned/profiles/`.
+
+| Part | Setting | Why |
+|---|---|---|
+| `[main]` | `include=postgresql` | The base: `vm.swappiness = 3`, background writeback from 64 MiB of dirty pages, writers wait at 512 MiB, transparent huge pages off, no deep CPU idle states (`force_latency=1`) |
+| `[cpu]` | `drop=boost` | A VM has no CPU frequency driver, so `boost` does not exist. The option comes from `throughput-performance`, so `tuned-adm verify` fails on db2 (`virtual-guest`) for the same reason. |
+| `[scheduler]` | `enabled=false` | Its settings live in `debugfs`. With Secure Boot the kernel runs in lockdown mode (`integrity`) and blocks access to them, even for root. |
+
+`tuned-adm verify` passes on db1. db2 keeps `virtual-guest` until it becomes a database server in phase 2.
+
 ## Virtualization
 
 | Part | Setup |
