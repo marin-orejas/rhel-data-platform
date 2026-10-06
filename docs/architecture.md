@@ -144,7 +144,7 @@ db1 uses its own tuned profile, `postgresql-guest`, in `/etc/tuned/profiles/post
 | `[cpu]` | `drop=boost` | A VM has no CPU frequency driver, so `boost` does not exist. The option comes from `throughput-performance`, so `tuned-adm verify` fails on db2 (`virtual-guest`) for the same reason. |
 | `[scheduler]` | `enabled=false` | Its settings live in `debugfs`. With Secure Boot the kernel runs in lockdown mode (`integrity`) and blocks access to them, even for root. |
 
-`tuned-adm verify` passes on db1. db2 keeps `virtual-guest` until it becomes a database server in phase 2.
+`tuned-adm verify` passes on db1. db2 keeps `virtual-guest` until it becomes a database server in phase 3.
 
 ## DBA group and shared directory
 

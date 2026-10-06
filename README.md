@@ -20,7 +20,7 @@ flowchart LR
         k3s["k3s<br/>(phase 6)"]
         base -. clone .-> db1
         base -. clone .-> db2
-        db1 -- "replication (phase 2)" --> db2
+        db1 -- "replication (phase 3)" --> db2
     end
     desk -- SSH --> nuc
     classDef planned stroke-dasharray: 5 5
@@ -35,8 +35,8 @@ Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
 |---|---|---|
 | 0 | Lab: install the NUC with kickstart, KVM, base VM, db1/db2 | done |
 | 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | in progress |
-| 2 | Replication and a small ETL job | planned |
-| 3 | RHCSA practice exam | planned |
+| 2 | RHCSA practice exam | planned |
+| 3 | Replication and a small ETL job | planned |
 | 4 | Ansible: rebuild the lab as code | planned |
 | 5 | Containers: Podman | planned |
 | 6 | Kubernetes: k3s + CloudNativePG | planned |

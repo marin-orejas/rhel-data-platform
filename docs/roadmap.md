@@ -26,14 +26,15 @@ I do every step by hand first, then automate it. Every setting must still work a
 
 *RHCSA topics: storage, file systems, SELinux, scripts, scheduled jobs, boot, logs, permissions.*
 
-## Phase 2: Replication and ETL
+## Phase 2: RHCSA practice
+- [ ] Other exam topics: Flatpak, VFAT, IPv6, `at`, nice/renice, `sudo` rules in `/etc/sudoers.d/`
+- [ ] 3-hour practice exam on a new VM, checked by the scripts in `checks/`
+- [ ] EX200 exam
+
+## Phase 3: Replication and ETL
 - [ ] Streaming replication db1 → db2 (`pg_basebackup`), test failover
 - [ ] ETL: load a public dataset into staging tables, transform it with SQL into report tables, run it on a timer
 - [ ] DBA basics: roles and privileges, `pg_hba.conf`, point-in-time recovery, `EXPLAIN`, `VACUUM`
-
-## Phase 3: RHCSA practice
-- [ ] Other exam topics: Flatpak, VFAT, IPv6, `at`, nice/renice
-- [ ] 3-hour practice exam on a new VM, checked by the scripts in `checks/`
 
 ## Phase 4: Ansible
 - [ ] Inventory, roles, `rhel-system-roles` (postgresql, firewall, selinux, storage), Vault for passwords
