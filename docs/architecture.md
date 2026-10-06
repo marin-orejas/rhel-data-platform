@@ -134,17 +134,21 @@ psql + ~/.pgpass ── TCP 5433 ──►   firewalld     public zone allows 54
                                    pg_hba.conf   remote_test from 192.168.122.12, scram-sha-256
 ```
 
-## db1 tuning
+## Tuning
 
-db1 uses its own tuned profile, `postgresql-guest`, in `/etc/tuned/profiles/postgresql-guest/tuned.conf`. It is based on the `postgresql` profile from the package `tuned-profiles-postgresql` and removes the parts that cannot work in this VM. Profiles in `/etc/tuned/profiles/` take priority over the ones from packages in `/usr/lib/tuned/profiles/`.
+db1 and db2 use their own tuned profiles. Each one includes a profile from a package and removes only the parts that cannot work in these VMs. The files are in `tuned/` and are installed as `/etc/tuned/profiles/<name>/tuned.conf`. Profiles in `/etc/tuned/profiles/` take priority over the ones from packages in `/usr/lib/tuned/profiles/`.
 
-| Part | Setting | Why |
-|---|---|---|
-| `[main]` | `include=postgresql` | The base: `vm.swappiness = 3`, background writeback from 64 MiB of dirty pages, writers wait at 512 MiB, transparent huge pages off, no deep CPU idle states (`force_latency=1`) |
-| `[cpu]` | `drop=boost` | A VM has no CPU frequency driver, so `boost` does not exist. The option comes from `throughput-performance`, so `tuned-adm verify` fails on db2 (`virtual-guest`) for the same reason. |
-| `[scheduler]` | `enabled=false` | Its settings live in `debugfs`. With Secure Boot the kernel runs in lockdown mode (`integrity`) and blocks access to them, even for root. |
+| Part | db1: `postgresql-guest` | db2: `virtual-guest-lab` | Why |
+|---|---|---|---|
+| `[main]` | `include=postgresql`, from the package `tuned-profiles-postgresql` | `include=virtual-guest`, the profile of the base VM image | db1 runs PostgreSQL. db2 does not run a database server until phase 3. |
+| `[cpu]` | `drop=boost` | `drop=boost` | A VM has no CPU frequency driver, so `boost` does not exist. The option comes from `throughput-performance`, which both bases include. |
+| `[scheduler]` | `enabled=false` | — | Its settings live in `debugfs`. With Secure Boot the kernel runs in lockdown mode (`integrity`) and blocks access to them, even for root. db2 does not need this: `tuned-adm verify` passes there without it. |
 
-`tuned-adm verify` passes on db1. db2 keeps `virtual-guest` until it becomes a database server in phase 3.
+What the bases set:
+- `postgresql`: `vm.swappiness = 3`, background writeback from 64 MiB of dirty pages, writers wait at 512 MiB, transparent huge pages off, no deep CPU idle states (`force_latency=1`).
+- `virtual-guest`: `vm.swappiness = 30`, on top of `throughput-performance`.
+
+`tuned-adm verify` passes on db1 and db2, also after a reboot.
 
 ## DBA group and shared directory
 
