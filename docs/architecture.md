@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. A script backs up the databases on db1 to a local directory.
 
 ## Machines
 
@@ -161,6 +161,31 @@ The DBA team works under personal accounts in the group `dba`, not as `postgres`
 Two cases where a file does not get the group's rights:
 - `cp` creates the file with the source's mode. With a source of `600`, the ACL mask becomes `---` and the group cannot read it. `chmod g+rw` sets the mask again.
 - `mv` within one file system keeps the file's owner, group and mode. The file gets neither the group `dba` nor the ACL. `chgrp dba` and `chmod g+rw` fix it.
+
+## Backups
+
+`scripts/pg-backup.sh` backs up PostgreSQL on db1. It is installed as `/usr/local/bin/pg-backup.sh` (`root:root`, `755`) and runs as `postgres`. It connects over the local socket with `peer` authentication, so it needs no password. For now it runs by hand.
+
+| Part | Setup |
+|---|---|
+| Destination | `/srv/backup/pgsql` on db1, given as the first argument. Owned by `postgres:dba`, mode `2750`. It is on the root disk, not on the data disk. |
+| Databases | One plain SQL dump per database, compressed with gzip: `<database>-<YYYY-MM-DD_HHMM>.sql.gz`. Templates are skipped. A database that does not accept connections makes the backup fail instead of being skipped. |
+| Roles | `pg_dumpall --globals-only`, in `globals-<stamp>.sql.gz`. It includes the password hashes of the roles. |
+| Config files | `postgresql.conf`, `postgresql.auto.conf`, `pg_hba.conf` and `pg_ident.conf` from the data directory, in `config-<stamp>.tar.bz2`. The package `bzip2` is installed on db1 for this. |
+| Permissions | The script sets `umask 027`, and the directory has setgid, so every file is `640 postgres:dba`. The group `dba` can read the backups but cannot change or delete them. Others have no access. |
+| Port | The script sets `PGPORT=5433` unless the caller sets it. `sudo -u`, cron and systemd do not read the `.bash_profile` of postgres. |
+| Retention | Files older than the second argument (default 7 days) are deleted with `find -mtime`, but only when every step has succeeded. |
+| Exit code | `0` when every step has succeeded, `1` when any step has failed, `2` on a usage error |
+| Test data | Database `lab` with the table `items`, 10,000 rows |
+
+Restore of one database into a new one, tested with `lab`. The row count and `sum(id)` match the original. `ON_ERROR_STOP=1` makes psql stop at the first error and exit with a non-zero code.
+
+```
+sudo -iu postgres createdb lab_restore
+zcat /srv/backup/pgsql/lab-<stamp>.sql.gz | sudo -iu postgres psql -v ON_ERROR_STOP=1 -d lab_restore
+```
+
+The backups stay on db1 for now. Moving them to db2 over NFS is planned.
 
 ## Virtualization
 
