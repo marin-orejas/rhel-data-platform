@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. A systemd timer backs up the databases on db1 every day, to a local directory for now.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup`. A systemd timer backs up the databases on db1 every day, to a local directory for now.
 
 ## Machines
 
@@ -10,7 +10,7 @@ Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are clone
 | nuc | VM host with KVM and Cockpit, no monitor | RHEL 10.2 | i3-1315U / 16 GB | 120 GB SSD | in use |
 | rhel-base | Base VM image. Only used for cloning | RHEL 10.2 | 2 CPU / 2 GB | 20 GB | built |
 | db1 | PostgreSQL primary | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
-| db2 | PostgreSQL replica, backup storage (NFS) | clone of rhel-base | 2 CPU / 3 GB | 20 GB | cloned |
+| db2 | PostgreSQL replica, backup storage (NFS) | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
 | k3s | Kubernetes (phase 6) | clone of rhel-base | 2 CPU / 4 GB | 30 GB | planned |
 
 RAM on the NUC: host about 2 GB, db1 and db2 3 GB each, later k3s 4 GB. That is about 12 of 16 GB.
@@ -79,24 +79,30 @@ A clone starts with the same identity as `rhel-base`. Before the first SSH login
 | SSH host keys | Copied. All clones would have the same keys. | Delete `/etc/ssh/ssh_host_*`. `sshd-keygen` creates new keys at the next boot. |
 | Subscription | Each system needs its own identity | `subscription-manager register`, after the hostname change |
 
-## db1 data disk
+## Data disks
 
-The data goes on a separate disk, because VG `rhel` on the VMs has only about 420 MiB free.
+Each VM keeps its data on a separate disk, because VG `rhel` has only about 420 MiB free. A full data disk also cannot fill the root file system.
 
-| Part | Setup |
-|---|---|
-| Image | `db1-data.qcow2`, 10 GiB thin qcow2 in the `default` pool |
-| Attached as | `vdb` (virtio), with `virsh attach-disk --live --config` |
-| Partition table | GPT, one partition of type Linux LVM |
-| LVM | PV `/dev/vdb1`, VG `data`, LV `pgdata` (5 GiB) |
-| File system | XFS, label `pgdata` |
-| Mount | `/pgdata`, in `/etc/fstab` by file system UUID |
+| Part | db1 | db2 |
+|---|---|---|
+| Image | `db1-data.qcow2`, 10 GiB thin qcow2 in the `default` pool | `db2-data.qcow2`, the same |
+| Attached as | `vdb` (virtio), with `virsh attach-disk --live --config` | the same |
+| Partition table | GPT, one partition of type Linux LVM | the same |
+| LVM | PV `/dev/vdb1`, VG `data`, LV `pgdata` (5 GiB) | PV `/dev/vdb1`, VG `data`, LV `backup` (3 GiB) |
+| File system | XFS, label `pgdata` | XFS, label `backup` |
+| Mount | `/pgdata`, in `/etc/fstab` by file system UUID | `/srv/backup`, in `/etc/fstab` by file system UUID |
+| SELinux | `postgresql_db_t`, see "PostgreSQL on db1" | `var_t`, the default for `/srv`. A new XFS file system has no label on its root directory, so the mount point showed `unlabeled_t` until `restorecon`. |
 
 ```
-/dev/vdb (10 GiB)
+db1: /dev/vdb (10 GiB)
 └─ vdb1  whole disk  LVM  → VG data
     └─ LV pgdata  5 GiB  xfs → /pgdata
        about 5 GiB left free on purpose, to practise extending an LV
+
+db2: /dev/vdb (10 GiB)
+└─ vdb1  whole disk  LVM  → VG data
+    └─ LV backup  3 GiB  xfs → /srv/backup
+       about 7 GiB left free: 5 GiB for the data directory of the replica (phase 3), the rest to practise extending an LV
 ```
 
 ## PostgreSQL on db1
@@ -228,6 +234,5 @@ The journal is persistent on nuc, db1 and db2, so the logs survive a reboot (`jo
 - Besides the defaults (`ssh`, `cockpit`, `dhcpv6-client`), db1 opens `5433/tcp` for PostgreSQL. db2 opens nothing extra.
 
 Planned:
-- A data disk for db2, for the NFS backup share (phase 1).
 - A fixed IP for k3s: `.20`.
 - A firewall rule for NFS on db2 (phase 1).
