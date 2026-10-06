@@ -19,7 +19,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [x] Data directory on `/pgdata`: `semanage fcontext` and `restorecon`
 - [x] Persistent journal
 - [x] Tuned profile, DBA group, umask, ACLs
-- [ ] Backup script (`pg_dump`, tar/gzip) run by a systemd timer (and by cron, to compare)
+- [x] Backup script (`pg_dump`, tar/gzip) run by a systemd timer (and by cron, to compare)
 - [ ] NFS share on db2, mounted on db1 with autofs
 - [ ] Disk full: extend the LV while the system runs
 - [ ] Break and fix: bad fstab, emergency mode, root password reset, GRUB
