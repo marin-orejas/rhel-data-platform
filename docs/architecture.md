@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. A script backs up the databases on db1 to a local directory.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. A systemd timer backs up the databases on db1 every day, to a local directory for now.
 
 ## Machines
 
@@ -164,10 +164,12 @@ Two cases where a file does not get the group's rights:
 
 ## Backups
 
-`scripts/pg-backup.sh` backs up PostgreSQL on db1. It is installed as `/usr/local/bin/pg-backup.sh` (`root:root`, `755`) and runs as `postgres`. It connects over the local socket with `peer` authentication, so it needs no password. For now it runs by hand.
+`scripts/pg-backup.sh` backs up PostgreSQL on db1. It is installed as `/usr/local/bin/pg-backup.sh` (`root:root`, `755`) and runs as `postgres`. It connects over the local socket with `peer` authentication, so it needs no password. The systemd timer `pg-backup.timer` starts it every day at 02:00.
 
 | Part | Setup |
 |---|---|
+| Service | `systemd/pg-backup.service`, installed in `/etc/systemd/system/`. `Type=oneshot`, `User=postgres`, `After=postgresql.service`. It has no `[Install]` section, so only the timer starts it. The output goes to the journal (`journalctl -u pg-backup.service`), and a failed backup leaves the unit in the `failed` state. |
+| Timer | `systemd/pg-backup.timer`, enabled. `OnCalendar=*-*-* 02:00:00` and `Persistent=true`: a run missed while db1 was off starts right after the next boot. |
 | Destination | `/srv/backup/pgsql` on db1, given as the first argument. Owned by `postgres:dba`, mode `2750`. It is on the root disk, not on the data disk. |
 | Databases | One plain SQL dump per database, compressed with gzip: `<database>-<YYYY-MM-DD_HHMM>.sql.gz`. Templates are skipped. A database that does not accept connections makes the backup fail instead of being skipped. |
 | Roles | `pg_dumpall --globals-only`, in `globals-<stamp>.sql.gz`. It includes the password hashes of the roles. |
