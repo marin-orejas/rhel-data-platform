@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day, to a local directory for now.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2.
 
 ## Machines
 
@@ -178,26 +178,25 @@ Two cases where a file does not get the group's rights:
 
 | Part | Setup |
 |---|---|
-| Service | `systemd/pg-backup.service`, installed in `/etc/systemd/system/`. `Type=oneshot`, `User=postgres`, `After=postgresql.service`. It has no `[Install]` section, so only the timer starts it. The output goes to the journal (`journalctl -u pg-backup.service`), and a failed backup leaves the unit in the `failed` state. |
+| Service | `systemd/pg-backup.service`, installed in `/etc/systemd/system/`. `Type=oneshot`, `User=postgres`, `After=postgresql.service autofs.service`, `Wants=autofs.service`. It has no `[Install]` section, so only the timer starts it. The output goes to the journal (`journalctl -u pg-backup.service`), and a failed backup leaves the unit in the `failed` state. |
 | Timer | `systemd/pg-backup.timer`, enabled. `OnCalendar=*-*-* 02:00:00` and `Persistent=true`: a run missed while db1 was off starts right after the next boot. |
-| Destination | `/srv/backup/pgsql` on db1, given as the first argument. Owned by `postgres:dba`, mode `2750`. It is on the root disk, not on the data disk. |
+| Order at boot | A run missed at 02:00 starts during the next boot, maybe before autofs, so the service waits for `autofs.service`. `RequiresMountsFor=` would not help: systemd knows the mounts from fstab and mount units, but not the ones that autofs makes when a program opens the path. |
+| Destination | `/mnt/db2/backup/pgsql` on db1, given as the first argument. It is `/srv/backup/pgsql` on db2 (see "NFS share on db2"). Owned by `postgres:dba`, mode `2750`. Nothing is stored on db1. |
 | Databases | One plain SQL dump per database, compressed with gzip: `<database>-<YYYY-MM-DD_HHMM>.sql.gz`. Templates are skipped. A database that does not accept connections makes the backup fail instead of being skipped. |
 | Roles | `pg_dumpall --globals-only`, in `globals-<stamp>.sql.gz`. It includes the password hashes of the roles. |
 | Config files | `postgresql.conf`, `postgresql.auto.conf`, `pg_hba.conf` and `pg_ident.conf` from the data directory, in `config-<stamp>.tar.bz2`. The package `bzip2` is installed on db1 for this. |
 | Permissions | The script sets `umask 027`, and the directory has setgid, so every file is `640 postgres:dba`. The group `dba` can read the backups but cannot change or delete them. Others have no access. |
 | Port | The script sets `PGPORT=5433` unless the caller sets it. `sudo -u`, cron and systemd do not read the `.bash_profile` of postgres. |
-| Retention | Files older than the second argument (default 7 days) are deleted with `find -mtime`, but only when every step has succeeded. |
+| Retention | `find -mtime +7` (the second argument, default 7) deletes the files that are at least 8 days old, because `find` rounds the age down to whole days. After each nightly run, 8 sets are kept: that night's and the 7 before it. Nothing is deleted when any step has failed. |
 | Exit code | `0` when every step has succeeded, `1` when any step has failed, `2` on a usage error |
 | Test data | Database `lab` with the table `items`, 10,000 rows |
 
-Restore of one database into a new one, tested with `lab`. The row count and `sum(id)` match the original. `ON_ERROR_STOP=1` makes psql stop at the first error and exit with a non-zero code.
+Restore of one database into a new one, tested with `lab` from a dump on db2. The row count and `sum(id)` match the original. `ON_ERROR_STOP=1` makes psql stop at the first error and exit with a non-zero code.
 
 ```
 sudo -iu postgres createdb lab_restore
-zcat /srv/backup/pgsql/lab-<stamp>.sql.gz | sudo -iu postgres psql -v ON_ERROR_STOP=1 -d lab_restore
+zcat /mnt/db2/backup/pgsql/lab-<stamp>.sql.gz | sudo -iu postgres psql -v ON_ERROR_STOP=1 -d lab_restore
 ```
-
-The backups stay on db1 for now. Moving them to db2 over NFS is planned.
 
 ## NFS share on db2
 

@@ -2,7 +2,7 @@
 # Back up all PostgreSQL databases, the roles and the config files.
 # Usage: pg-backup.sh DEST_DIR [KEEP_DAYS]
 # Installed on db1 as /usr/local/bin/pg-backup.sh and run as postgres:
-#   sudo -u postgres /usr/local/bin/pg-backup.sh /srv/backup/pgsql
+#   sudo -u postgres /usr/local/bin/pg-backup.sh /mnt/db2/backup/pgsql
 # It exits 1 when any step fails, and then it deletes no old backups.
 
 # New files get mode 640: the group can read them, others cannot.
