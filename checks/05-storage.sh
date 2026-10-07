@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Lesson 05 checks: persistent journal and the data disk on db1.
+# Since lesson 11 the LV pgdata is 7 GiB (grown from 5 GiB while PostgreSQL ran).
 # Run on db1 as a user in the wheel group, no sudo needed:
 #   ssh db1 bash -s < checks/05-storage.sh
 # The checks read saved state (config files, fstab, the journal), so they
@@ -34,7 +35,7 @@ check "/dev/vdb1 has the type Linux LVM" [ "$(lsblk -dno PARTTYPENAME /dev/vdb1 
 on_vdb1=$(lsblk -nro NAME /dev/vdb1 2>/dev/null)
 check "/dev/vdb1 is an LVM physical volume" [ "$(lsblk -dno FSTYPE /dev/vdb1 2>/dev/null)" = "LVM2_member" ]
 check "LV data/pgdata is on /dev/vdb1" grep -qx data-pgdata <<<"$on_vdb1"
-check "LV data/pgdata is 5 GiB" [ "$(lsblk -bdno SIZE /dev/data/pgdata 2>/dev/null)" = "5368709120" ]
+check "LV data/pgdata is 7 GiB" [ "$(lsblk -bdno SIZE /dev/data/pgdata 2>/dev/null)" = "7516192768" ]
 
 # XFS, mounted on /pgdata by UUID
 uuid=$(lsblk -dno UUID /dev/data/pgdata 2>/dev/null)
