@@ -21,6 +21,7 @@ flowchart LR
         base -. clone .-> db1
         base -. clone .-> db2
         db1 -- "replication (phase 3)" --> db2
+        db1 -- "backups (NFS)" --> db2
     end
     desk -- SSH --> nuc
     classDef planned stroke-dasharray: 5 5
