@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Lesson 09 checks: the backup script, its systemd units and the backups on db1.
+# Lesson 09 checks: the backup script, its systemd units and the backups of db1.
+# Since lesson 10 the backups are on db2, in the NFS share that autofs mounts on db1.
 # Run as the owner (member of dba), no sudo needed:
 #   ssh db1 bash -s < checks/09-backup.sh
 # Run it after a reboot of db1: the timer must come back on its own.
@@ -18,7 +19,7 @@ check() {
 }
 
 script=/usr/local/bin/pg-backup.sh
-dir=/srv/backup/pgsql
+dir=/mnt/db2/backup/pgsql
 unit=pg-backup
 
 # Newest file in the backup directory that matches a pattern
