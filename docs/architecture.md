@@ -88,7 +88,7 @@ Each VM keeps its data on a separate disk, because VG `rhel` has only about 420 
 | Image | `db1-data.qcow2`, 10 GiB thin qcow2 in the `default` pool | `db2-data.qcow2`, the same |
 | Attached as | `vdb` (virtio), with `virsh attach-disk --live --config` | the same |
 | Partition table | GPT, one partition of type Linux LVM | the same |
-| LVM | PV `/dev/vdb1`, VG `data`, LV `pgdata` (5 GiB) | PV `/dev/vdb1`, VG `data`, LV `backup` (3 GiB) |
+| LVM | PV `/dev/vdb1`, VG `data`, LV `pgdata` (7 GiB) | PV `/dev/vdb1`, VG `data`, LV `backup` (3 GiB) |
 | File system | XFS, label `pgdata` | XFS, label `backup` |
 | Mount | `/pgdata`, in `/etc/fstab` by file system UUID | `/srv/backup`, in `/etc/fstab` by file system UUID |
 | SELinux | `postgresql_db_t`, see "PostgreSQL on db1" | `var_t`, the default for `/srv`. A new XFS file system has no label on its root directory, so the mount point showed `unlabeled_t` until `restorecon`. |
@@ -96,14 +96,16 @@ Each VM keeps its data on a separate disk, because VG `rhel` has only about 420 
 ```
 db1: /dev/vdb (10 GiB)
 └─ vdb1  whole disk  LVM  → VG data
-    └─ LV pgdata  5 GiB  xfs → /pgdata
-       about 5 GiB left free on purpose, to practise extending an LV
+    └─ LV pgdata  7 GiB  xfs → /pgdata
+       about 3 GiB left free for later growth
 
 db2: /dev/vdb (10 GiB)
 └─ vdb1  whole disk  LVM  → VG data
     └─ LV backup  3 GiB  xfs → /srv/backup
        about 7 GiB left free: 5 GiB for the data directory of the replica (phase 3), the rest to practise extending an LV
 ```
+
+LV `pgdata` started at 5 GiB and was grown to 7 GiB while PostgreSQL ran, with `lvextend -r -L 7G data/pgdata`. The VG had free space, so the PV did not change. `-r` also grows the file system (`xfs_growfs`); without it the LV grows, but `df` and PostgreSQL still see the old size. XFS grows while mounted but cannot shrink, so an LV gets more space in small steps. The file system UUID stays the same, so `/etc/fstab` does not change.
 
 ## PostgreSQL on db1
 
