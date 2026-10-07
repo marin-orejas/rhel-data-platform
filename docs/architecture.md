@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup`. A systemd timer backs up the databases on db1 every day, to a local directory for now.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day, to a local directory for now.
 
 ## Machines
 
@@ -199,6 +199,28 @@ zcat /srv/backup/pgsql/lab-<stamp>.sql.gz | sudo -iu postgres psql -v ON_ERROR_S
 
 The backups stay on db1 for now. Moving them to db2 over NFS is planned.
 
+## NFS share on db2
+
+db2 shares `/srv/backup` with db1 over NFS, for the backups of db1. Then they are not on the same machine as the database. db2 runs on the same NUC and SSD, so this protects against the loss of db1, not of the NUC.
+
+| Part | Setup |
+|---|---|
+| Package | `nfs-utils` on db2 (server) and db1 (client). Without it, `mount -t nfs` on the client fails with `NFS: mount program didn't pass remote address`. |
+| Service | `nfs-server` on db2, enabled |
+| Export | `/etc/exports.d/backup.exports`: `/srv/backup 192.168.122.11(rw)`. The defaults apply, among them `sync`, `sec=sys` and `root_squash` (`exportfs -v` shows them all). `/etc/exports` stays empty. |
+| Clients | db1 only, by IP. With `sec=sys` the server trusts the UID and GID that the client sends, so no other host may mount the share. |
+| Firewall | Service `nfs` (TCP 2049) in the `public` zone of db2. Only NFSv4 gets through, so `showmount -e db2` does not work: it uses `rpcbind` and `mountd` from NFSv3. |
+| SELinux | The booleans `nfs_export_all_ro` and `nfs_export_all_rw` are on by default, so nfsd may share `/srv/backup` with its `var_t` label. On db1, the files on the share have the label `nfs_t`. |
+| Owners | NFS sends numeric IDs. `postgres` (UID 26) and `dba` (GID 2000) have the same IDs on both hosts, so the files have the same owner on db1 and db2. |
+| root | `root_squash` maps root on db1 to `nobody` on db2, so root on db1 cannot write to the share. |
+
+```
+/srv/backup          root:root      755    mount point of LV data/backup, exported
+└─ pgsql             postgres:dba   2750   for the backups of db1
+```
+
+db1 does not mount the share at boot yet. A manual `mount -t nfs db2:/srv/backup /mnt` works and uses NFSv4.2.
+
 ## Virtualization
 
 | Part | Setup |
@@ -231,8 +253,7 @@ The journal is persistent on nuc, db1 and db2, so the logs survive a reboot (`jo
 - The VMs are on the libvirt `default` network. Each VM gets a fixed IP from a DHCP reservation by MAC address: `rhel-base` `.10`, `db1` `.11`, `db2` `.12`.
 - The names in the reservations also work as DNS names inside the network, served by the network's dnsmasq. From db1, `db2` resolves to `192.168.122.12`.
 - From the desktop I reach the VMs through the NUC with `ProxyJump nuc` in `~/.ssh/config`, so `ssh db1` and `ssh db2` work directly.
-- Besides the defaults (`ssh`, `cockpit`, `dhcpv6-client`), db1 opens `5433/tcp` for PostgreSQL. db2 opens nothing extra.
+- Besides the defaults (`ssh`, `cockpit`, `dhcpv6-client`), db1 opens `5433/tcp` for PostgreSQL. db2 opens the service `nfs` (TCP 2049).
 
 Planned:
 - A fixed IP for k3s: `.20`.
-- A firewall rule for NFS on db2 (phase 1).
