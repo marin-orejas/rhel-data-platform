@@ -219,7 +219,17 @@ db2 shares `/srv/backup` with db1 over NFS, for the backups of db1. Then they ar
 └─ pgsql             postgres:dba   2750   for the backups of db1
 ```
 
-db1 does not mount the share at boot yet. A manual `mount -t nfs db2:/srv/backup /mnt` works and uses NFSv4.2.
+db1 mounts the share with autofs when a program opens it, and unmounts it after 5 minutes without use. Nothing mounts it at boot.
+
+| Part | Setup |
+|---|---|
+| Package | `autofs` on db1. Service `autofs`, enabled. |
+| Master map | `/etc/auto.master.d/db2.autofs`: `/mnt/db2 /etc/auto.db2`. `/etc/auto.master` is not changed. |
+| Map | `/etc/auto.db2`: `backup -rw,sync db2:/srv/backup`. It is an indirect map: the key `backup` becomes `/mnt/db2/backup`. |
+| Options | `sync`, so every write waits until db2 confirms it. The dumps are small, so the slower writes do not matter. The rest are the defaults, among them NFSv4.2 and `hard`. |
+| Timeout | 300 seconds, the default from `/etc/autofs.conf` |
+
+`ls /mnt/db2` shows nothing until a program opens `/mnt/db2/backup`.
 
 ## Virtualization
 
