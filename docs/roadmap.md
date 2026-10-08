@@ -22,12 +22,12 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [x] Backup script (`pg_dump`, tar/gzip) run by a systemd timer (and by cron, to compare)
 - [x] NFS share on db2, mounted on db1 with autofs
 - [x] Disk full: extend the LV while the system runs
-- [ ] Break and fix: bad fstab, emergency mode, root password reset, GRUB
+- [x] Break and fix: GRUB, boot targets, emergency mode
 
 *RHCSA topics: storage, file systems, SELinux, scripts, scheduled jobs, boot, logs, permissions.*
 
 ## Phase 2: RHCSA practice
-- [ ] Other exam topics: Flatpak, VFAT, IPv6, `at`, nice/renice, `sudo` rules in `/etc/sudoers.d/`
+- [ ] Other exam topics: Flatpak, VFAT, IPv6, `at`, nice/renice, `sudo` rules in `/etc/sudoers.d/`, root password reset with `rd.break`, a bad fstab line in emergency mode
 - [ ] 3-hour practice exam on a new VM, checked by the scripts in `checks/`
 - [ ] EX200 exam
 

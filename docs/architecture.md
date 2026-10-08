@@ -10,7 +10,7 @@ Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are clone
 | nuc | VM host with KVM and Cockpit, no monitor | RHEL 10.2 | i3-1315U / 16 GB | 120 GB SSD | in use |
 | rhel-base | Base VM image. Only used for cloning | RHEL 10.2 | 2 CPU / 2 GB | 20 GB | built |
 | db1 | PostgreSQL primary | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
-| db2 | PostgreSQL replica, backup storage (NFS) | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
+| db2 | Backup storage (NFS), PostgreSQL replica in phase 3 | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
 | k3s | Kubernetes (phase 6) | clone of rhel-base | 2 CPU / 4 GB | 30 GB | planned |
 
 RAM on the NUC: host about 2 GB, db1 and db2 3 GB each, later k3s 4 GB. That is about 12 of 16 GB.
@@ -43,6 +43,7 @@ Installed with `kickstart/rhel-base-vm.ks` and `virt-install`. It is never used 
 | Disk | 20 GiB thin qcow2 (`rhel-base.qcow2`) in the `default` pool |
 | Network | DHCP on the `default` network, fixed IP from a reservation |
 | Console | Serial console on `ttyS0` (`virsh console rhel-base`) |
+| Root account | Locked (`rootpw --lock`). Admin work goes through `sudo`. Emergency mode asks for the root password, so it gives no shell on these VMs, and after Enter the boot goes on (tested on db2). |
 | Extra packages | `qemu-guest-agent`, `tuned` (profile `virtual-guest`) |
 | Firewall | `public` zone: `ssh`, plus the defaults `cockpit` and `dhcpv6-client` |
 | Subscription | Not registered. Each clone is registered on its own. |

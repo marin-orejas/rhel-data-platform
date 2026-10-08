@@ -16,7 +16,7 @@ flowchart LR
     subgraph nuc["NUC (RHEL 10.2)"]
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
-        db2["db2<br/>replica, backup storage"]
+        db2["db2<br/>backup storage<br/>replica (phase 3)"]
         k3s["k3s<br/>(phase 6)"]
         base -. clone .-> db1
         base -. clone .-> db2
@@ -35,7 +35,7 @@ Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
 | # | Phase | Status |
 |---|---|---|
 | 0 | Lab: install the NUC with kickstart, KVM, base VM, db1/db2 | done |
-| 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | in progress |
+| 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | done |
 | 2 | RHCSA practice exam | planned |
 | 3 | Replication and a small ETL job | planned |
 | 4 | Ansible: rebuild the lab as code | planned |
