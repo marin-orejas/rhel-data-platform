@@ -145,19 +145,20 @@ psql + ~/.pgpass ── TCP 5433 ──►   firewalld     public zone allows 54
 
 ## Tuning
 
-db1 and db2 use their own tuned profiles. Each one includes a profile from a package and removes only the parts that cannot work in these VMs. The files are in `tuned/` and are installed as `/etc/tuned/profiles/<name>/tuned.conf`. Profiles in `/etc/tuned/profiles/` take priority over the ones from packages in `/usr/lib/tuned/profiles/`.
+The NUC, db1 and db2 use their own tuned profiles. Each one includes a profile from a package and removes only the parts that cannot work on that host. The files are in `tuned/` and are installed as `/etc/tuned/profiles/<name>/tuned.conf`. Profiles in `/etc/tuned/profiles/` take priority over the ones from packages in `/usr/lib/tuned/profiles/`.
 
-| Part | db1: `postgresql-guest` | db2: `virtual-guest-lab` | Why |
-|---|---|---|---|
-| `[main]` | `include=postgresql`, from the package `tuned-profiles-postgresql` | `include=virtual-guest`, the profile of the base VM image | db1 runs PostgreSQL. db2 does not run a database server until phase 3. |
-| `[cpu]` | `drop=boost` | `drop=boost` | A VM has no CPU frequency driver, so `boost` does not exist. The option comes from `throughput-performance`, which both bases include. |
-| `[scheduler]` | `enabled=false` | — | Its settings live in `debugfs`. With Secure Boot the kernel runs in lockdown mode (`integrity`) and blocks access to them, even for root. db2 does not need this: `tuned-adm verify` passes there without it. |
+| Part | nuc: `virtual-host-nuc` | db1: `postgresql-guest` | db2: `virtual-guest-lab` | Why |
+|---|---|---|---|---|
+| `[main]` | `include=virtual-host` | `include=postgresql`, from the package `tuned-profiles-postgresql` | `include=virtual-guest`, the profile of the base VM image | The NUC runs the VMs. db1 runs PostgreSQL. db2 does not run a database server until phase 3. |
+| `[cpu]` | `drop=boost` | `drop=boost` | `drop=boost` | The option comes from `throughput-performance`, which all three bases include. A VM has no CPU frequency driver, so `boost` does not exist. The NUC uses the `intel_pstate` driver, which has no `boost` file either, so tuned reads nothing there. Turbo stays on (`/sys/devices/system/cpu/intel_pstate/no_turbo` is `0`). |
+| `[scheduler]` | — | `enabled=false` | — | Its settings live in `debugfs`. With Secure Boot the kernel runs in lockdown mode (`integrity`) and blocks access to them, even for root. The NUC and db2 do not need this: `tuned-adm verify` passes there without it. |
 
 What the bases set:
+- `virtual-host`: background writeback from 5 % of memory (`dirty_background_bytes = 5%`) and no CPU idle states deeper than C3, on top of `throughput-performance`.
 - `postgresql`: `vm.swappiness = 3`, background writeback from 64 MiB of dirty pages, writers wait at 512 MiB, transparent huge pages off, no deep CPU idle states (`force_latency=1`).
 - `virtual-guest`: `vm.swappiness = 30`, on top of `throughput-performance`.
 
-`tuned-adm verify` passes on db1 and db2, also after a reboot.
+`tuned-adm verify` passes on the NUC, db1 and db2, also after a reboot.
 
 ## DBA group and shared directory
 
@@ -241,7 +242,7 @@ db1 mounts the share with autofs when a program opens it, and unmounts it after 
 | libvirt | Modular daemons (`virtqemud`, `virtnetworkd`, `virtstoraged` and others), started by their sockets. My user is in the `libvirt` group, and `virsh` uses `qemu:///system` by default. |
 | Storage pool | `default`: a directory pool on `/var/lib/libvirt/images` (LV `vms/images`, 60 GiB), autostart |
 | Network | `default`: NAT on `virbr0` (`192.168.122.1/24`), autostart, firewalld zone `libvirt` |
-| Tuning | tuned profile `virtual-host` |
+| Tuning | tuned profile `virtual-host-nuc`, see "Tuning" |
 | VM shutdown | `libvirt-guests` shuts down the running VMs cleanly when the NUC shuts down (`ON_SHUTDOWN=shutdown`, up to 120 s each). It does not start VMs at boot (`ON_BOOT=ignore`); autostart does that. Config: `/etc/sysconfig/libvirt-guests`. |
 | Web console | Cockpit with `cockpit-machines`, `https://192.168.1.50:9090` |
 
