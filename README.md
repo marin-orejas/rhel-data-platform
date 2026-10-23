@@ -36,12 +36,12 @@ Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
 |---|---|---|
 | 0 | Lab: install the NUC with kickstart, KVM, base VM, db1/db2 | done |
 | 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | done |
-| 2 | RHCSA practice exam | in progress |
+| 2 | RHCSA practice exams and drills, then EX200 | in progress |
 | 3 | Replication and a small ETL job | planned |
 | 4 | Ansible: rebuild the lab as code | planned |
 | 5 | Containers: Podman | planned |
 | 6 | Kubernetes: k3s + CloudNativePG | planned |
 
-Right now I am studying for the RHCSA exam (EX200).
+Right now I am preparing for the RHCSA exam (EX200) with 3-hour practice exams and drills on single topics. Scores and lessons are in the journal.
 
 Full list: [docs/roadmap.md](docs/roadmap.md). Session notes: [docs/journal/](docs/journal/).

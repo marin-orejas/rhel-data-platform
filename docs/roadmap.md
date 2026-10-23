@@ -27,8 +27,9 @@ I do every step by hand first, then automate it. Every setting must still work a
 *RHCSA topics: storage, file systems, SELinux, scripts, scheduled jobs, boot, logs, permissions.*
 
 ## Phase 2: RHCSA practice
-- [ ] Other exam topics: Flatpak, VFAT, IPv6, `at`, nice/renice, `sudo` rules in `/etc/sudoers.d/`, root password reset with `rd.break`, a bad fstab line in emergency mode
-- [ ] 3-hour practice exam on a new VM, checked by the scripts in `checks/`
+- [x] Other exam topics: Flatpak, VFAT, IPv6, `at`, nice/renice, `sudo` rules in `/etc/sudoers.d/`, root password reset with `init=/bin/bash` (on RHEL 10.2 `rd.break` asks for the root password)
+- [ ] A bad fstab line: recover from emergency mode at boot
+- [x] 3-hour practice exams in the EX200 format, checked after a reboot, and drills on single topics: 19 exams, every exam from 09 to 19 a PASS (scores and lessons in the journal)
 - [ ] EX200 exam
 
 ## Phase 3: Replication and ETL
