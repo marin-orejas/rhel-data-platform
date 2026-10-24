@@ -28,8 +28,8 @@ I do every step by hand first, then automate it. Every setting must still work a
 
 ## Phase 2: RHCSA practice
 - [x] Other exam topics: Flatpak, VFAT, IPv6, `at`, nice/renice, `sudo` rules in `/etc/sudoers.d/`, root password reset with `init=/bin/bash` (on RHEL 10.2 `rd.break` asks for the root password)
-- [ ] A bad fstab line: recover from emergency mode at boot
-- [x] 3-hour practice exams in the EX200 format, checked after a reboot, and drills on single topics: 19 exams, every exam from 09 to 19 a PASS (scores and lessons in the journal)
+- [x] A bad fstab line: recover from emergency mode at boot
+- [x] 3-hour practice exams in the EX200 format, checked after a reboot, and drills on single topics: 20 exams, every exam from 09 to 20 a PASS (scores and lessons in the journal)
 - [ ] EX200 exam
 
 ## Phase 3: Replication and ETL
