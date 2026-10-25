@@ -11,7 +11,7 @@ Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are clone
 | rhel-base | Base VM image. Only used for cloning | RHEL 10.2 | 2 CPU / 2 GB | 20 GB | built |
 | db1 | PostgreSQL primary | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
 | db2 | Backup storage (NFS), PostgreSQL replica in phase 3 | clone of rhel-base | 2 CPU / 3 GB | 20 GB + 10 GB data | in use |
-| k3s | Kubernetes (phase 6) | clone of rhel-base | 2 CPU / 4 GB | 30 GB | planned |
+| k3s | Kubernetes (phase 9) | clone of rhel-base | 2 CPU / 4 GB | 30 GB | planned |
 
 RAM on the NUC: host about 2 GB, db1 and db2 3 GB each, later k3s 4 GB. That is about 12 of 16 GB.
 
