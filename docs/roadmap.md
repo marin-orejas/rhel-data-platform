@@ -33,9 +33,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [ ] EX200 exam
 
 ## Phase 3: PostgreSQL operations
-- [ ] Second build from the docs, part 1: a new base image, db1 and db2 clones, data disk and PostgreSQL; checks 05–07 pass
-- [ ] Second build, part 2: tuned, DBA group, backup timer, NFS and autofs, a backup run while db2 is down; checks 08–10 pass
-- [ ] Point-in-time recovery by hand: WAL archiving to db2, a base backup, a timed restore to a set time
+- [ ] Point-in-time recovery by hand: WAL archiving to db2 (also with db2 down), a base backup, a timed restore to a set time
 - [ ] pgBackRest: full, differential and incremental backups to db2, retention, a timed restore test
 - [ ] Streaming replication db1 → db2: a replication slot, a read-only standby, lag queries
 - [ ] Failover: promote db2, move the client, bring db1 back as a standby with `pg_rewind`, measure the downtime
