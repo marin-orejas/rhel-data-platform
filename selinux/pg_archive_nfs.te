@@ -1,0 +1,17 @@
+# Local SELinux module for db1. The PostgreSQL archiver (domain postgresql_t)
+# copies WAL segments to the NFS share from db2 (archive_command), and recovery
+# reads them back (restore_command). The policy has no boolean for this.
+# The rules come from audit2allow after one archive run with postgresql_t in
+# permissive mode; read was added for restore_command. No rule allows deleting
+# or renaming files on NFS.
+module pg_archive_nfs 1.0;
+
+require {
+	type postgresql_t;
+	type nfs_t;
+	class dir { add_name search write };
+	class file { create getattr ioctl open read write };
+}
+
+allow postgresql_t nfs_t:dir { add_name search write };
+allow postgresql_t nfs_t:file { create getattr ioctl open read write };

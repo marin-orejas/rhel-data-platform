@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. PostgreSQL also archives every WAL segment to that share, next to a base backup.
 
 ## Machines
 
@@ -114,11 +114,11 @@ PostgreSQL 18 from AppStream. It runs only on db1 for now. It accepts local conn
 
 | Part | Setup |
 |---|---|
-| Package | `postgresql18-server`. RHEL 10 has no modules: each major version has its own package name, and only one version can be installed. |
+| Package | `postgresql18-server`, and `postgresql18-contrib` for `pg_waldump`. RHEL 10 has no modules: each major version has its own package name, and only one version can be installed. |
 | Service | `postgresql`, enabled. The vendor unit is not changed. A drop-in, `/etc/systemd/system/postgresql.service.d/override.conf`, sets `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`, so the server does not start without the data disk. |
 | Data directory | `/pgdata/pgsql/data`, created with `postgresql-setup --initdb` |
 | Settings | `port = 5433` and `listen_addresses = '*'`, set with `ALTER SYSTEM`. They are in `postgresql.auto.conf`, and `postgresql.conf` stays as `initdb` made it. The server listens on all addresses, not only on the IP of db1: the unit does not wait for the network, so at boot the IP may not exist yet, and the server would start on localhost only. |
-| SELinux | Local rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon`. Local port rule: TCP 5433 → `postgresql_port_t` (`semanage port`). The server runs in the `postgresql_t` domain. |
+| SELinux | Local rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon`. Local port rule: TCP 5433 → `postgresql_port_t` (`semanage port`). The server runs in the `postgresql_t` domain. The local module `pg_archive_nfs` lets it write WAL to NFS, see "WAL archiving and base backups". |
 | Firewall | `5433/tcp` in the `public` zone. The firewalld service `postgresql` is not used, because it opens 5432. |
 | Client authentication | `pg_hba.conf` keeps the default local rules and has one more line: `host postgres remote_test 192.168.122.12/32 scram-sha-256` |
 | Roles | `remote_test`: login only, no other attributes. It tests remote access from db2. Its password is stored only in `~/.pgpass` on db2 (mode 600). |
@@ -191,7 +191,7 @@ Two cases where a file does not get the group's rights:
 | Config files | `postgresql.conf`, `postgresql.auto.conf`, `pg_hba.conf` and `pg_ident.conf` from the data directory, in `config-<stamp>.tar.bz2`. The package `bzip2` is installed on db1 for this. |
 | Permissions | The script sets `umask 027`, and the directory has setgid, so every file is `640 postgres:dba`. The group `dba` can read the backups but cannot change or delete them. Others have no access. |
 | Port | The script sets `PGPORT=5433` unless the caller sets it. `sudo -u`, cron and systemd do not read the `.bash_profile` of postgres. |
-| Retention | `find -mtime +7` (the second argument, default 7) deletes the files that are at least 8 days old, because `find` rounds the age down to whole days. After each nightly run, 8 sets are kept: that night's and the 7 before it. Nothing is deleted when any step has failed. |
+| Retention | `find -mtime +7` (the second argument, default 7) deletes the files that are at least 8 days old, because `find` rounds the age down to whole days. After each nightly run, 8 sets are kept: that night's and the 7 before it. Nothing is deleted when any step has failed. Only files directly in the destination are deleted, so `wal` and `base` below it are not touched. |
 | Exit code | `0` when every step has succeeded, `1` when any step has failed, `2` on a usage error |
 | Test data | Database `lab` with the table `items`, 10,000 rows |
 
@@ -200,6 +200,30 @@ Restore of one database into a new one, tested with `lab` from a dump on db2. Th
 ```
 sudo -iu postgres createdb lab_restore
 zcat /mnt/db2/backup/pgsql/lab-<stamp>.sql.gz | sudo -iu postgres psql -v ON_ERROR_STOP=1 -d lab_restore
+```
+
+## WAL archiving and base backups
+
+The nightly dumps restore a database only to the state at 02:00. PostgreSQL on db1 also copies every full WAL segment to the NFS share on db2, next to a base backup. Together they are what point-in-time recovery needs.
+
+| Part | Setup |
+|---|---|
+| Settings | `archive_mode = on` and `archive_command`, set with `ALTER SYSTEM`. `wal_level` stays `replica`, the default. `archive_mode` needs a restart, `archive_command` only a reload. |
+| Archive command | `test ! -f /mnt/db2/backup/pgsql/wal/%f && cp %p /mnt/db2/backup/pgsql/wal/%f`. It returns 0 only when the copy has succeeded, and it never overwrites a segment that is already there. `cp` writes the file in place and does not call fsync, so a crash of db2 during a copy can leave a partial segment. |
+| Archive | `/mnt/db2/backup/pgsql/wal`, which is `/srv/backup/pgsql/wal` on db2. 16 MiB per segment, mode 600, so the group `dba` cannot read them. Nothing deletes old segments yet. |
+| Segment switch | `archive_timeout` stays 0. A segment is archived when it is full, or after `SELECT pg_switch_wal()`. |
+| Failed archiving | The segment stays in `pg_wal`, with a `.ready` file in `pg_wal/archive_status`, and the archiver tries again about every minute. Nothing is lost, but `pg_wal` grows. `pg_stat_archiver` counts the failures, and the server log shows the error. |
+| SELinux | The archiver runs in the domain `postgresql_t`, and the policy does not let it use files labeled `nfs_t`; no boolean changes that. The local module `selinux/pg_archive_nfs.te` allows it to create, write and read files there, but not to delete or rename them. The rules come from `audit2allow`, after one archive run with `postgresql_t` in permissive mode (`semanage permissive -a`, then `-d`). |
+| Base backup | `pg_basebackup -Ft -z -X stream -c fast` as postgres, over the local socket (`local replication all peer` in `pg_hba.conf`), into `/mnt/db2/backup/pgsql/base/<YYYY-MM-DD_HHMM>`. It writes `base.tar.gz`, `pg_wal.tar.gz` with the WAL from the time of the backup, and `backup_manifest`. The first one: 32 MB of data, 4.3 MB compressed, 1.3 s. |
+| Verification | `pg_verifybackup -n <dir>` checks every file against the manifest. `-n` is needed because `pg_waldump` cannot read WAL from a tar file. |
+| Backup record | At the end of a backup, PostgreSQL archives a small `.backup` file with the start and stop WAL locations and the label. A restore from that backup needs the archived WAL from the start segment on. |
+
+The module is built and loaded on db1 from its source:
+
+```
+checkmodule -M -m -o pg_archive_nfs.mod pg_archive_nfs.te
+semodule_package -o pg_archive_nfs.pp -m pg_archive_nfs.mod
+sudo semodule -i pg_archive_nfs.pp
 ```
 
 ## NFS share on db2
@@ -220,6 +244,8 @@ db2 shares `/srv/backup` with db1 over NFS, for the backups of db1. Then they ar
 ```
 /srv/backup          root:root      755    mount point of LV data/backup, exported
 └─ pgsql             postgres:dba   2750   for the backups of db1
+    ├─ wal           postgres:dba   2750   archived WAL segments
+    └─ base          postgres:dba   2750   base backups, one directory each
 ```
 
 db1 mounts the share with autofs when a program opens it, and unmounts it after 5 minutes without use. Nothing mounts it at boot.
