@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. PostgreSQL also archives every WAL segment to that share, next to a base backup.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. PostgreSQL also archives every WAL segment to that share, next to a base backup, and a restore to a set time from them has been tested.
 
 ## Machines
 
@@ -211,8 +211,9 @@ The nightly dumps restore a database only to the state at 02:00. PostgreSQL on d
 | Settings | `archive_mode = on` and `archive_command`, set with `ALTER SYSTEM`. `wal_level` stays `replica`, the default. `archive_mode` needs a restart, `archive_command` only a reload. |
 | Archive command | `test ! -f /mnt/db2/backup/pgsql/wal/%f && cp %p /mnt/db2/backup/pgsql/wal/%f`. It returns 0 only when the copy has succeeded, and it never overwrites a segment that is already there. `cp` writes the file in place and does not call fsync, so a crash of db2 during a copy can leave a partial segment. |
 | Archive | `/mnt/db2/backup/pgsql/wal`, which is `/srv/backup/pgsql/wal` on db2. 16 MiB per segment, mode 600, so the group `dba` cannot read them. Nothing deletes old segments yet. |
-| Segment switch | `archive_timeout` stays 0. A segment is archived when it is full, or after `SELECT pg_switch_wal()`. |
+| Segment switch | `archive_timeout` stays 0. A segment is archived when it is full, or after `SELECT pg_switch_wal()`. A clean shutdown of the server archives the current segment too. |
 | Failed archiving | The segment stays in `pg_wal`, with a `.ready` file in `pg_wal/archive_status`, and the archiver tries again about every minute. Nothing is lost, but `pg_wal` grows. `pg_stat_archiver` counts the failures, and the server log shows the error. |
+| db2 down | The share is mounted `hard`, so `cp` waits until db2 answers again instead of failing. The archiver stops on that segment, the next ones wait in `pg_wal` with `.ready` files, and the database keeps working. Tested with db2 shut down while three segments were written: `failed_count` did not change, and all three were archived within 10 seconds after db2 came back. So monitoring has to watch the age of `last_archived_time` and the number of `.ready` files, not only the failures. A long outage fills `/pgdata`. |
 | SELinux | The archiver runs in the domain `postgresql_t`, and the policy does not let it use files labeled `nfs_t`; no boolean changes that. The local module `selinux/pg_archive_nfs.te` allows it to create, write and read files there, but not to delete or rename them. The rules come from `audit2allow`, after one archive run with `postgresql_t` in permissive mode (`semanage permissive -a`, then `-d`). |
 | Base backup | `pg_basebackup -Ft -z -X stream -c fast` as postgres, over the local socket (`local replication all peer` in `pg_hba.conf`), into `/mnt/db2/backup/pgsql/base/<YYYY-MM-DD_HHMM>`. It writes `base.tar.gz`, `pg_wal.tar.gz` with the WAL from the time of the backup, and `backup_manifest`. The first one: 32 MB of data, 4.3 MB compressed, 1.3 s. |
 | Verification | `pg_verifybackup -n <dir>` checks every file against the manifest. `-n` is needed because `pg_waldump` cannot read WAL from a tar file. |
@@ -224,6 +225,44 @@ The module is built and loaded on db1 from its source:
 checkmodule -M -m -o pg_archive_nfs.mod pg_archive_nfs.te
 semodule_package -o pg_archive_nfs.pp -m pg_archive_nfs.mod
 sudo semodule -i pg_archive_nfs.pp
+```
+
+## Point-in-time recovery
+
+Tested on db1 on 2026-10-26: a table was created after the base backup and then dropped, and the cluster was restored to a time between the two.
+
+| Part | Setup |
+|---|---|
+| Method | In place on db1. The broken cluster is moved to `/pgdata/pgsql/data-broken`, not deleted, so the restore can be undone. A real restore would go to a separate host first; the lab has none. |
+| Base backup | `base.tar.gz` is extracted into a new, empty `/pgdata/pgsql/data` (owner postgres, mode 700), and `pg_wal.tar.gz` into its `pg_wal`. The files get `postgresql_db_t` from `/pgdata`, so `restorecon` changes nothing. |
+| Settings | Appended to `postgresql.auto.conf` while the server is down, because `ALTER SYSTEM` needs a running server: `restore_command = 'cp /mnt/db2/backup/pgsql/wal/%f %p'`, `recovery_target_time` with the time zone offset, and `recovery_target_action = 'pause'`. An empty `recovery.signal` in the data directory starts the recovery. |
+| Check before promote | `pause` stops the replay at the target and leaves the database read-only, so the data can be checked first. `SELECT pg_wal_replay_resume()` then ends the recovery. |
+| After promote | The server continues on timeline 2: new WAL files begin with `00000002`, and `00000002.history` in the archive records where it branched off. PostgreSQL removes `recovery.signal` itself. The three settings are removed with `ALTER SYSTEM RESET`, so a later recovery or replica does not inherit the old target. |
+| Lost data | The replay stops before the first commit after the target. A good row inserted 4 seconds after the target was lost together with the dropped table. |
+| Log | `cp: cannot stat` for `00000002.history` and for the first segment after the end of the archive is normal: recovery asks for files that may not exist. |
+
+| Measured | Time |
+|---|---|
+| Outage, from `systemctl stop` to promote | 9 min 31 s |
+| Server start to the pause at the target | 0.85 s |
+| Replay of 8 segments (`…06` to `…0D`) | 0.67 s |
+
+Almost the whole outage was manual work: moving, extracting, editing the settings and checking the data. The replay itself took under a second.
+
+```
+sudo systemctl stop postgresql
+sudo -iu postgres mv /pgdata/pgsql/data /pgdata/pgsql/data-broken
+sudo -iu postgres mkdir -m 700 /pgdata/pgsql/data
+sudo -iu postgres tar -xzf /mnt/db2/backup/pgsql/base/<stamp>/base.tar.gz -C /pgdata/pgsql/data
+sudo -iu postgres tar -xzf /mnt/db2/backup/pgsql/base/<stamp>/pg_wal.tar.gz -C /pgdata/pgsql/data/pg_wal
+# append the three settings to /pgdata/pgsql/data/postgresql.auto.conf
+sudo -iu postgres touch /pgdata/pgsql/data/recovery.signal
+sudo systemctl start postgresql
+# check the data while the server is paused, then
+sudo -iu postgres psql -c "SELECT pg_wal_replay_resume();"
+sudo -iu postgres psql -c "ALTER SYSTEM RESET restore_command;"
+sudo -iu postgres psql -c "ALTER SYSTEM RESET recovery_target_time;"
+sudo -iu postgres psql -c "ALTER SYSTEM RESET recovery_target_action;"
 ```
 
 ## NFS share on db2
