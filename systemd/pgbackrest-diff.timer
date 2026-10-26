@@ -1,0 +1,11 @@
+[Unit]
+Description=Differential pgBackRest backup from Monday to Saturday
+
+# No Persistent=true: after an outage the full timer catches up at boot,
+# and a second backup at the same time would fail on the stanza lock.
+[Timer]
+OnCalendar=Mon..Sat *-*-* 01:00:00
+Unit=pgbackrest@diff.service
+
+[Install]
+WantedBy=timers.target

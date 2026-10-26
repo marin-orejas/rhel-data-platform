@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. pgBackRest archives every WAL segment of PostgreSQL to the same share. A restore to a set time from archived WAL and a base backup has been tested.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. pgBackRest also backs up the whole cluster to that share, a full backup on Sunday and a differential on the other nights, and archives every WAL segment there. A restore to a set time from archived WAL and a base backup has been tested.
 
 ## Machines
 
@@ -267,7 +267,7 @@ sudo -iu postgres psql -c "ALTER SYSTEM RESET recovery_target_action;"
 
 ## pgBackRest
 
-Since 2026-10-26, pgBackRest archives the WAL of db1 to the NFS share on db2. It replaces the `cp` archive command from "WAL archiving and base backups by hand".
+Since 2026-10-26, pgBackRest archives the WAL of db1 and backs up the cluster to the NFS share on db2. It replaces the `cp` archive command and `pg_basebackup` from "WAL archiving and base backups by hand".
 
 | Part | Setup |
 |---|---|
@@ -278,6 +278,21 @@ Since 2026-10-26, pgBackRest archives the WAL of db1 to the NFS share on db2. It
 | Archive command | `pgbackrest --stanza=main archive-push %p`, set with `ALTER SYSTEM` and a reload. It checks that the segment belongs to this cluster, compresses it with zstd and writes it to a temporary file that it renames, so a partial segment never has its final name. The segments are in `archive/main/18-1/`, one directory for every 256 segments. |
 | SELinux | `archive-push` runs in `postgresql_t`, like `cp` did. Version 1.1 of the module `pg_archive_nfs` also lets it create, list and check directories and rename files on NFS. The rules come from two permissive runs: on the empty repository the directories did not exist yet, so the first run never checked `getattr` on them, and archiving failed in enforcing mode. |
 | Test | `pgbackrest --stanza=main check` switches to a new WAL segment and waits up to 60 seconds until it is in the repository. |
+| Backups | A full backup copies every file of the cluster. A differential copies the files changed since the last full, and an incremental the files changed since the last backup of any type; the rest of the set refers to the earlier backups. A changed file is copied whole. Every backup waits until its WAL is in the archive. |
+| Service | `systemd/pgbackrest@.service`, a template unit installed in `/etc/systemd/system/`. `Type=oneshot`, `User=postgres`, `ExecStart=/usr/bin/pgbackrest --stanza=main --type=%i backup`, with the same `Wants=` and `After=` as `pg-backup.service`. The instance name is the backup type: `pgbackrest@full.service`, `pgbackrest@diff.service`. |
+| Schedule | `systemd/pgbackrest-full.timer`: Sunday at 01:00, `Persistent=true`. `systemd/pgbackrest-diff.timer`: Monday to Saturday at 01:00, without `Persistent=`, because after an outage the full catches up at boot, and a second backup at the same time would fail on the stanza lock. A restore needs at most a full and one differential. The nightly dumps at 02:00 stay, for the restore of a single database. |
+| Retention | `repo1-retention-full=2`. After each backup, `expire` keeps the two newest full backups: a third full removes the oldest one with every backup that refers to it. It also removes the archived WAL from before the start of the oldest full that is kept. With a weekly full, a restore to any time in the last 7 to 14 days is possible. Tested: the third full removed the first full, its differential and incremental, and their WAL. |
+
+Measured on 2026-10-26. Between the backups, the test table `pgbr_test` in `lab` got 200,000 rows (14 MB) and then 100,000 more.
+
+| Backup | Time | Copied | In the repository |
+|---|---|---|---|
+| Full, 31.1 MB cluster | 17.8 s | 31.1 MB, 1282 files | 3.7 MB |
+| Differential | 1.4 s | 15.4 MB | 5.2 MB |
+| Incremental | 1.5 s | 19.7 MB | 7.4 MB |
+| Full, 50.6 MB, by `pgbackrest@full.service` | 19.4 s | 50.6 MB | 11.1 MB |
+
+The full writes all 1282 files to the share, which is mounted with `sync`. A differential or incremental writes only the changed files. The incremental copied the whole file of `pgbr_test`, not only the 100,000 new rows.
 
 ## NFS share on db2
 
