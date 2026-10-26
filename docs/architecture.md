@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. pgBackRest also backs up the whole cluster to that share, a full backup on Sunday and a differential on the other nights, and archives every WAL segment there. A restore to a set time from archived WAL and a base backup has been tested.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. pgBackRest also backs up the whole cluster to that share, a full backup on Sunday and a differential on the other nights, and archives every WAL segment there. A restore to a set time has been tested, by hand and with pgBackRest.
 
 ## Machines
 
@@ -293,6 +293,28 @@ Measured on 2026-10-26. Between the backups, the test table `pgbr_test` in `lab`
 | Full, 50.6 MB, by `pgbackrest@full.service` | 19.4 s | 50.6 MB | 11.1 MB |
 
 The full writes all 1282 files to the share, which is mounted with `sync`. A differential or incremental writes only the changed files. The incremental copied the whole file of `pgbr_test`, not only the 100,000 new rows.
+
+### Restore to a set time with pgBackRest
+
+Tested on db1 on 2026-10-26, the same way as the restore by hand: the table `pgbr_test` (300,000 rows) was dropped, and the cluster was restored to 5 seconds before the drop.
+
+| Part | Setup |
+|---|---|
+| Command | `pgbackrest --stanza=main --delta --type=time "--target=<time>" --target-action=promote restore`, as postgres, with the server stopped. The time comes from `SELECT now()`, with the time zone offset. |
+| Backup set | pgBackRest picks the newest backup that ended before the target, here the full backup `20261026-194628F`. |
+| `--delta` | The restore goes over the existing data directory. pgBackRest compares the checksum of every file with the backup, replaces the files that differ and removes the files that are not in the backup. |
+| Settings | pgBackRest writes `restore_command = 'pgbackrest --stanza=main archive-get %f "%p"'`, `recovery_target_time` and `recovery_target_action = 'promote'` to `postgresql.auto.conf` and creates `recovery.signal`. |
+| WAL | The commit of the drop must be in the archive, or the replay cannot see where to stop. `pgbackrest check` after the drop switched the segment and waited until it was archived. |
+| After promote | The server continues on timeline 3. The three settings are removed with `ALTER SYSTEM RESET`, and a new full backup is taken on the new timeline. |
+| Result | `pgbr_test` came back with 300,000 rows and the same `sum(id)`. `items` (10,000 rows) and `pitr_test` (1,000 rows) did not change. |
+
+| Measured | Time |
+|---|---|
+| Outage, from `systemctl stop` to promote | 1.1 s |
+| `pgbackrest restore` with `--delta`, 1287 files checked | 0.41 s |
+| Server start to the promote | 0.28 s |
+
+The restore by hand took 9 min 31 s, almost all of it typing. With pgBackRest the same restore was one command. `--delta` also made it short: the data directory was intact, so only the changed files came from the share. After the loss of the data disk, all 50.6 MB would be copied.
 
 ## NFS share on db2
 
