@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Lesson 13 checks: WAL archiving to db2 and the state after the point-in-time restore.
+# Lesson 13 checks: the WAL archive by hand on db2 and the state after the point-in-time restore.
+# Since lesson 14, pgBackRest archives the WAL (checks/14-pgbackrest.sh). The archive by hand
+# keeps what it had before the switch, so its checks stay.
 # db1 checks the archiver and the archive on the NFS share; db2 checks the server
 # on db1 over the network as remote_test, like checks/07. Run as the owner, no sudo needed:
 #   for h in db1 db2; do echo "== $h"; ssh "$h" bash -s < checks/13-pitr.sh; done
 # Run it after a reboot of both hosts: archiving must come back on its own.
-# The timeline check expects 2, the timeline since the restore on 2026-10-26.
+# The history file check expects timeline 2, from the restore by hand on 2026-10-26.
 
 failed=0
 
@@ -90,7 +92,6 @@ if [ "$(hostname -s)" = db2 ]; then
     # The server on db1 after the restore
     check "$role logs in to $server:$port" [ "$(query 'SELECT current_user')" = "$role" ]
     check "the server is not in recovery" [ "$(query 'SELECT pg_is_in_recovery()')" = f ]
-    check "the server writes WAL on timeline 2" [ "$(query 'SELECT left(pg_walfile_name(pg_current_wal_lsn()), 8)')" = "$timeline" ]
     check "archive_mode is on" [ "$(query 'SHOW archive_mode')" = on ]
     check "the last archive attempt succeeded" [ "$(query 'SELECT last_archived_time IS NOT NULL AND (last_failed_time IS NULL OR last_failed_time < last_archived_time) FROM pg_stat_archiver')" = t ]
 
