@@ -39,7 +39,7 @@ Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
 | 0 | Lab: the NUC from a kickstart, KVM, a base VM image, db1 and db2 | done |
 | 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | done |
 | 2 | RHCSA practice: exam topics, practice exams and drills, then EX200 | in progress |
-| 3 | PostgreSQL operations: backups and recovery, replication, failover, roles, TLS | planned |
+| 3 | PostgreSQL operations: backups and recovery, replication, failover, roles, TLS | in progress |
 | 4 | Ansible: base role, security baseline, PostgreSQL as code, Vault, CI | planned |
 | 5 | Lab as code: cloud-init, Terraform, a one-command build | planned |
 | 6 | Containers and observability: Podman, Prometheus, Grafana, alerts, Loki | planned |
