@@ -1,17 +1,23 @@
 # Local SELinux module for db1. The PostgreSQL archiver (domain postgresql_t)
-# copies WAL segments to the NFS share from db2 (archive_command), and recovery
-# reads them back (restore_command). The policy has no boolean for this.
-# The rules come from audit2allow after one archive run with postgresql_t in
-# permissive mode; read was added for restore_command. No rule allows deleting
-# or renaming files on NFS.
-module pg_archive_nfs 1.0;
+# pushes WAL segments to the pgBackRest repository on the NFS share from db2
+# (archive_command), and recovery reads them back (restore_command). The policy
+# has no boolean for this.
+# Version 1.0 allowed the cp archive command. Version 1.1 adds what
+# pgbackrest archive-push needs: it creates a directory for each WAL log file,
+# lists directories, and writes each segment to a temporary file that it renames.
+# The rules come from audit2allow after archive runs with postgresql_t in
+# permissive mode; read was added for restore_command. Run it twice: on an
+# empty repository the directories do not exist yet, so the first run never
+# checks getattr on them. No rule allows deleting a file on NFS, and a rename
+# cannot replace an existing file, because that needs unlink.
+module pg_archive_nfs 1.1;
 
 require {
 	type postgresql_t;
 	type nfs_t;
-	class dir { add_name search write };
-	class file { create getattr ioctl open read write };
+	class dir { add_name create getattr open read remove_name search write };
+	class file { create getattr ioctl open read rename write };
 }
 
-allow postgresql_t nfs_t:dir { add_name search write };
-allow postgresql_t nfs_t:file { create getattr ioctl open read write };
+allow postgresql_t nfs_t:dir { add_name create getattr open read remove_name search write };
+allow postgresql_t nfs_t:file { create getattr ioctl open read rename write };

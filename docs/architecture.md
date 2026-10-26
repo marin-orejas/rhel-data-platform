@@ -1,6 +1,6 @@
 # Architecture
 
-Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. PostgreSQL also archives every WAL segment to that share, next to a base backup, and a restore to a set time from them has been tested.
+Status: the NUC runs RHEL 10.2 as a KVM host with Cockpit. db1 and db2 are cloned from the base VM image. db1 runs PostgreSQL 18, with its data on a separate disk mounted on `/pgdata`, and db2 connects to it on port 5433. db2 has a data disk for the backups, mounted on `/srv/backup` and shared with db1 over NFS. A systemd timer backs up the databases on db1 every day to the NFS share on db2. pgBackRest archives every WAL segment of PostgreSQL to the same share. A restore to a set time from archived WAL and a base backup has been tested.
 
 ## Machines
 
@@ -118,7 +118,7 @@ PostgreSQL 18 from AppStream. It runs only on db1 for now. It accepts local conn
 | Service | `postgresql`, enabled. The vendor unit is not changed. A drop-in, `/etc/systemd/system/postgresql.service.d/override.conf`, sets `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`, so the server does not start without the data disk. |
 | Data directory | `/pgdata/pgsql/data`, created with `postgresql-setup --initdb` |
 | Settings | `port = 5433` and `listen_addresses = '*'`, set with `ALTER SYSTEM`. They are in `postgresql.auto.conf`, and `postgresql.conf` stays as `initdb` made it. The server listens on all addresses, not only on the IP of db1: the unit does not wait for the network, so at boot the IP may not exist yet, and the server would start on localhost only. |
-| SELinux | Local rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon`. Local port rule: TCP 5433 → `postgresql_port_t` (`semanage port`). The server runs in the `postgresql_t` domain. The local module `pg_archive_nfs` lets it write WAL to NFS, see "WAL archiving and base backups". |
+| SELinux | Local rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon`. Local port rule: TCP 5433 → `postgresql_port_t` (`semanage port`). The server runs in the `postgresql_t` domain. The local module `pg_archive_nfs` lets it write WAL to NFS, see "pgBackRest". |
 | Firewall | `5433/tcp` in the `public` zone. The firewalld service `postgresql` is not used, because it opens 5432. |
 | Client authentication | `pg_hba.conf` keeps the default local rules and has one more line: `host postgres remote_test 192.168.122.12/32 scram-sha-256` |
 | Roles | `remote_test`: login only, no other attributes. It tests remote access from db2. Its password is stored only in `~/.pgpass` on db2 (mode 600). |
@@ -202,9 +202,9 @@ sudo -iu postgres createdb lab_restore
 zcat /mnt/db2/backup/pgsql/lab-<stamp>.sql.gz | sudo -iu postgres psql -v ON_ERROR_STOP=1 -d lab_restore
 ```
 
-## WAL archiving and base backups
+## WAL archiving and base backups by hand
 
-The nightly dumps restore a database only to the state at 02:00. PostgreSQL on db1 also copies every full WAL segment to the NFS share on db2, next to a base backup. Together they are what point-in-time recovery needs.
+The nightly dumps restore a database only to the state at 02:00. From 2026-10-25, PostgreSQL on db1 also copied every full WAL segment to the NFS share on db2, next to a base backup. Together they are what point-in-time recovery needs. On 2026-10-26, pgBackRest replaced this method (see "pgBackRest"). The `wal` and `base` directories still hold that archive, up to segment `00000002000000000000000E`, and its base backup. Nothing writes to them any more.
 
 | Part | Setup |
 |---|---|
@@ -265,6 +265,20 @@ sudo -iu postgres psql -c "ALTER SYSTEM RESET recovery_target_time;"
 sudo -iu postgres psql -c "ALTER SYSTEM RESET recovery_target_action;"
 ```
 
+## pgBackRest
+
+Since 2026-10-26, pgBackRest archives the WAL of db1 to the NFS share on db2. It replaces the `cp` archive command from "WAL archiving and base backups by hand".
+
+| Part | Setup |
+|---|---|
+| Package | `pgbackrest` 2.60 from the "common" repository of PGDG, the PostgreSQL project's own packages. RHEL has no pgBackRest package. The repository file is `pgbackrest/pgdg-common.repo`, installed in `/etc/yum.repos.d/`, with the GPG key in `/etc/pki/rpm-gpg/PGDG-RPM-GPG-KEY-RHEL`. `includepkgs` lets dnf see only `pgbackrest` and `pgdg-libssh2`, a library it needs that RHEL does not ship, so no PGDG package can replace PostgreSQL from AppStream. |
+| Config | `pgbackrest/pgbackrest.conf`, installed as `/etc/pgbackrest.conf`. One stanza, `main`, for the cluster in `/pgdata/pgsql/data` on port 5433. |
+| Repository | `/mnt/db2/backup/pgbackrest` on db1, which is `/srv/backup/pgbackrest` on db2. pgBackRest runs only on db1, as `postgres`, and writes to the NFS share. This keeps the lab simple, but db1 can change and delete its own backups. A production setup would use a separate repository host. |
+| Stanza | Created with `pgbackrest --stanza=main stanza-create`. The repository has `archive/main` for WAL and `backup/main` for backups. |
+| Archive command | `pgbackrest --stanza=main archive-push %p`, set with `ALTER SYSTEM` and a reload. It checks that the segment belongs to this cluster, compresses it with zstd and writes it to a temporary file that it renames, so a partial segment never has its final name. The segments are in `archive/main/18-1/`, one directory for every 256 segments. |
+| SELinux | `archive-push` runs in `postgresql_t`, like `cp` did. Version 1.1 of the module `pg_archive_nfs` also lets it create, list and check directories and rename files on NFS. The rules come from two permissive runs: on the empty repository the directories did not exist yet, so the first run never checked `getattr` on them, and archiving failed in enforcing mode. |
+| Test | `pgbackrest --stanza=main check` switches to a new WAL segment and waits up to 60 seconds until it is in the repository. |
+
 ## NFS share on db2
 
 db2 shares `/srv/backup` with db1 over NFS, for the backups of db1. Then they are not on the same machine as the database. db2 runs on the same NUC and SSD, so this protects against the loss of db1, not of the NUC.
@@ -281,10 +295,11 @@ db2 shares `/srv/backup` with db1 over NFS, for the backups of db1. Then they ar
 | root | `root_squash` maps root on db1 to `nobody` on db2, so root on db1 cannot write to the share. |
 
 ```
-/srv/backup          root:root      755    mount point of LV data/backup, exported
-└─ pgsql             postgres:dba   2750   for the backups of db1
-    ├─ wal           postgres:dba   2750   archived WAL segments
-    └─ base          postgres:dba   2750   base backups, one directory each
+/srv/backup          root:root           755    mount point of LV data/backup, exported
+├─ pgsql             postgres:dba        2750   for the backups of db1
+│   ├─ wal           postgres:dba        2750   archived WAL segments, by hand
+│   └─ base          postgres:dba        2750   base backups, one directory each
+└─ pgbackrest        postgres:postgres   750    pgBackRest repository
 ```
 
 db1 mounts the share with autofs when a program opens it, and unmounts it after 5 minutes without use. Nothing mounts it at boot.
