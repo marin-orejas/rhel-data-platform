@@ -34,7 +34,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 
 ## Phase 3: PostgreSQL operations
 - [x] Point-in-time recovery by hand: WAL archiving to db2 (also with db2 down), a base backup, a timed restore to a set time
-- [ ] pgBackRest: full, differential and incremental backups to db2, retention, a timed restore test
+- [x] pgBackRest: full, differential and incremental backups to db2, retention, a timed restore test
 - [ ] Streaming replication db1 → db2: a replication slot, a read-only standby, lag queries
 - [ ] Failover: promote db2, move the client, bring db1 back as a standby with `pg_rewind`, measure the downtime
 - [ ] Roles and privileges: an application role, a read-only role, default privileges, `pg_hba.conf` rules per role
