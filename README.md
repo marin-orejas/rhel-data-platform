@@ -30,7 +30,7 @@ flowchart LR
     class k3s planned
 ```
 
-Dashed boxes are planned. Details: [docs/architecture.md](docs/architecture.md)
+Dashed boxes are planned. Details: [architecture](docs/architecture/), [runbooks](docs/runbooks/), [decisions](docs/decisions/); all docs: [docs/](docs/)
 
 ## Roadmap
 
