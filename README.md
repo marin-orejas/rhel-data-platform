@@ -47,6 +47,6 @@ Dashed boxes are planned. Details: [architecture](docs/architecture/), [runbooks
 | 8 | PostgreSQL high availability: Patroni, measured failover, upgrades, game days | planned |
 | 9 | Kubernetes and GitOps: k3s, Argo CD, CloudNativePG | planned |
 
-Right now I am preparing for the RHCSA exam (EX200) with 3-hour practice exams and drills on single topics. Scores and lessons are in the journal.
+Right now I am on phase 3: point-in-time recovery and pgBackRest are done, and streaming replication is next. The RHCSA exam (EX200) is booked; practice scores are on the [EX200 practice](docs/journal/ex200-practice.md) page.
 
 Full list: [docs/roadmap.md](docs/roadmap.md). Session notes: [docs/journal/](docs/journal/).
