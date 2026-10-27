@@ -4,6 +4,8 @@
 #   ssh db2 bash -s < checks/07-postgres-remote.sh
 # Run it after a reboot of db1: the SELinux port label, the firewall rule,
 # listen_addresses and pg_hba.conf must all come back on their own.
+# Since lesson 15, db2 also runs the server as a standby (checks/15-replication.sh),
+# so the check that postgresql18-server is not installed is gone.
 
 failed=0
 
@@ -41,7 +43,6 @@ port_open() {
 
 # Client on db2
 check "postgresql18 (client) is installed" rpm -q --quiet postgresql18
-check "postgresql18-server is not installed" not rpm -q --quiet postgresql18-server
 check "~/.pgpass is owned by $(id -un), mode 600" [ "$(stat -c '%U %a' ~/.pgpass 2>/dev/null)" = "$(id -un) 600" ]
 
 # Remote access as remote_test

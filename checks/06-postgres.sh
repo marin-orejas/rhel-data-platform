@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Lesson 06 checks: PostgreSQL 18 on db1, data directory on /pgdata.
-# Run on db1 as a user in the wheel group, no sudo needed:
-#   ssh db1 bash -s < checks/06-postgres.sh
-# Run it after a reboot of db1: the service must come back on its own.
+# Since lesson 15 it also runs on db2, which has the same setup for the standby.
+# Run on both hosts as a user in the wheel group, no sudo needed:
+#   for h in db1 db2; do echo "== $h"; ssh "$h" bash -s < checks/06-postgres.sh; done
+# Run it after a reboot of both hosts: the service must come back on its own.
 
 failed=0
 

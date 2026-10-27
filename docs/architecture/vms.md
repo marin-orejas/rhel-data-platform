@@ -2,7 +2,7 @@
 
 db1 and db2 are clones of the base VM image `rhel-base`. Each one keeps its data on a second disk with its own volume group.
 
-Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (db1), [`checks/10-nfs.sh`](../../checks/10-nfs.sh) (db2)
+Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (db1), [`checks/10-nfs.sh`](../../checks/10-nfs.sh) and [`checks/15-replication.sh`](../../checks/15-replication.sh) (db2)
 Repo files: [`kickstart/rhel-base-vm.ks`](../../kickstart/rhel-base-vm.ks)
 
 ## Setup
