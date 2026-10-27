@@ -18,11 +18,11 @@ flowchart LR
     subgraph nuc["NUC (RHEL 10.2)"]
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
-        db2["db2<br/>backup storage<br/>replica (phase 3)"]
+        db2["db2<br/>backup storage<br/>PostgreSQL standby"]
         k3s["k3s<br/>(phase 9)"]
         base -. clone .-> db1
         base -. clone .-> db2
-        db1 -- "replication (phase 3)" --> db2
+        db1 -- "streaming replication" --> db2
         db1 -- "backups (NFS)" --> db2
     end
     desk -- SSH --> nuc
@@ -47,6 +47,6 @@ Dashed boxes are planned. Details: [architecture](docs/architecture/), [runbooks
 | 8 | PostgreSQL high availability: Patroni, measured failover, upgrades, game days | planned |
 | 9 | Kubernetes and GitOps: k3s, Argo CD, CloudNativePG | planned |
 
-Right now I am on phase 3: point-in-time recovery and pgBackRest are done, and streaming replication is next. The RHCSA exam (EX200) is booked; practice scores are on the [EX200 practice](docs/journal/ex200-practice.md) page.
+Right now I am on phase 3: point-in-time recovery, pgBackRest and streaming replication are done, and failover is next. The RHCSA exam (EX200) is booked; practice scores are on the [EX200 practice](docs/journal/ex200-practice.md) page.
 
 Full list: [docs/roadmap.md](docs/roadmap.md). Session notes: [docs/journal/](docs/journal/).
