@@ -32,7 +32,7 @@ Verified by: [`checks/06-postgres.sh`](../../checks/06-postgres.sh) (db1), [`che
 | Part | Setup |
 |---|---|
 | Type | Physical streaming replication, asynchronous: db1 confirms a commit without waiting for db2. |
-| Standby | db2, built with `pg_basebackup -R` from db1. The empty file `standby.signal` in the data directory keeps it a standby. It accepts read-only queries (`hot_standby = on`, the default). |
+| Standby | db2, built with `pg_basebackup -R` from db1. The empty file `standby.signal` in the data directory keeps it a standby. It accepts read-only queries (`hot_standby = on`, the default). Procedure: [Build a standby with pg_basebackup](../runbooks/build-a-standby.md). |
 | Connection | `primary_conninfo` in `postgresql.auto.conf` on db2: `host=192.168.122.11 port=5433 user=replicator`, with the password from `passfile`. |
 | Slot | Physical slot `db2` on db1, used through `primary_slot_name = 'db2'` on db2. db1 keeps WAL until db2 has received it. |
 | Slot limit | `max_slot_wal_keep_size = 1GB` on db1. If db2 falls further behind, db1 removes the WAL anyway, the slot becomes `lost`, and db2 has to be built again. |
@@ -75,7 +75,8 @@ walsender ◄── TCP 5433, replicator, slot db2 ───── walreceiver
 - Port 5433 instead of the default 5432, to practise moving a service to another port through every layer. The firewalld service `postgresql` is not used, because it opens 5432. See [ADR 0005](../decisions/0005-postgresql-on-port-5433.md).
 - db2 has the same data directory, drop-in, SELinux rules and port as db1, so the two hosts can swap roles in a failover without changes on disk.
 - `replicator` can only read the WAL stream. `pg_hba.conf` lets it in only for replication and only from db2.
-- The slot is capped: a standby that is gone for a long time costs a rebuild of db2, not a full `/pgdata` on db1.
+- Replication is asynchronous, and the slot is capped at 1 GB: a standby that is gone for a long time costs a rebuild of db2, not a full `/pgdata` on db1. See [ADR 0007](../decisions/0007-asynchronous-replication-with-a-capped-slot.md).
+- Lag is read in bytes on db1: `pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)` from `pg_stat_replication`. The time columns there are empty when nothing is written, and the time since the last replayed commit on db2 grows while db1 is idle.
 
 ## Tested
 
@@ -84,3 +85,7 @@ walsender ◄── TCP 5433, replicator, slot db2 ───── walreceiver
 | 2026-10-27 | `pg_basebackup` from db1 to db2 | 52,552 kB copied in 0.8 s |
 | 2026-10-27 | Streaming | db2 streams on timeline 3 through the slot `db2`; a row inserted on db1 is readable on db2 |
 | 2026-10-27 | A write on db2 | `CREATE TABLE` fails with `cannot execute CREATE TABLE in a read-only transaction` |
+| 2026-10-27 | Lag at rest | 0 bytes not replayed; `write_lag`, `flush_lag` and `replay_lag` empty. On db2, `now() - pg_last_xact_replay_timestamp()` showed 26 min, the time since the last commit on db1. |
+| 2026-10-27 | Lag during one `INSERT` of 1,000,000 rows (2.8 s on db1), sampled every 0.5 s | Up to 17.9 MB not replayed and `replay_lag` up to 0.33 s, while the WAL not sent was often 0: the replay on db2 was slower than the network. 0 bytes again within 0.5 s after the `INSERT` ended. |
+| 2026-10-27 | db2 stopped while db1 wrote 300,000 rows | The slot kept 47 MB of WAL (`safe_wal_size` 982 MB). After the start, db2 caught up and the slot kept 0 bytes. |
+| 2026-10-27 | A read on db2 right after its start | It still showed the data from before the stop (1,000,000 rows instead of 1,300,000): a hot standby accepts queries before it has caught up. |
