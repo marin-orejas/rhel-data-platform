@@ -13,10 +13,10 @@ Enforcing on every host. The local changes:
 
 | Host | Change | Why |
 |---|---|---|
-| db1 | File context rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon` | PostgreSQL may use its data directory on the data disk |
-| db1 | Port rule TCP 5433 → `postgresql_port_t` (`semanage port`) | PostgreSQL may listen on 5433 |
+| db1, db2 | File context rule `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`), applied with `restorecon` | PostgreSQL may use its data directory on the data disk |
+| db1, db2 | Port rule TCP 5433 → `postgresql_port_t` (`semanage port`) | PostgreSQL may listen on 5433 |
 | db1 | Module `pg_archive_nfs`, version 1.1 | The archiver may write WAL to the NFS share |
-| db2 | None. `/srv/backup` has `var_t`, the default for `/srv`. | A new XFS file system has no label on its root directory, so the mount point showed `unlabeled_t` until `restorecon`. |
+| db2 | No rule for `/srv/backup`. It has `var_t`, the default for `/srv`. | A new XFS file system has no label on its root directory, so the mount point showed `unlabeled_t` until `restorecon`. |
 | db2 | None. The booleans `nfs_export_all_ro` and `nfs_export_all_rw` are on by default. | nfsd may share `/srv/backup` with its `var_t` label |
 
 On db1, the files on the NFS share have the label `nfs_t`. The archiver runs in the domain `postgresql_t`, and the policy does not let it use files labeled `nfs_t`; no boolean changes that. The module `pg_archive_nfs` (`selinux/pg_archive_nfs.te`) allows it to create, write, read and rename files and to create, list and check directories there, but not to delete files. Version 1.0 was for the `cp` archive command; version 1.1 added the directory rules and `rename` for pgBackRest. How the rules were found: [Build an SELinux module from denials](../runbooks/build-an-selinux-module.md).
@@ -29,7 +29,7 @@ firewalld, zone `public` on every host:
 |---|---|---|
 | nuc | `ssh`, `cockpit` and the other defaults of the zone | Cockpit is reachable from the home network |
 | db1 | `ssh`, `cockpit`, `dhcpv6-client`, `5433/tcp` | PostgreSQL on port 5433. The firewalld service `postgresql` is not used, because it opens 5432. |
-| db2 | `ssh`, `cockpit`, `dhcpv6-client`, service `nfs` (TCP 2049) | Only NFSv4 gets through, so `showmount -e db2` does not work: it uses `rpcbind` and `mountd` from NFSv3. |
+| db2 | `ssh`, `cockpit`, `dhcpv6-client`, service `nfs` (TCP 2049), `5433/tcp` | Only NFSv4 gets through, so `showmount -e db2` does not work: it uses `rpcbind` and `mountd` from NFSv3. Port 5433 is for read-only clients of the standby, and for all clients after a failover. |
 
 On the nuc, `virbr0` is in the zone `libvirt`.
 
@@ -39,7 +39,7 @@ The nuc, db1 and db2 use their own tuned profiles. Each one includes a profile f
 
 | Part | nuc: `virtual-host-nuc` | db1: `postgresql-guest` | db2: `virtual-guest-lab` | Why |
 |---|---|---|---|---|
-| `[main]` | `include=virtual-host` | `include=postgresql`, from the package `tuned-profiles-postgresql` | `include=virtual-guest`, the profile of the base VM image | The nuc runs the VMs. db1 runs PostgreSQL. db2 does not run a database server until phase 3. |
+| `[main]` | `include=virtual-host` | `include=postgresql`, from the package `tuned-profiles-postgresql` | `include=virtual-guest`, the profile of the base VM image | The nuc runs the VMs. db1 runs PostgreSQL. db2 kept the profile of the base image when it got the standby in phase 3. |
 | `[cpu]` | `drop=boost` | `drop=boost` | `drop=boost` | The option comes from `throughput-performance`, which all three bases include. A VM has no CPU frequency driver, so `boost` does not exist. The nuc uses the `intel_pstate` driver, which has no `boost` file either, so tuned reads nothing there. Turbo stays on (`/sys/devices/system/cpu/intel_pstate/no_turbo` is `0`). |
 | `[scheduler]` | — | `enabled=false` | — | Its settings live in `debugfs`. With Secure Boot the kernel runs in lockdown mode (`integrity`) and blocks access to them, even for root. The nuc and db2 do not need this: `tuned-adm verify` passes there without it. |
 

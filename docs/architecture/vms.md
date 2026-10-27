@@ -51,10 +51,10 @@ A clone starts with the same identity as `rhel-base`. These parts change in the 
 | Image | `db1-data.qcow2`, 10 GiB thin qcow2 in the `default` pool | `db2-data.qcow2`, the same |
 | Attached as | `vdb` (virtio), with `virsh attach-disk --live --config` | the same |
 | Partition table | GPT, one partition of type Linux LVM | the same |
-| LVM | PV `/dev/vdb1`, VG `data`, LV `pgdata` (7 GiB) | PV `/dev/vdb1`, VG `data`, LV `backup` (3 GiB) |
-| File system | XFS, label `pgdata` | XFS, label `backup` |
-| Mount | `/pgdata`, in `/etc/fstab` by file system UUID | `/srv/backup`, in `/etc/fstab` by file system UUID |
-| SELinux | `postgresql_db_t`, see [SELinux](system.md#selinux) | `var_t`, the default for `/srv`, see [SELinux](system.md#selinux) |
+| LVM | PV `/dev/vdb1`, VG `data`, LV `pgdata` (7 GiB) | PV `/dev/vdb1`, VG `data`, LV `backup` (3 GiB) and LV `pgdata` (5 GiB) |
+| File system | XFS, label `pgdata` | XFS, labels `backup` and `pgdata` |
+| Mount | `/pgdata`, in `/etc/fstab` by file system UUID | `/srv/backup` and `/pgdata`, in `/etc/fstab` by file system UUID |
+| SELinux | `postgresql_db_t`, see [SELinux](system.md#selinux) | `var_t` on `/srv/backup` (the default for `/srv`), `postgresql_db_t` on `/pgdata`, see [SELinux](system.md#selinux) |
 
 ## Layout
 
@@ -74,8 +74,9 @@ db1: /dev/vdb (10 GiB)
 
 db2: /dev/vdb (10 GiB)
 └─ vdb1  whole disk  LVM  → VG data
-    └─ LV backup  3 GiB  xfs → /srv/backup
-       about 7 GiB left free: 5 GiB for the data directory of the replica (phase 3), the rest to practise extending an LV
+    ├─ LV backup  3 GiB  xfs → /srv/backup
+    └─ LV pgdata  5 GiB  xfs → /pgdata
+       about 2 GiB left free to practise extending an LV
 ```
 
 ## Why
