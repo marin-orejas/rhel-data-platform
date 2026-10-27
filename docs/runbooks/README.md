@@ -10,3 +10,4 @@ Procedures that were run and checked on the lab. Each one ends with the date of 
 | [Restore to a set time with pgBackRest](restore-to-a-time-with-pgbackrest.md) | the cluster back to a time before a bad change | 2026-10-26 |
 | [Restore to a set time by hand](restore-to-a-time-by-hand.md) | a time in the old archive by hand | 2026-10-26 |
 | [Build an SELinux module from denials](build-an-selinux-module.md) | SELinux blocks a service and no boolean helps | 2026-10-26 |
+| [Build a standby with pg_basebackup](build-a-standby.md) | a new read-only copy of db1 on db2 | 2026-10-27 |
