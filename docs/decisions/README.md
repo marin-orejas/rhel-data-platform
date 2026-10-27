@@ -10,3 +10,4 @@ Architecture decision records: one page per choice between real options, with it
 | [0004](0004-pgbackrest-with-its-repository-on-nfs.md) | pgBackRest, with its repository on the NFS share | 2026-10-26 | Accepted |
 | [0005](0005-postgresql-on-port-5433.md) | PostgreSQL on port 5433 | 2026-10-05 | Accepted |
 | [0006](0006-autofs-for-the-nfs-share.md) | autofs for the NFS share on db1 | 2026-10-07 | Accepted |
+| [0007](0007-asynchronous-replication-with-a-capped-slot.md) | Asynchronous streaming replication with a capped slot | 2026-10-27 | Accepted |
