@@ -46,7 +46,3 @@ Installed with `kickstart/nuc-host.ks`.
 ## Why
 
 - The system and the VM disks are in separate volume groups. If the VMs fill their disk, the host keeps working.
-
-## Planned
-
-- A fixed IP for k3s: `.20` (phase 9).
