@@ -4,6 +4,8 @@ PostgreSQL 18 runs on db1 as the primary and on db2 as a read-only standby that 
 
 Verified by: [`checks/06-postgres.sh`](../../checks/06-postgres.sh) (db1 and db2), [`checks/07-postgres-remote.sh`](../../checks/07-postgres-remote.sh) (db2), [`checks/15-replication.sh`](../../checks/15-replication.sh) (db1 and db2)
 
+Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh)
+
 ## Setup
 
 ### Both hosts
@@ -21,9 +23,9 @@ Verified by: [`checks/06-postgres.sh`](../../checks/06-postgres.sh) (db1 and db2
 
 | Part | Setup |
 |---|---|
-| `pg_hba.conf` | Two lines for db2 (`192.168.122.12/32`, `scram-sha-256`): `remote_test` to the database `postgres`, `replicator` for replication |
-| Roles | `remote_test` (login only, tests remote access) and `replicator` (`LOGIN REPLICATION`). Their passwords are only in `.pgpass` files on db2, mode 600. |
-| Test data | Database `lab` with the table `items`, 10,000 rows |
+| `pg_hba.conf` | Lines for db2 (`192.168.122.12/32`, `scram-sha-256`): `remote_test` to `postgres` and `lab`, `rewind` to `postgres`, `replicator` for replication |
+| Roles | `remote_test` (login, `SELECT` and `INSERT` on `lab.failover_test`), `replicator` (`LOGIN REPLICATION`), `rewind` (login, `EXECUTE` on the four file functions `pg_rewind` needs). Passwords only in `.pgpass` files, mode 600. |
+| Test data | Database `lab` with the tables `items` (10,000 rows) and `failover_test`, written by the failover client |
 
 ### Replication
 
@@ -34,6 +36,10 @@ Verified by: [`checks/06-postgres.sh`](../../checks/06-postgres.sh) (db1 and db2
 | Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator`, the password from `passfile` |
 | Slot | Physical slot `db2` on db1, capped with `max_slot_wal_keep_size = 1GB` |
 | Archiving | db2 has `archive_mode = on` from the copy, but a standby does not archive |
+| `pg_hba.conf` on db2 | Copied from db1, plus db1 (`192.168.122.11/32`) as `replicator` and `rewind`, and `remote_test` to `lab` from db2 itself |
+| `.pgpass` of `postgres` | On both hosts, with the `replicator` and `rewind` passwords for the other host |
+| `pg_rewind` | Possible because data checksums are on, the PostgreSQL 18 default |
+| Client | `scripts/failover-client.sh`, run by hand on db2. It names both servers with `target_session_attrs=read-write`, so libpq picks the one that accepts writes. |
 
 ## Layout
 
