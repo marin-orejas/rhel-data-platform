@@ -35,7 +35,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh)
 | Standby | db2, built with `pg_basebackup -R`, see [Build a standby](../runbooks/build-a-standby.md). It answers read-only queries. |
 | Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator`, the password from `passfile` |
 | Slot | Physical slot `db2` on db1, capped with `max_slot_wal_keep_size = 1GB` |
-| Archiving | db2 has `archive_mode = on` from the copy, but a standby does not archive |
+| Archiving | db2 has `archive_mode = on` from the copy. A standby does not archive, and as a primary db2 fails with exit code 127, because pgBackRest is only on db1. |
 | `pg_hba.conf` on db2 | Copied from db1, plus db1 (`192.168.122.11/32`) as `replicator` and `rewind`, and `remote_test` to `lab` from db2 itself |
 | `.pgpass` of `postgres` | On both hosts, with the `replicator` and `rewind` passwords for the other host |
 | `pg_rewind` | Possible because data checksums are on, the PostgreSQL 18 default |
@@ -79,3 +79,6 @@ Lag is read in bytes on db1, from `pg_stat_replication`.
 | 2026-10-27 | db2 stopped while db1 wrote 300,000 rows | The slot kept 47 MB of WAL, and db2 caught up after its start |
 | 2026-10-27 | A read on db2 right after its start | Showed the old data for a moment: a hot standby answers before it has caught up |
 | 2026-10-27 | A write on db2 | `cannot execute CREATE TABLE in a read-only transaction` |
+| 2026-10-29 | Failover: PostgreSQL on db1 killed with `kill -9`, db2 promoted by hand, see [Fail over to db2](../runbooks/fail-over-to-db2.md) | Writes stopped for 5 min 51 s, the promotion itself about 1 s; none of the 631 rows db1 confirmed was lost |
+| 2026-10-29 | `pg_rewind` of db1 after the failover | Diverged at `0/340628B8` on timeline 3; copied 181 MB of 340 MB; db1 streamed from db2 on timeline 4 |
+| 2026-10-29 | Planned switchover back: db2 stopped cleanly, db1 promoted | No `pg_rewind`, db2 followed on timeline 5. Writes stopped for about 6 min, by hand with a pause; the promotion about 1 s |
