@@ -36,7 +36,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [x] db1 was restored by hand to a set time from a base backup and WAL archived on db2, and the restore was timed.
 - [x] pgBackRest makes full, differential and incremental backups to db2, deletes old ones and passed a timed restore.
 - [x] db2 is a read-only standby that streams changes from db1 through a replication slot, and its lag is measured.
-- [ ] db2 takes over when db1 fails, the client follows, db1 comes back as a standby with `pg_rewind`, and the downtime is measured.
+- [x] db2 takes over when db1 fails, the client follows, db1 comes back as a standby with `pg_rewind`, and the downtime is measured.
 
 ## Phase 4: Ansible
 - [ ] Ansible runs from the desktop with an inventory, a config file and SSH keys, first with ad hoc commands, then a playbook.

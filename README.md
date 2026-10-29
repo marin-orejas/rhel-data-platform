@@ -13,6 +13,7 @@ What I learn here:
 
 - db1 runs PostgreSQL 18 on its own data disk, with SELinux enforcing. [Check scripts](checks/) verify every setting after a reboot.
 - db2 is a streaming standby. During a 1,000,000-row insert on db1 it stayed at most 0.33 s behind.
+- When PostgreSQL on db1 failed, db2 took over by hand in 5 min 51 s with no rows lost, and db1 came back as its standby with `pg_rewind`. See the [failover runbook](docs/runbooks/fail-over-to-db2.md).
 - pgBackRest backs db1 up to db2 every night. A dropped table came back with a restore to a set time: 9 min 31 s by hand, 1.1 s of outage with pgBackRest.
 - RHCSA practice: every exam from exam 09 on passed, see [EX200 practice](docs/journal/ex200-practice.md).
 
@@ -57,10 +58,10 @@ flowchart LR
 | 0 | Lab: the NUC from a kickstart, KVM, a base VM image, db1 and db2 | done |
 | 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | done |
 | 2 | RHCSA practice: exam topics, practice exams and drills, then EX200 | in progress |
-| 3 | PostgreSQL operations: backups and recovery, replication, failover | in progress |
+| 3 | PostgreSQL operations: backups and recovery, replication, failover | done |
 | 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | planned |
 | 5 | RHCE in Enterprise Linux practice: troubleshooting, practice exams, then EX342 | planned |
 
-Right now I am on phase 3: point-in-time recovery, pgBackRest and streaming replication are done, and failover is next. The RHCSA exam (EX200) comes before phase 4.
+Right now I am on phase 2: the RHCSA exam (EX200) is next. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 4 starts after the exam.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).
