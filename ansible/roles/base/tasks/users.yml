@@ -1,0 +1,48 @@
+---
+- name: Create the dba group
+  ansible.builtin.group:
+    name: dba
+    gid: 2000
+
+- name: Keep makilele in dba
+  ansible.builtin.user:
+    name: makilele
+    groups: dba
+    append: true
+
+- name: Create the ansible group
+  ansible.builtin.group:
+    name: ansible
+    gid: 1500
+
+- name: Create the ansible user
+  ansible.builtin.user:
+    name: ansible
+    uid: 1500
+    group: ansible
+    comment: Ansible automation
+
+- name: Create the .ssh directory of ansible
+  ansible.builtin.file:
+    path: /home/ansible/.ssh
+    state: directory
+    owner: ansible
+    group: ansible
+    mode: "0700"
+
+- name: Install the ansible public key
+  ansible.builtin.copy:
+    src: ansible.pub
+    dest: /home/ansible/.ssh/authorized_keys
+    owner: ansible
+    group: ansible
+    mode: "0600"
+
+- name: Allow ansible to use sudo without a password
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/ansible
+    content: "ansible ALL=(ALL) NOPASSWD: ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s

@@ -1,0 +1,22 @@
+---
+- name: Users and sudo
+  ansible.builtin.import_tasks: users.yml
+
+- name: Install vim
+  ansible.builtin.dnf:
+    name: vim-enhanced
+    state: present
+
+- name: Keep chronyd enabled and running
+  ansible.builtin.systemd_service:
+    name: chronyd
+    enabled: true
+    state: started
+
+- name: Write the login message
+  ansible.builtin.copy:
+    dest: /etc/motd.d/ansible
+    content: "Managed by Ansible (ansible/playbooks/base.yml). Changes by hand are overwritten.\n"
+    owner: root
+    group: root
+    mode: "0644"
