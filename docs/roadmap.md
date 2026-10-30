@@ -39,7 +39,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [x] db2 takes over when db1 fails, the client follows, db1 comes back as a standby with `pg_rewind`, and the downtime is measured.
 
 ## Phase 4: Ansible
-- [ ] Ansible runs from the desktop with an inventory, a config file and SSH keys, first with ad hoc commands, then a playbook.
+- [x] Ansible runs from the desktop with an inventory, a config file and SSH keys, first with ad hoc commands, then a playbook.
 - [ ] A base role sets up users, sudo, SSH, the firewall, SELinux, time sync and tuned on db1 and db2.
 - [ ] The `storage` and `postgresql` roles from `rhel-system-roles` set up the data disk and PostgreSQL.
 - [ ] Templates manage `postgresql.conf` and `pg_hba.conf`, a handler reloads PostgreSQL, and a dry run shows the changes first.

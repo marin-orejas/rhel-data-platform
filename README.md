@@ -59,9 +59,9 @@ flowchart LR
 | 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | done |
 | 2 | RHCSA practice: exam topics, practice exams and drills, then EX200 | in progress |
 | 3 | PostgreSQL operations: backups and recovery, replication, failover | done |
-| 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | planned |
+| 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | in progress |
 | 5 | RHCE in Enterprise Linux practice: troubleshooting, practice exams, then EX342 | planned |
 
-Right now I am on phase 2: the RHCSA exam (EX200) is next. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 4 starts after the exam.
+Right now I am on phase 4: Ansible. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).
