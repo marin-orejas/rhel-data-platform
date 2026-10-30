@@ -21,7 +21,7 @@ What I learn here:
 
 ```mermaid
 flowchart LR
-    desk["Desktop (Fedora 44)<br/>workstation, git"]
+    desk["Desktop (Fedora 44)<br/>workstation, git, Ansible"]
     subgraph nuc["NUC (RHEL 10.2)"]
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
@@ -36,7 +36,7 @@ flowchart LR
 
 | Host | Role | CPU / RAM | Disk |
 |---|---|---|---|
-| desktop | Workstation, git, SSH, later Ansible; Fedora 44 | i3-12100F / 16 GB | |
+| desktop | Workstation, git, SSH, Ansible control node; Fedora 44 | i3-12100F / 16 GB | |
 | nuc | KVM host with Cockpit, no monitor; RHEL 10.2 | i3-1315U / 16 GB | 120 GB SSD |
 | rhel-base | Base VM image, only for cloning | 2 CPU / 2 GB | 20 GB |
 | db1 | PostgreSQL primary | 2 CPU / 3 GB | 20 GB + 10 GB data |
@@ -46,7 +46,7 @@ flowchart LR
 
 | Folder | What it holds |
 |---|---|
-| [architecture](docs/architecture/) | One page per layer: [NUC host](docs/architecture/host.md), [VMs](docs/architecture/vms.md), [PostgreSQL](docs/architecture/postgresql.md), [backups](docs/architecture/backups.md), [NFS](docs/architecture/nfs.md), [system settings](docs/architecture/system.md) |
+| [architecture](docs/architecture/) | One page per layer: [NUC host](docs/architecture/host.md), [VMs](docs/architecture/vms.md), [PostgreSQL](docs/architecture/postgresql.md), [backups](docs/architecture/backups.md), [NFS](docs/architecture/nfs.md), [system settings](docs/architecture/system.md), [Ansible](docs/architecture/ansible.md) |
 | [runbooks](docs/runbooks/) | Tested procedures, step by step |
 | [decisions](docs/decisions/) | Why the lab is built this way, one record per decision |
 | [journal](docs/journal/) | My notes, one file per lesson day, and the EX200 practice results |
