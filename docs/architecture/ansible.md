@@ -2,6 +2,8 @@
 
 Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The first playbook keeps vim, chronyd and the login message the same on both hosts.
 
+Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh) (desktop)
+
 Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/inventory/hosts.ini`](../../ansible/inventory/hosts.ini), [`ansible/playbooks/base.yml`](../../ansible/playbooks/base.yml)
 
 ## Setup
