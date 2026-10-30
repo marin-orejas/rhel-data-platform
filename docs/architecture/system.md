@@ -1,6 +1,6 @@
 # System settings on every host
 
-SELinux, the firewall, tuned, the persistent journal, and the DBA group with its shared directory.
+SELinux, the firewall, SSH, tuned, the persistent journal, and the DBA group with its shared directory. On db1 and db2, the Ansible role `base` keeps the SELinux labels, the firewall, SSH and the `dba` group ([Ansible](ansible.md)).
 
 Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (journal), [`checks/08-tuned-dba.sh`](../../checks/08-tuned-dba.sh) (tuned, `dba`), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) and [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (the SELinux module)
 Repo files: [`selinux/pg_archive_nfs.te`](../../selinux/pg_archive_nfs.te), [`tuned/`](../../tuned/)
@@ -27,6 +27,13 @@ firewalld, zone `public` on every host.
 | nuc | `ssh`, `cockpit` and the other defaults of the zone; `virbr0` is in the zone `libvirt` |
 | db1 | `ssh`, `cockpit`, `dhcpv6-client`, `5433/tcp` |
 | db2 | `ssh`, `cockpit`, `dhcpv6-client`, `nfs` (NFSv4 only, so `showmount -e` does not work), `5433/tcp` |
+
+### SSH
+
+| Host | Setup |
+|---|---|
+| nuc | see [host](host.md#setup) |
+| db1, db2 | key login only; no password or root login (`/etc/ssh/sshd_config.d/10-hardening.conf`, before `50-redhat.conf`) |
 
 ### Tuning
 

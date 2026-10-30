@@ -1,0 +1,25 @@
+---
+- name: Install the SELinux tools
+  ansible.builtin.dnf:
+    name: policycoreutils-python-utils
+    state: present
+
+- name: Keep SELinux enforcing
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Add the file labels
+  community.general.sefcontext:
+    target: "{{ item.target }}"
+    setype: "{{ item.setype }}"
+    state: present
+  loop: "{{ base_selinux_fcontexts }}"
+
+- name: Add the port labels
+  community.general.seport:
+    ports: "{{ item.ports }}"
+    proto: "{{ item.proto }}"
+    setype: "{{ item.setype }}"
+    state: present
+  loop: "{{ base_selinux_ports }}"

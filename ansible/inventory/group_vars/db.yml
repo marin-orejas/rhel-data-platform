@@ -1,0 +1,15 @@
+---
+base_firewall_services:
+  - ssh
+  - cockpit
+  - dhcpv6-client
+base_firewall_ports:
+  - 5433/tcp
+
+base_selinux_fcontexts:
+  - target: /pgdata(/.*)?
+    setype: postgresql_db_t
+base_selinux_ports:
+  - ports: "5433"
+    proto: tcp
+    setype: postgresql_port_t

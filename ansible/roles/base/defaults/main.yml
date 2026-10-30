@@ -1,0 +1,7 @@
+---
+base_firewall_services:
+  - ssh
+base_firewall_ports: []
+base_firewall_extra_services: []
+base_selinux_fcontexts: []
+base_selinux_ports: []

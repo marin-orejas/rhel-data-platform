@@ -2,6 +2,15 @@
 - name: Users and sudo
   ansible.builtin.import_tasks: users.yml
 
+- name: Firewall
+  ansible.builtin.import_tasks: firewall.yml
+
+- name: SELinux
+  ansible.builtin.import_tasks: selinux.yml
+
+- name: SSH
+  ansible.builtin.import_tasks: ssh.yml
+
 - name: Install vim
   ansible.builtin.dnf:
     name: vim-enhanced
