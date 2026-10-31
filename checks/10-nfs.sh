@@ -4,6 +4,7 @@
 #   for h in db1 db2; do echo "== $h"; ssh "$h" bash -s < checks/10-nfs.sh; done
 # Run it after a reboot of both hosts: everything must come back on its own.
 # The firewall on db2 is checked from db1: the share mounts only if TCP 2049 is open.
+# Since lesson 18 db2 has the profile postgresql-guest, set by the Ansible role base.
 
 failed=0
 
@@ -18,7 +19,7 @@ check() {
     fi
 }
 
-profile=virtual-guest-lab
+profile=postgresql-guest
 export_dir=/srv/backup
 master=/mnt/db2
 share=/mnt/db2/backup
@@ -39,7 +40,7 @@ check "package nfs-utils is installed" rpm -q --quiet nfs-utils
 if [ "$(hostname -s)" = db2 ]; then
     # tuned
     check "active profile is $profile" [ "$(tuned-adm active)" = "Current active profile: $profile" ]
-    check "$profile is based on virtual-guest" grep -qx 'include=virtual-guest' "/etc/tuned/profiles/$profile/tuned.conf"
+    check "$profile is based on postgresql" grep -qx 'include=postgresql' "/etc/tuned/profiles/$profile/tuned.conf"
     check "tuned-adm verify passes" grep -q '^Verification succeeded' <<<"$(tuned-adm verify 2>&1)"
 
     # Data disk: GPT, LVM, XFS, mounted by UUID

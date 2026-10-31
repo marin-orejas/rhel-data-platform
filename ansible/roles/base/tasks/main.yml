@@ -11,16 +11,19 @@
 - name: SSH
   ansible.builtin.import_tasks: ssh.yml
 
+- name: Time sync
+  ansible.builtin.import_tasks: time.yml
+
+- name: Tuned
+  ansible.builtin.import_tasks: tuned.yml
+
+- name: Journal
+  ansible.builtin.import_tasks: journal.yml
+
 - name: Install vim
   ansible.builtin.dnf:
     name: vim-enhanced
     state: present
-
-- name: Keep chronyd enabled and running
-  ansible.builtin.systemd_service:
-    name: chronyd
-    enabled: true
-    state: started
 
 - name: Write the login message
   ansible.builtin.copy:

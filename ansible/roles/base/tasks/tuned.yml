@@ -1,0 +1,40 @@
+---
+- name: Install tuned and the PostgreSQL profiles
+  ansible.builtin.dnf:
+    name:
+      - tuned
+      - tuned-profiles-postgresql
+    state: present
+
+- name: Keep tuned enabled and running
+  ansible.builtin.systemd_service:
+    name: tuned
+    enabled: true
+    state: started
+
+- name: Create the profile directory
+  ansible.builtin.file:
+    path: "/etc/tuned/profiles/{{ base_tuned_profile }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy the profile
+  ansible.builtin.copy:
+    src: "tuned/{{ base_tuned_profile }}/tuned.conf"
+    dest: "/etc/tuned/profiles/{{ base_tuned_profile }}/tuned.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart tuned
+
+- name: Read the active profile
+  ansible.builtin.command: tuned-adm active
+  register: base_tuned_active
+  changed_when: false
+  check_mode: false
+
+- name: Switch to the profile
+  ansible.builtin.command: "tuned-adm profile {{ base_tuned_profile }}"
+  when: 'base_tuned_active.stdout != "Current active profile: " ~ base_tuned_profile'

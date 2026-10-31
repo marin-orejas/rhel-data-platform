@@ -1,6 +1,6 @@
 # Ansible
 
-Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, vim, chronyd and the login message the same on both hosts.
+Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts.
 
 Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh) (desktop)
 
@@ -20,7 +20,8 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 | sudo | `/etc/sudoers.d/ansible`: `ansible ALL=(ALL) NOPASSWD: ALL`, mode 440 |
 | Become | off by default; `-b` for an ad hoc command, `become: true` in the playbook |
 | Playbook | `playbooks/base.yml` on group `db`, runs the role `base` |
-| Role `base` | the `dba` group, the user `ansible` with its key and sudo rule, the firewall, SELinux and SSH ([system](system.md)); `vim-enhanced`, `chronyd`, `/etc/motd.d/ansible` |
+| Role `base` | the `dba` group, the user `ansible` with its key and sudo rule, the firewall, SELinux, SSH, tuned and the journal ([system](system.md)); `chronyd`, `vim-enhanced`, `/etc/motd.d/ansible` |
+| tuned | `tuned-adm profile` runs only when `tuned-adm active` shows another profile, so a second run reports no change |
 | Variables | role defaults in `roles/base/defaults/`, values for both hosts in `inventory/group_vars/db.yml`, `nfs` in `inventory/host_vars/db2.yml` |
 
 ## Why
@@ -42,3 +43,4 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 | 2026-10-30 | `ansible-playbook playbooks/base.yml` with `--check --diff`, then run twice | check run: `changed=1` (the login message) and no file changed; first run `changed=1`, second `changed=0` on db1 and db2 |
 | 2026-10-30 | Role `base` with the users and sudo, run with `--check --diff`, then twice | `changed=0` each time on db1 and db2: the role matches the setup by hand |
 | 2026-10-30 | Role `base` with the firewall, SELinux and SSH: `--check --diff`, run, run again; then a login with only a password | firewall and SELinux `changed=0`; the SSH drop-in and reload `changed=2`, then `changed=0`; the password login is refused |
+| 2026-10-31 | Role `base` with chrony, tuned and the journal: `--check --diff`, run, run again | db1 `changed=0` each time; db2 `changed=5` (package, profile, switch to `postgresql-guest`, restart), then `changed=0`; `tuned-adm verify` passes on db2 |

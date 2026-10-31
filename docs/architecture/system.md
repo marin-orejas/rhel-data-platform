@@ -1,9 +1,9 @@
 # System settings on every host
 
-SELinux, the firewall, SSH, tuned, the persistent journal, and the DBA group with its shared directory. On db1 and db2, the Ansible role `base` keeps the SELinux labels, the firewall, SSH and the `dba` group ([Ansible](ansible.md)).
+SELinux, the firewall, SSH, tuned, the persistent journal, and the DBA group with its shared directory. On db1 and db2, the Ansible role `base` keeps the SELinux labels, the firewall, SSH, tuned, the journal and the `dba` group ([Ansible](ansible.md)).
 
-Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (journal), [`checks/08-tuned-dba.sh`](../../checks/08-tuned-dba.sh) (tuned, `dba`), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) and [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (the SELinux module)
-Repo files: [`selinux/pg_archive_nfs.te`](../../selinux/pg_archive_nfs.te), [`tuned/`](../../tuned/)
+Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (journal), [`checks/08-tuned-dba.sh`](../../checks/08-tuned-dba.sh) (tuned, `dba`), [`checks/10-nfs.sh`](../../checks/10-nfs.sh) (tuned on db2), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) and [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (the SELinux module)
+Repo files: [`selinux/pg_archive_nfs.te`](../../selinux/pg_archive_nfs.te), [`tuned/`](../../tuned/), [`ansible/roles/base/files/tuned/`](../../ansible/roles/base/files/tuned/)
 
 ## Setup
 
@@ -37,13 +37,12 @@ firewalld, zone `public` on every host.
 
 ### Tuning
 
-Each host has its own tuned profile in `tuned/`, installed as `/etc/tuned/profiles/<name>/tuned.conf`. Each one includes a profile from a package and drops only what fails on that host.
+Each tuned profile is installed as `/etc/tuned/profiles/<name>/tuned.conf`. It includes a profile from a package and drops only what fails on that host. The nuc profile is in `tuned/`; the db profile is in the role `base`.
 
 | Host | Profile | Base | Dropped |
 |---|---|---|---|
 | nuc | `virtual-host-nuc` | `virtual-host` | `[cpu] boost` |
-| db1 | `postgresql-guest` | `postgresql` (`tuned-profiles-postgresql`) | `[cpu] boost`, `[scheduler]` |
-| db2 | `virtual-guest-lab` | `virtual-guest` | `[cpu] boost` |
+| db1, db2 | `postgresql-guest` | `postgresql` (`tuned-profiles-postgresql`) | `[cpu] boost`, `[scheduler]` |
 
 ### Journal
 
@@ -71,3 +70,7 @@ Persistent on nuc, db1 and db2: drop-in `/etc/systemd/journald.conf.d/50-persist
 | 2026-10-08 | `tuned-adm verify` on nuc, db1 and db2, after a reboot | Passes |
 | 2026-10-05 | `cp` of a `600` file into `/srv/dba` | The ACL mask became `---` and the group could not read it; `chmod g+rw` fixed it |
 | 2026-10-05 | `mv` of a file into `/srv/dba` on the same file system | It kept its own group and got no ACL; `chgrp dba` and `chmod g+rw` fixed it |
+
+## History
+
+- `virtual-guest-lab` (db2, lessons 10–17): `include=virtual-guest`, `[cpu] drop=boost`; still in `/etc/tuned/profiles/` on db2, not active.
