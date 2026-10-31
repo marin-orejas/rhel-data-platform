@@ -1,0 +1,12 @@
+---
+storage_pools:
+  - name: data
+    type: lvm
+    disks:
+      - vdb
+    volumes:
+      - name: pgdata
+        size: 7 GiB
+        fs_type: xfs
+        fs_label: pgdata
+        mount_point: /pgdata

@@ -1,3 +1,20 @@
 ---
 base_firewall_extra_services:
   - nfs
+
+storage_pools:
+  - name: data
+    type: lvm
+    disks:
+      - vdb
+    volumes:
+      - name: backup
+        size: 3 GiB
+        fs_type: xfs
+        fs_label: backup
+        mount_point: /srv/backup
+      - name: pgdata
+        size: 5 GiB
+        fs_type: xfs
+        fs_label: pgdata
+        mount_point: /pgdata

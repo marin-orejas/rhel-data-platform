@@ -48,6 +48,7 @@ A clone starts with the identity of `rhel-base`. Four parts change before the fi
 | LVM | PV `/dev/vdb1`, VG `data` | the same |
 | LVs | `pgdata` 7 GiB, XFS, `/pgdata` | `backup` 3 GiB, `/srv/backup`; `pgdata` 5 GiB, `/pgdata`; both XFS |
 | Mount | `/etc/fstab` by file system UUID | the same |
+| Managed by | the Ansible role `storage` ([Ansible](ansible.md)) | the same |
 
 ## Layout
 

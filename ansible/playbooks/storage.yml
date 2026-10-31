@@ -1,0 +1,10 @@
+---
+- name: Data disks of the db hosts
+  hosts: db
+  become: true
+
+  vars:
+    storage_safe_mode: true
+
+  roles:
+    - fedora.linux_system_roles.storage
