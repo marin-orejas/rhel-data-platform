@@ -2,7 +2,7 @@
 
 Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts.
 
-Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh) (desktop)
+Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh) and [`checks/18-base-role.sh`](../../checks/18-base-role.sh) (desktop)
 
 Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/inventory/hosts.ini`](../../ansible/inventory/hosts.ini), [`ansible/playbooks/base.yml`](../../ansible/playbooks/base.yml), [`ansible/roles/base/`](../../ansible/roles/base/)
 

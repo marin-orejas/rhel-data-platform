@@ -2,7 +2,7 @@
 
 SELinux, the firewall, SSH, tuned, the persistent journal, and the DBA group with its shared directory. On db1 and db2, the Ansible role `base` keeps the SELinux labels, the firewall, SSH, tuned, the journal and the `dba` group ([Ansible](ansible.md)).
 
-Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (journal), [`checks/08-tuned-dba.sh`](../../checks/08-tuned-dba.sh) (tuned, `dba`), [`checks/10-nfs.sh`](../../checks/10-nfs.sh) (tuned on db2), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) and [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (the SELinux module)
+Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (journal), [`checks/08-tuned-dba.sh`](../../checks/08-tuned-dba.sh) (tuned, `dba`), [`checks/10-nfs.sh`](../../checks/10-nfs.sh) (tuned on db2), [`checks/18-base-role.sh`](../../checks/18-base-role.sh) (the role `base`, from the desktop), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) and [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (the SELinux module)
 Repo files: [`selinux/pg_archive_nfs.te`](../../selinux/pg_archive_nfs.te), [`tuned/`](../../tuned/), [`ansible/roles/base/files/tuned/`](../../ansible/roles/base/files/tuned/)
 
 ## Setup
