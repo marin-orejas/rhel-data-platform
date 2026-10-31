@@ -21,7 +21,7 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 | Become | off by default; `-b` for an ad hoc command, `become: true` in the playbook |
 | Playbook | `playbooks/base.yml` on group `db`, runs the role `base` |
 | Role `base` | the `dba` group, the user `ansible` with its key and sudo rule, the firewall, SELinux, SSH, tuned and the journal ([system](system.md)); `chronyd`, `vim-enhanced`, `/etc/motd.d/ansible` |
-| tuned | `tuned-adm profile` runs only when `tuned-adm active` shows another profile, so a second run reports no change |
+| tuned | another profile in `tuned-adm active` is reported as changed, also in a check run; only then `tuned-adm profile` runs |
 | Variables | role defaults in `roles/base/defaults/`, values for both hosts in `inventory/group_vars/db.yml`, `nfs` in `inventory/host_vars/db2.yml` |
 
 ## Why
