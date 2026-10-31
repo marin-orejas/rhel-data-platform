@@ -62,6 +62,6 @@ flowchart LR
 | 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | in progress |
 | 5 | RHCE in Enterprise Linux practice: troubleshooting, practice exams, then EX342 | planned |
 
-Right now I am on phase 4: Ansible. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
+Right now I am on phase 4: Ansible. A base role keeps the users, SSH, the firewall, SELinux, time sync and tuned the same on db1 and db2. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).

@@ -40,7 +40,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 
 ## Phase 4: Ansible
 - [x] Ansible runs from the desktop with an inventory, a config file and SSH keys, first with ad hoc commands, then a playbook.
-- [ ] A base role sets up users, sudo, SSH, the firewall, SELinux, time sync and tuned on db1 and db2.
+- [x] A base role sets up users, sudo, SSH, the firewall, SELinux, time sync and tuned on db1 and db2.
 - [ ] The `storage` and `postgresql` roles from `rhel-system-roles` set up the data disk and PostgreSQL.
 - [ ] Templates manage `postgresql.conf` and `pg_hba.conf`, a handler reloads PostgreSQL, and a dry run shows the changes first.
 - [ ] An app role and a read-only role get default privileges and their own `pg_hba.conf` rules, by hand first, then as code.
