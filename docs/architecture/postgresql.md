@@ -4,7 +4,7 @@ PostgreSQL 18 runs on db1 as the primary and on db2 as a read-only standby that 
 
 Verified by: [`checks/06-postgres.sh`](../../checks/06-postgres.sh) (db1 and db2), [`checks/07-postgres-remote.sh`](../../checks/07-postgres-remote.sh) (db2), [`checks/15-replication.sh`](../../checks/15-replication.sh) (db1 and db2), [`checks/16-failover.sh`](../../checks/16-failover.sh) (db2)
 
-Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh)
+Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`ansible/roles/postgresql/`](../../ansible/roles/postgresql/)
 
 ## Setup
 
@@ -12,7 +12,8 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh)
 
 | Part | Setup |
 |---|---|
-| Package | `postgresql18-server` from AppStream; on db1 also `postgresql18-contrib` for `pg_waldump` |
+| Package | `postgresql18-server` and `postgresql18-contrib` (for `pg_waldump`) from AppStream |
+| Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, the service |
 | Service | `postgresql`, enabled. Drop-in `postgresql.service.d/override.conf` with `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`. |
 | Settings | `port = 5433` and `listen_addresses = '*'` in `postgresql.auto.conf`, set with `ALTER SYSTEM` |
 | SELinux, firewall | Rules for `/pgdata` and port 5433, `5433/tcp` open, see [System settings](system.md) |

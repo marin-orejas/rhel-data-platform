@@ -1,10 +1,10 @@
 # Ansible
 
-Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts. The playbook `storage.yml` runs the system role `storage`, which keeps the data disks as `host_vars` describes them.
+Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts. The playbook `storage.yml` runs the system role `storage`, which keeps the data disks as `host_vars` describes them. The playbook `postgresql.yml` runs the role `postgresql`, which keeps the PostgreSQL packages, the service drop-in and the profile of `postgres`.
 
 Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh) and [`checks/18-base-role.sh`](../../checks/18-base-role.sh) (desktop)
 
-Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/inventory/hosts.ini`](../../ansible/inventory/hosts.ini), [`ansible/playbooks/base.yml`](../../ansible/playbooks/base.yml), [`ansible/playbooks/storage.yml`](../../ansible/playbooks/storage.yml), [`ansible/roles/base/`](../../ansible/roles/base/)
+Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/inventory/hosts.ini`](../../ansible/inventory/hosts.ini), [`ansible/playbooks/base.yml`](../../ansible/playbooks/base.yml), [`ansible/playbooks/storage.yml`](../../ansible/playbooks/storage.yml), [`ansible/playbooks/postgresql.yml`](../../ansible/playbooks/postgresql.yml), [`ansible/roles/base/`](../../ansible/roles/base/), [`ansible/roles/postgresql/`](../../ansible/roles/postgresql/)
 
 ## Setup
 
@@ -25,6 +25,7 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 | tuned | another profile in `tuned-adm active` is reported as changed, also in a check run; only then `tuned-adm profile` runs |
 | Playbook `storage.yml` | `fedora.linux_system_roles.storage` on group `db`, `storage_safe_mode: true`; the [data disks](vms.md#data-disks) as `storage_pools` in `inventory/host_vars/` |
 | blivet | `python3-blivet` and the `libblockdev` plugins on db1 and db2; the role needs them also in a check run |
+| Role `postgresql` | `playbooks/postgresql.yml` on group `db`: packages, the drop-in and `.bash_profile` ([PostgreSQL](postgresql.md)), `postgresql-setup --initdb` only without `PG_VERSION`, the service started but never restarted |
 | Variables | role defaults in `roles/base/defaults/`, values for both hosts in `inventory/group_vars/db.yml`, `nfs` in `inventory/host_vars/db2.yml` |
 
 ## Why
@@ -37,6 +38,7 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 - The sudo rule and the SSH drop-in are written with `validate` (`visudo -cf`, `sshd -t -f`), because a broken file would lock Ansible out of both hosts.
 - The role reads its values from variables, and a host adds to a list through its own variable (`base_firewall_extra_services`), because `host_vars` replaces a list from `group_vars` instead of merging it.
 - The data disks use the system role `storage` with safe mode on, so a wrong description fails instead of formatting a volume with data. The layout is in `host_vars`, because db1 and db2 have different volumes.
+- An own role `postgresql`, because the system role keeps its data directory at `/var/lib/pgsql/data` in an internal variable. The role stops when `/pgdata` is not mounted, so `initdb` never creates a cluster on the root disk.
 
 ## Tested
 
@@ -49,3 +51,5 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 | 2026-10-30 | Role `base` with the firewall, SELinux and SSH: `--check --diff`, run, run again; then a login with only a password | firewall and SELinux `changed=0`; the SSH drop-in and reload `changed=2`, then `changed=0`; the password login is refused |
 | 2026-10-31 | Role `base` with chrony, tuned and the journal: `--check --diff`, run, run again | db1 `changed=0` each time; db2 `changed=5` (package, profile, switch to `postgresql-guest`, restart), then `changed=0`; `tuned-adm verify` passes on db2 |
 | 2026-10-31 | Role `storage` on the data disks built by hand: `--check --diff`, then a run | the check run changed no disk and no line in `/etc/fstab`; the run `changed=0` on db1 and db2 |
+| 2026-10-31 | System role `postgresql` with `--check --diff` on db1 | `changed=2 failed=1`: it would run `postgresql-setup --initdb`, then failed on the missing `/var/lib/pgsql/data/postgresql.conf`; nothing changed on db1 |
+| 2026-11-01 | Role `postgresql`: `--check --diff`, run, run again | db1 `changed=0` each time; db2 `changed=1` (contrib), then `changed=0`; `NRestarts=0` on both |

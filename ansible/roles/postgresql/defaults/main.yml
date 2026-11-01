@@ -1,0 +1,6 @@
+---
+postgresql_packages:
+  - postgresql18-server
+  - postgresql18-contrib
+postgresql_mount_point: /pgdata
+postgresql_data_dir: /pgdata/pgsql/data
