@@ -2,7 +2,7 @@
 
 Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts. The playbook `storage.yml` runs the system role `storage`, which keeps the data disks as `host_vars` describes them. The playbook `postgresql.yml` runs the role `postgresql`, which keeps the PostgreSQL packages, the service drop-in and the profile of `postgres`.
 
-Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh) and [`checks/18-base-role.sh`](../../checks/18-base-role.sh) (desktop)
+Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh), [`checks/18-base-role.sh`](../../checks/18-base-role.sh) and [`checks/19-storage-postgresql.sh`](../../checks/19-storage-postgresql.sh) (desktop)
 
 Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/inventory/hosts.ini`](../../ansible/inventory/hosts.ini), [`ansible/playbooks/base.yml`](../../ansible/playbooks/base.yml), [`ansible/playbooks/storage.yml`](../../ansible/playbooks/storage.yml), [`ansible/playbooks/postgresql.yml`](../../ansible/playbooks/postgresql.yml), [`ansible/roles/base/`](../../ansible/roles/base/), [`ansible/roles/postgresql/`](../../ansible/roles/postgresql/)
 
