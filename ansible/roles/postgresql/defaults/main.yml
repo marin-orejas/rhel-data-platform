@@ -4,3 +4,25 @@ postgresql_packages:
   - postgresql18-contrib
 postgresql_mount_point: /pgdata
 postgresql_data_dir: /pgdata/pgsql/data
+
+postgresql_settings:
+  max_connections: "100"
+  shared_buffers: "128MB"
+  dynamic_shared_memory_type: "posix"
+  max_wal_size: "1GB"
+  min_wal_size: "80MB"
+  logging_collector: "on"
+  log_filename: "postgresql-%a.log"
+  log_rotation_age: "1d"
+  log_truncate_on_rotation: "on"
+  log_timezone: "Europe/Zagreb"
+  autovacuum_worker_slots: "16"
+  datestyle: "iso, mdy"
+  timezone: "Europe/Zagreb"
+  lc_messages: "en_US.UTF-8"
+  lc_monetary: "en_US.UTF-8"
+  lc_numeric: "en_US.UTF-8"
+  lc_time: "en_US.UTF-8"
+  default_text_search_config: "pg_catalog.english"
+
+postgresql_extra_settings: {}

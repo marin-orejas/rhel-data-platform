@@ -13,3 +13,10 @@ base_selinux_ports:
   - ports: "5433"
     proto: tcp
     setype: postgresql_port_t
+
+postgresql_extra_settings:
+  port: "5433"
+  listen_addresses: "*"
+  archive_mode: "on"
+  archive_command: "pgbackrest --stanza=main archive-push %p"
+  max_slot_wal_keep_size: "1GB"

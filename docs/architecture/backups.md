@@ -14,7 +14,7 @@ Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](.
 | Package | `pgbackrest` 2.60 from the PGDG "common" repository (`pgbackrest/pgdg-common.repo`), limited by `includepkgs` to `pgbackrest` and `pgdg-libssh2` |
 | Config | `pgbackrest/pgbackrest.conf` as `/etc/pgbackrest.conf`, stanza `main` |
 | Repository | `/mnt/db2/backup/pgbackrest` on db1, which is `/srv/backup/pgbackrest` on db2. pgBackRest runs only on db1, as `postgres`. |
-| Archive command | `pgbackrest --stanza=main archive-push %p`, set with `ALTER SYSTEM` |
+| Archive command | `pgbackrest --stanza=main archive-push %p`, in `postgresql.conf` from the Ansible role `postgresql` ([Ansible](ansible.md)) |
 | SELinux | module `pg_archive_nfs`, see [SELinux](system.md#selinux) |
 | Service | `systemd/pgbackrest@.service`, the instance is the backup type: `pgbackrest@full`, `pgbackrest@diff` |
 | Schedule | Full on Sunday, differential Monday to Saturday, both at 01:00 (`pgbackrest-full.timer`, `pgbackrest-diff.timer`) |

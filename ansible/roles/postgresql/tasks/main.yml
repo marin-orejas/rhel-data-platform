@@ -60,8 +60,31 @@
   args:
     creates: "{{ postgresql_data_dir }}/PG_VERSION"
 
+- name: Write postgresql.conf from the template
+  ansible.builtin.template:
+    src: postgresql.conf.j2
+    dest: "{{ postgresql_data_dir }}/postgresql.conf"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  notify: Reload PostgreSQL
+
 - name: Keep PostgreSQL enabled and running
   ansible.builtin.systemd_service:
     name: postgresql
     enabled: true
     state: started
+
+- name: Reload before the settings check
+  ansible.builtin.meta: flush_handlers
+
+- name: Stop if a setting in the files is not applied
+  ansible.builtin.command: >-
+    runuser -u postgres -- psql -p 5433 -XAtc
+    "SELECT name, error FROM pg_file_settings WHERE NOT applied"
+  register: postgresql_not_applied
+  changed_when: false
+  check_mode: false
+  failed_when: >-
+    postgresql_not_applied.rc != 0 or
+    postgresql_not_applied.stdout != ""

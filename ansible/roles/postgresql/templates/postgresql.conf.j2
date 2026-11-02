@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+{% for name, value in (postgresql_settings | combine(postgresql_extra_settings)) | dictsort %}
+{{ name }} = '{{ value }}'
+{% endfor %}

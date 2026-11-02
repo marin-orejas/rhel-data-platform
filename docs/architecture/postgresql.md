@@ -13,9 +13,9 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Part | Setup |
 |---|---|
 | Package | `postgresql18-server` and `postgresql18-contrib` (for `pg_waldump`) from AppStream |
-| Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, the service |
+| Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, `postgresql.conf`, the service |
 | Service | `postgresql`, enabled. Drop-in `postgresql.service.d/override.conf` with `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`. |
-| Settings | `port = 5433` and `listen_addresses = '*'` in `postgresql.auto.conf`, set with `ALTER SYSTEM` |
+| Settings | `postgresql.conf` from the role's template; `port = 5433`, `listen_addresses = '*'` and the archive settings come from `ansible/inventory/group_vars/db.yml` |
 | SELinux, firewall | Rules for `/pgdata` and port 5433, `5433/tcp` open, see [System settings](system.md) |
 | Logs | `/pgdata/pgsql/data/log/postgresql-<day>.log` |
 | Admin access | `sudo -iu postgres psql`; `/var/lib/pgsql/.bash_profile` sets `PGDATA` and `PGPORT=5433` |
@@ -36,7 +36,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Standby | db2, built with `pg_basebackup -R`, see [Build a standby](../runbooks/build-a-standby.md). It answers read-only queries. |
 | Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator`, the password from `passfile` |
 | Slot | Physical slot `db2` on db1, capped with `max_slot_wal_keep_size = 1GB` |
-| Archiving | db2 has `archive_mode = on` from the copy. A standby does not archive, and as a primary db2 fails with exit code 127, because pgBackRest is only on db1. |
+| Archiving | db2 has the same `archive_mode = on` and archive command from the role. A standby does not archive, and as a primary db2 fails with exit code 127, because pgBackRest is only on db1. |
 | `pg_hba.conf` on db2 | Copied from db1, plus db1 (`192.168.122.11/32`) as `replicator` and `rewind`, and `remote_test` to `lab` from db2 itself |
 | `.pgpass` of `postgres` | On both hosts, with the `replicator` and `rewind` passwords for the other host |
 | `pg_rewind` | Possible because data checksums are on, the PostgreSQL 18 default |
