@@ -13,9 +13,10 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Part | Setup |
 |---|---|
 | Package | `postgresql18-server` and `postgresql18-contrib` (for `pg_waldump`) from AppStream |
-| Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, `postgresql.conf`, the service |
+| Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, `postgresql.conf`, `pg_hba.conf`, the service |
 | Service | `postgresql`, enabled. Drop-in `postgresql.service.d/override.conf` with `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`. |
 | Settings | `postgresql.conf` from the role's template; `port = 5433`, `listen_addresses = '*'` and the archive settings come from `ansible/inventory/group_vars/db.yml` |
+| `pg_hba.conf` | from the role's template, the same on both hosts: the `initdb` lines, then `scram-sha-256` lines for `remote_test` from db2 to `postgres` and `lab`, and for `replicator` and `rewind` from db1 and db2 |
 | SELinux, firewall | Rules for `/pgdata` and port 5433, `5433/tcp` open, see [System settings](system.md) |
 | Logs | `/pgdata/pgsql/data/log/postgresql-<day>.log` |
 | Admin access | `sudo -iu postgres psql`; `/var/lib/pgsql/.bash_profile` sets `PGDATA` and `PGPORT=5433` |
@@ -24,7 +25,6 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 
 | Part | Setup |
 |---|---|
-| `pg_hba.conf` | Lines for db2 (`192.168.122.12/32`, `scram-sha-256`): `remote_test` to `postgres` and `lab`, `rewind` to `postgres`, `replicator` for replication |
 | Roles | `remote_test` (login, `SELECT` and `INSERT` on `lab.failover_test`), `replicator` (`LOGIN REPLICATION`), `rewind` (login, `EXECUTE` on the four file functions `pg_rewind` needs). Passwords only in `.pgpass` files, mode 600. |
 | Test data | Database `lab` with the tables `items` (10,000 rows) and `failover_test`, written by the failover client |
 
@@ -37,7 +37,6 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator`, the password from `passfile` |
 | Slot | Physical slot `db2` on db1, capped with `max_slot_wal_keep_size = 1GB` |
 | Archiving | db2 has the same `archive_mode = on` and archive command from the role. A standby does not archive, and as a primary db2 fails with exit code 127, because pgBackRest is only on db1. |
-| `pg_hba.conf` on db2 | Copied from db1, plus db1 (`192.168.122.11/32`) as `replicator` and `rewind`, and `remote_test` to `lab` from db2 itself |
 | `.pgpass` of `postgres` | On both hosts, with the `replicator` and `rewind` passwords for the other host |
 | `pg_rewind` | Possible because data checksums are on, the PostgreSQL 18 default |
 | Client | `scripts/failover-client.sh`, run by hand on db2. It names both servers with `target_session_attrs=read-write`, so libpq picks the one that accepts writes. |
@@ -65,7 +64,7 @@ psql + ~/.pgpass ── TCP 5433 ──►   firewalld     public zone allows 54
 - The cluster is one level below the mount point. If the disk is not mounted, `/pgdata/pgsql/data` does not exist, so no cluster gets created on the root disk by mistake.
 - The server listens on all addresses, because the unit does not wait for the network. See [ADR 0002](../decisions/0002-listen-on-all-addresses.md).
 - Port 5433, to practise moving a service through SELinux, the firewall and the clients. See [ADR 0005](../decisions/0005-postgresql-on-port-5433.md).
-- db2 has the same data directory, drop-in, SELinux rules and port as db1, so the two can swap roles in a failover.
+- db2 has the same data directory, drop-in, SELinux rules, port and `pg_hba.conf` as db1, so the two can swap roles in a failover.
 - Asynchronous, with a slot capped at 1 GB: a long db2 outage costs a rebuild of db2, not a full `/pgdata` on db1. See [ADR 0007](../decisions/0007-asynchronous-replication-with-a-capped-slot.md).
 
 ## Tested

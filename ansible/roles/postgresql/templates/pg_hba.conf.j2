@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+{% for rule in postgresql_hba_rules + postgresql_hba_extra_rules %}
+{{ '%-7s %-15s %-15s %-23s %s' | format(rule.type, rule.database, rule.user, rule.address | default(''), rule.method) }}
+{% endfor %}

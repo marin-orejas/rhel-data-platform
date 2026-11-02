@@ -1,6 +1,6 @@
 # Ansible
 
-Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts. The playbook `storage.yml` runs the system role `storage`, which keeps the data disks as `host_vars` describes them. The playbook `postgresql.yml` runs the role `postgresql`, which keeps the PostgreSQL packages, the service drop-in, the profile of `postgres` and `postgresql.conf`.
+Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts. The playbook `storage.yml` runs the system role `storage`, which keeps the data disks as `host_vars` describes them. The playbook `postgresql.yml` runs the role `postgresql`, which keeps the PostgreSQL packages, the service drop-in, the profile of `postgres`, `postgresql.conf` and `pg_hba.conf`.
 
 Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh), [`checks/18-base-role.sh`](../../checks/18-base-role.sh) and [`checks/19-storage-postgresql.sh`](../../checks/19-storage-postgresql.sh) (desktop)
 
@@ -26,8 +26,8 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 | Playbook `storage.yml` | `fedora.linux_system_roles.storage` on group `db`, `storage_safe_mode: true`; the [data disks](vms.md#data-disks) as `storage_pools` in `inventory/host_vars/` |
 | blivet | `python3-blivet` and the `libblockdev` plugins on db1 and db2; the role needs them also in a check run |
 | Role `postgresql` | `playbooks/postgresql.yml` on group `db`: packages, the drop-in and `.bash_profile` ([PostgreSQL](postgresql.md)), `postgresql-setup --initdb` only without `PG_VERSION`, the service started but never restarted |
-| `postgresql.conf` | template `postgresql.conf.j2`, values from the role defaults (`initdb`) and `group_vars/db.yml`; a change reloads PostgreSQL |
-| Settings check | after the reload, the play stops when `pg_file_settings` has a line that is not applied |
+| `postgresql.conf`, `pg_hba.conf` | templates `postgresql.conf.j2` and `pg_hba.conf.j2`, values from the role defaults (`initdb`) and `group_vars/db.yml`; a change reloads PostgreSQL |
+| Settings check | after the reload, the play stops on a line in `pg_file_settings` that is not applied, or a line in `pg_hba_file_rules` with an error |
 | Variables | role defaults in each role's `defaults/`, values for both hosts in `inventory/group_vars/db.yml`, `nfs` in `inventory/host_vars/db2.yml` |
 
 ## Why
@@ -42,6 +42,7 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 - The data disks use the system role `storage` with safe mode on, so a wrong description fails instead of formatting a volume with data. The layout is in `host_vars`, because db1 and db2 have different volumes.
 - An own role `postgresql`, because the system role keeps its data directory at `/var/lib/pgsql/data` in an internal variable. The role stops when `/pgdata` is not mounted, so `initdb` never creates a cluster on the root disk.
 - The settings live only in the template, because a line in `postgresql.auto.conf` wins over it. The role leaves that file to `pg_basebackup -R` and `pg_rewind`, and the settings check catches a line there.
+- The `pg_hba.conf` lines are a list, not a map like the settings, because the first line that matches a connection decides.
 
 ## Tested
 
@@ -57,3 +58,4 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 | 2026-10-31 | System role `postgresql` with `--check --diff` on db1 | `changed=2 failed=1`: it would run `postgresql-setup --initdb`, then failed on the missing `/var/lib/pgsql/data/postgresql.conf`; nothing changed on db1 |
 | 2026-11-01 | Role `postgresql`: `--check --diff`, run, run again | db1 `changed=0` each time; db2 `changed=1` (contrib), then `changed=0`; `NRestarts=0` on both |
 | 2026-11-02 | Template `postgresql.conf`: `--check --diff`, run, `ALTER SYSTEM RESET` of the five duplicates in `postgresql.auto.conf`, run again | dry run 889 lines to 24; the same values after the reset, now from `postgresql.conf`; `pgbackrest check` passes; second run `changed=0` on db1 and db2, no restart |
+| 2026-11-02 | Template `pg_hba.conf`: `--check --diff`, run, run again | First run, with the list misnamed in `group_vars`: only the six `initdb` lines, new logins from db2 refused (the dry run showed it), the walreceiver kept streaming. After the fix: 12 lines on db1 and db2, checks 07, 15 and 16 pass, second run `changed=0` |

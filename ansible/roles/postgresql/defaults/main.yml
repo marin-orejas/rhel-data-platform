@@ -26,3 +26,13 @@ postgresql_settings:
   default_text_search_config: "pg_catalog.english"
 
 postgresql_extra_settings: {}
+
+postgresql_hba_rules:
+  - {type: local, database: all, user: all, address: "", method: peer}
+  - {type: host, database: all, user: all, address: 127.0.0.1/32, method: ident}
+  - {type: host, database: all, user: all, address: "::1/128", method: ident}
+  - {type: local, database: replication, user: all, address: "", method: peer}
+  - {type: host, database: replication, user: all, address: 127.0.0.1/32, method: ident}
+  - {type: host, database: replication, user: all, address: "::1/128", method: ident}
+
+postgresql_hba_extra_rules: []

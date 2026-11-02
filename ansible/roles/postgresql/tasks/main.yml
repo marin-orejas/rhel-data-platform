@@ -69,6 +69,15 @@
     mode: "0600"
   notify: Reload PostgreSQL
 
+- name: Write pg_hba.conf from the template
+  ansible.builtin.template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_data_dir }}/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  notify: Reload PostgreSQL
+
 - name: Keep PostgreSQL enabled and running
   ansible.builtin.systemd_service:
     name: postgresql
@@ -88,3 +97,14 @@
   failed_when: >-
     postgresql_not_applied.rc != 0 or
     postgresql_not_applied.stdout != ""
+
+- name: Stop if a pg_hba.conf line has an error
+  ansible.builtin.command: >-
+    runuser -u postgres -- psql -p 5433 -XAtc
+    "SELECT line_number, error FROM pg_hba_file_rules WHERE error IS NOT NULL"
+  register: postgresql_hba_error
+  changed_when: false
+  check_mode: false
+  failed_when: >-
+    postgresql_hba_error.rc != 0 or
+    postgresql_hba_error.stdout != ""
