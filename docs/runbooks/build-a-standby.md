@@ -9,6 +9,7 @@ When db2 needs a new read-only copy of db1 that streams WAL from it. How replica
 - db2 has `postgresql18-server`, `/pgdata` mounted, the drop-in, the SELinux rules and port 5433 open, as on db1. See [PostgreSQL, Both hosts](../architecture/postgresql.md#both-hosts).
 - `/pgdata/pgsql` on db2 is empty, owned by `postgres`, mode 700. The server on db2 is stopped.
 - A new password for the role `replicator`.
+- The Ansible role `postgresql` has run on db1. It writes the `pg_hba.conf` line for `replicator` from db2 and `max_slot_wal_keep_size = 1GB`, see [Ansible](../architecture/ansible.md).
 
 ## Steps
 
@@ -19,22 +20,13 @@ When db2 needs a new read-only copy of db1 that streams WAL from it. How replica
    \password replicator
    ```
 
-2. **db1**: allow the role from db2, for replication only, and reload.
-
-   ```bash
-   echo 'host    replication     replicator      192.168.122.12/32       scram-sha-256' | sudo tee -a /pgdata/pgsql/data/pg_hba.conf
-   sudo systemctl reload postgresql
-   ```
-
-3. **db1**: create the slot and cap the WAL it may keep. In `sudo -iu postgres psql`:
+2. **db1**: create the slot. In `sudo -iu postgres psql`:
 
    ```sql
    SELECT pg_create_physical_replication_slot('db2');
-   ALTER SYSTEM SET max_slot_wal_keep_size = '1GB';
-   SELECT pg_reload_conf();
    ```
 
-4. **db2**: store the password for the `postgres` user. The database field must be `replication`. `read -s` keeps the password off the screen and out of the shell history.
+3. **db2**: store the password for the `postgres` user. The database field must be `replication`. `read -s` keeps the password off the screen and out of the shell history.
 
    ```bash
    read -rsp 'replicator password: ' pw; echo
@@ -42,19 +34,19 @@ When db2 needs a new read-only copy of db1 that streams WAL from it. How replica
    unset pw
    ```
 
-5. **db2**: copy the cluster from db1. `-R` writes `standby.signal` and `primary_conninfo`, and `-S db2` uses the slot and writes `primary_slot_name`.
+4. **db2**: copy the cluster from db1. `-R` writes `standby.signal` and `primary_conninfo`, and `-S db2` uses the slot and writes `primary_slot_name`.
 
    ```bash
    sudo -iu postgres pg_basebackup -h 192.168.122.11 -p 5433 -U replicator -D /pgdata/pgsql/data -S db2 -R -X stream -c fast -P
    ```
 
-6. **db2**: check that `primary_conninfo` has `passfile=` and no `password=`.
+5. **db2**: check that `primary_conninfo` has `passfile=` and no `password=`.
 
    ```bash
    sudo tail -5 /pgdata/pgsql/data/postgresql.auto.conf
    ```
 
-7. **db2**: enable and start the server.
+6. **db2**: enable and start the server.
 
    ```bash
    sudo systemctl enable --now postgresql
