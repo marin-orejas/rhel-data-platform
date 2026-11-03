@@ -15,10 +15,10 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Package | `postgresql18-server` and `postgresql18-contrib` (for `pg_waldump`) from AppStream |
 | Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, `postgresql.conf`, `pg_hba.conf`, the service |
 | Service | `postgresql`, enabled. Drop-in `postgresql.service.d/override.conf` with `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`. |
-| Settings | `postgresql.conf` from the role's template; `port = 5433`, `listen_addresses = '*'` and the archive settings come from `ansible/inventory/group_vars/db.yml` |
+| Settings | `postgresql.conf` from the role's template; `port = 5433`, `listen_addresses = '*'`, `log_line_prefix` and the archive settings come from `ansible/inventory/group_vars/db.yml` |
 | `pg_hba.conf` | from the role's template, the same on both hosts: the `initdb` lines, then `scram-sha-256` lines for `remote_test` from db2 to `postgres` and `lab`, and for `replicator` and `rewind` from db1 and db2 |
 | SELinux, firewall | Rules for `/pgdata` and port 5433, `5433/tcp` open, see [System settings](system.md) |
-| Logs | `/pgdata/pgsql/data/log/postgresql-<day>.log` |
+| Logs | `/pgdata/pgsql/data/log/postgresql-<day>.log`, each line with the time, the PID and `user@database` |
 | Admin access | `sudo -iu postgres psql`; `/var/lib/pgsql/.bash_profile` sets `PGDATA` and `PGPORT=5433` |
 
 ### db1

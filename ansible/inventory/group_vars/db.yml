@@ -20,6 +20,7 @@ postgresql_extra_settings:
   archive_mode: "on"
   archive_command: "pgbackrest --stanza=main archive-push %p"
   max_slot_wal_keep_size: "1GB"
+  log_line_prefix: "%m [%p] %q%u@%d "
 
 postgresql_hba_extra_rules:
   - {type: host, database: postgres, user: remote_test, address: 192.168.122.12/32, method: scram-sha-256}
