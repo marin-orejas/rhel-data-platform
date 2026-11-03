@@ -42,7 +42,7 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [x] Ansible runs from the desktop with an inventory, a config file and SSH keys, first with ad hoc commands, then a playbook.
 - [x] A base role sets up users, sudo, SSH, the firewall, SELinux, time sync and tuned on db1 and db2.
 - [x] The `storage` role from `rhel-system-roles` sets up the data disks, and my own `postgresql` role sets up PostgreSQL.
-- [ ] Templates manage `postgresql.conf` and `pg_hba.conf`, a handler reloads PostgreSQL, and a dry run shows the changes first.
+- [x] Templates manage `postgresql.conf` and `pg_hba.conf`, a handler reloads PostgreSQL, and a dry run shows the changes first.
 - [ ] An app role and a read-only role get default privileges and their own `pg_hba.conf` rules, by hand first, then as code.
 - [ ] PostgreSQL uses TLS with a certificate from a small internal CA that clients check, by hand first, then as code with the keys in Vault.
 - [ ] Roles build the db2 standby and pgBackRest with its timer, and a playbook runs a restore test.

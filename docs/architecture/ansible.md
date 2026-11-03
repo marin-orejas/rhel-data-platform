@@ -2,7 +2,7 @@
 
 Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts. The playbook `storage.yml` runs the system role `storage`, which keeps the data disks as `host_vars` describes them. The playbook `postgresql.yml` runs the role `postgresql`, which keeps the PostgreSQL packages, the service drop-in, the profile of `postgres`, `postgresql.conf` and `pg_hba.conf`.
 
-Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh), [`checks/18-base-role.sh`](../../checks/18-base-role.sh) and [`checks/19-storage-postgresql.sh`](../../checks/19-storage-postgresql.sh) (desktop)
+Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh), [`checks/18-base-role.sh`](../../checks/18-base-role.sh), [`checks/19-storage-postgresql.sh`](../../checks/19-storage-postgresql.sh) and [`checks/20-postgresql-templates.sh`](../../checks/20-postgresql-templates.sh) (desktop)
 
 Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/inventory/hosts.ini`](../../ansible/inventory/hosts.ini), [`ansible/playbooks/base.yml`](../../ansible/playbooks/base.yml), [`ansible/playbooks/storage.yml`](../../ansible/playbooks/storage.yml), [`ansible/playbooks/postgresql.yml`](../../ansible/playbooks/postgresql.yml), [`ansible/roles/base/`](../../ansible/roles/base/), [`ansible/roles/postgresql/`](../../ansible/roles/postgresql/)
 
@@ -41,7 +41,8 @@ Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/invent
 - The role reads its values from variables, and a host adds to a list through its own variable (`base_firewall_extra_services`), because `host_vars` replaces a list from `group_vars` instead of merging it.
 - The data disks use the system role `storage` with safe mode on, so a wrong description fails instead of formatting a volume with data. The layout is in `host_vars`, because db1 and db2 have different volumes.
 - An own role `postgresql`, because the system role keeps its data directory at `/var/lib/pgsql/data` in an internal variable. The role stops when `/pgdata` is not mounted, so `initdb` never creates a cluster on the root disk.
-- The settings live only in the template, because a line in `postgresql.auto.conf` wins over it. The role leaves that file to `pg_basebackup -R` and `pg_rewind`, and the settings check catches a line there.
+- The settings live only in the template, because a line in `postgresql.auto.conf` wins over it. The role leaves that file to `pg_basebackup -R` and `pg_rewind`; the settings check stops the play on a line there that overrides the template, and check 20 finds any other line.
+- The role reloads PostgreSQL but never restarts it, because a restart cuts every connection and, with a standby, the order of the two hosts matters. A setting that needs a restart stops the play at the settings check.
 - The `pg_hba.conf` lines are a list, not a map like the settings, because the first line that matches a connection decides.
 
 ## Tested
