@@ -16,7 +16,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, `postgresql.conf`, `pg_hba.conf`, the service |
 | Service | `postgresql`, enabled. Drop-in `postgresql.service.d/override.conf` with `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`. |
 | Settings | `postgresql.conf` from the role's template; `port = 5433`, `listen_addresses = '*'`, `log_line_prefix` and the archive settings come from `ansible/inventory/group_vars/db.yml` |
-| `pg_hba.conf` | from the role's template, the same on both hosts: the `initdb` lines, then `scram-sha-256` lines for `remote_test` from db2 to `postgres` and `lab`, and for `replicator` and `rewind` from db1 and db2 |
+| `pg_hba.conf` | from the role's template, the same on both hosts: the `initdb` lines, then `scram-sha-256` lines for `remote_test` from db2 to `postgres` and `lab`, for `replicator` and `rewind` from db1 and db2, and for `app` and `report` from db2 to `app` |
 | SELinux, firewall | Rules for `/pgdata` and port 5433, `5433/tcp` open, see [System settings](system.md) |
 | Logs | `/pgdata/pgsql/data/log/postgresql-<day>.log`, each line with the time, the PID and `user@database` |
 | Admin access | `sudo -iu postgres psql`; `/var/lib/pgsql/.bash_profile` sets `PGDATA` and `PGPORT=5433` |
@@ -27,6 +27,15 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 |---|---|
 | Roles | `remote_test` (login, `SELECT` and `INSERT` on `lab.failover_test`), `replicator` (`LOGIN REPLICATION`), `rewind` (login, `EXECUTE` on the four file functions `pg_rewind` needs). Passwords only in `.pgpass` files, mode 600. |
 | Test data | Database `lab` with the tables `items` (10,000 rows) and `failover_test`, written by the failover client |
+
+### Database `app`
+
+| Part | Setup |
+|---|---|
+| Database | `app` on db1, on db2 through replication; owner `postgres`. `CONNECT` only for `app` and `report`, none for `PUBLIC`. |
+| `app` | Login role, owner of the schema `app`, where it creates its tables |
+| `report` | Login role with `USAGE` on the schema `app`. Default privileges give it `SELECT` on every table `app` creates there. |
+| Logins | From db2 only, to `app` only. Passwords in `.pgpass`, mode 600. |
 
 ### Replication
 
@@ -82,3 +91,4 @@ Lag is read in bytes on db1, from `pg_stat_replication`.
 | 2026-10-29 | Failover: PostgreSQL on db1 killed with `kill -9`, db2 promoted by hand, see [Fail over to db2](../runbooks/fail-over-to-db2.md) | Writes stopped for 5 min 51 s, the promotion itself about 1 s; none of the 631 rows db1 confirmed was lost |
 | 2026-10-29 | `pg_rewind` of db1 after the failover | Diverged at `0/340628B8` on timeline 3; copied 181 MB of 340 MB; db1 streamed from db2 on timeline 4 |
 | 2026-10-29 | Planned switchover back: db2 stopped cleanly, db1 promoted | No `pg_rewind`, db2 followed on timeline 5. Writes stopped for about 6 min, by hand with a pause; the promotion about 1 s |
+| 2026-11-04 | From db2, `report` reads the table `orders`, which `app` created after the default privileges | `SELECT` works with no `GRANT` on the table. `INSERT` fails with `permission denied for table orders`, a login to `lab` with `no pg_hba.conf entry`. |

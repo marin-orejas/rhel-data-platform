@@ -29,3 +29,5 @@ postgresql_hba_extra_rules:
   - {type: host, database: postgres, user: rewind, address: 192.168.122.11/32, method: scram-sha-256}
   - {type: host, database: postgres, user: rewind, address: 192.168.122.12/32, method: scram-sha-256}
   - {type: host, database: lab, user: remote_test, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: host, database: app, user: app, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: host, database: app, user: report, address: 192.168.122.12/32, method: scram-sha-256}
