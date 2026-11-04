@@ -36,8 +36,8 @@ flowchart LR
 
 | Host | Role | CPU / RAM | Disk |
 |---|---|---|---|
-| desktop | Workstation, git, SSH, Ansible control node; Fedora 44 | i3-12100F / 16 GB | |
-| nuc | KVM host with Cockpit, no monitor; RHEL 10.2 | i3-1315U / 16 GB | 120 GB SSD |
+| desktop | Fedora 44 workstation, git, SSH, Ansible control node | i3-12100F / 16 GB | |
+| nuc | RHEL 10.2 KVM host with Cockpit, no monitor | i3-1315U / 16 GB | 120 GB SSD |
 | rhel-base | Base VM image, only for cloning | 2 CPU / 2 GB | 20 GB |
 | db1 | PostgreSQL primary | 2 CPU / 3 GB | 20 GB + 10 GB data |
 | db2 | Backup storage (NFS), PostgreSQL standby | 2 CPU / 3 GB | 20 GB + 10 GB data |
@@ -62,6 +62,6 @@ flowchart LR
 | 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | in progress |
 | 5 | RHCE in Enterprise Linux practice: troubleshooting, practice exams, then EX342 | planned |
 
-Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks and PostgreSQL with its config files the same on db1 and db2: my own `base` and `postgresql` roles and the system role `storage`. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
+Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks and PostgreSQL with its config files the same on db1 and db2: my own `base` and `postgresql` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).

@@ -2,7 +2,7 @@
 
 Ansible runs on the desktop and manages db1 and db2 over SSH as the user `ansible`, with sudo. The playbook `base.yml` runs the role `base`, which keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on both hosts. The playbook `storage.yml` runs the system role `storage`, which keeps the data disks as `host_vars` describes them. The playbook `postgresql.yml` runs the role `postgresql`, which keeps the PostgreSQL packages, the service drop-in, the profile of `postgres`, `postgresql.conf` and `pg_hba.conf`, and on the primary the login roles and the app databases.
 
-Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh), [`checks/18-base-role.sh`](../../checks/18-base-role.sh), [`checks/19-storage-postgresql.sh`](../../checks/19-storage-postgresql.sh) and [`checks/20-postgresql-templates.sh`](../../checks/20-postgresql-templates.sh) (desktop)
+Verified by: [`checks/17-ansible.sh`](../../checks/17-ansible.sh), [`checks/18-base-role.sh`](../../checks/18-base-role.sh), [`checks/19-storage-postgresql.sh`](../../checks/19-storage-postgresql.sh), [`checks/20-postgresql-templates.sh`](../../checks/20-postgresql-templates.sh) and [`checks/21-app-roles.sh`](../../checks/21-app-roles.sh) (desktop)
 
 Repo files: [`ansible/ansible.cfg`](../../ansible/ansible.cfg), [`ansible/inventory/hosts.ini`](../../ansible/inventory/hosts.ini), [`ansible/playbooks/base.yml`](../../ansible/playbooks/base.yml), [`ansible/playbooks/storage.yml`](../../ansible/playbooks/storage.yml), [`ansible/playbooks/postgresql.yml`](../../ansible/playbooks/postgresql.yml), [`ansible/roles/base/`](../../ansible/roles/base/), [`ansible/roles/postgresql/`](../../ansible/roles/postgresql/)
 
