@@ -7,6 +7,7 @@
 # Run on the desktop from the repo root, with the key loaded (ssh-add ~/.ssh/id_ed25519_ansible):
 #   bash checks/20-postgresql-templates.sh
 # Run it after a reboot of both hosts.
+# Since lesson 21, pg_hba.conf has 14 rules: app and report from db2 to the database app.
 
 failed=0
 
@@ -54,7 +55,7 @@ for h in $hosts; do
     check "$h: no setting waits for a restart" [ "$(query "$h" 'SELECT count(*) FROM pg_settings WHERE pending_restart')" = 0 ]
     check "$h: postgresql.auto.conf has only primary_ lines" [ -z "$(on "$h" "awk '!/^#/ && !/^primary_(conninfo|slot_name) / && NF' $data_dir/postgresql.auto.conf")" ]
     check "$h: log lines show the user and database" [ "$(query "$h" 'SHOW log_line_prefix')" = "%m [%p] %q%u@%d " ]
-    check "$h: pg_hba.conf has 12 rules and no error" [ "$(query "$h" 'SELECT count(*), count(error) FROM pg_hba_file_rules')" = "12|0" ]
+    check "$h: pg_hba.conf has 14 rules and no error" [ "$(query "$h" 'SELECT count(*), count(error) FROM pg_hba_file_rules')" = "14|0" ]
 
     # pg_hba.conf on the other host lets replicator and rewind in, with the passwords from .pgpass
     check "$h: replicator gets a replication connection to $other" grep -Eq '^[0-9]+\|[0-9]+\|' <<< "$(on "$h" "runuser -u postgres -- psql -w 'host=$other port=5433 user=replicator dbname=replication replication=true' -XAtc IDENTIFY_SYSTEM")"
