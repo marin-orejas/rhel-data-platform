@@ -36,6 +36,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | `app` | Login role, owner of the schema `app`, where it creates its tables |
 | `report` | Login role with `USAGE` on the schema `app`. Default privileges give it `SELECT` on every table `app` creates there. |
 | Logins | From db2 only, to `app` only. Passwords in `.pgpass`, mode 600. |
+| Managed by | The Ansible role `postgresql` ([Ansible](ansible.md)), on the primary only: the roles, the database, the schema and the privileges. The passwords are set by hand. |
 
 ### Replication
 

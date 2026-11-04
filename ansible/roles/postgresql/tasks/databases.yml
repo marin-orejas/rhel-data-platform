@@ -1,0 +1,101 @@
+---
+- name: Install psycopg2 for the community.postgresql modules
+  ansible.builtin.dnf:
+    name: python3-psycopg2
+    state: present
+
+- name: Check whether this host is a standby
+  ansible.builtin.command: >-
+    runuser -u postgres -- psql -p 5433 -XAtc "SELECT pg_is_in_recovery()"
+  register: postgresql_in_recovery
+  changed_when: false
+  check_mode: false
+
+- name: Roles and app databases on the primary
+  when: postgresql_in_recovery.stdout == "f"
+  become_user: postgres
+  module_defaults:
+    group/community.postgresql.all:
+      port: 5433
+  block:
+    - name: Create the login roles
+      community.postgresql.postgresql_user:
+        name: "{{ item }}"
+        role_attr_flags: LOGIN
+      loop: "{{ postgresql_login_roles }}"
+
+    - name: Create the app databases
+      community.postgresql.postgresql_db:
+        name: "{{ item.name }}"
+        owner: postgres
+      loop: "{{ postgresql_app_databases }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Read what PUBLIC may do on the app databases
+      ansible.builtin.command: >-
+        psql -p 5433 -XAtc
+        "SELECT string_agg(privilege_type, ',')
+        FROM pg_database, aclexplode(coalesce(datacl, acldefault('d', datdba)))
+        WHERE datname = '{{ item.name }}' AND grantee = 0"
+      loop: "{{ postgresql_app_databases }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: postgresql_public_privs
+      changed_when: false
+      check_mode: false
+
+    - name: Revoke the PUBLIC privileges on the app databases
+      community.postgresql.postgresql_privs:
+        database: "{{ item.item.name }}"
+        type: database
+        privs: ALL
+        roles: PUBLIC
+        state: absent
+      loop: "{{ postgresql_public_privs.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: item.stdout != ""
+
+    - name: Let the owner and the readers connect
+      community.postgresql.postgresql_privs:
+        database: "{{ item.name }}"
+        type: database
+        privs: CONNECT
+        roles: "{{ ([item.owner] + item.readers) | join(',') }}"
+      loop: "{{ postgresql_app_databases }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create the app schemas
+      community.postgresql.postgresql_schema:
+        database: "{{ item.name }}"
+        name: "{{ item.schema }}"
+        owner: "{{ item.owner }}"
+      loop: "{{ postgresql_app_databases }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Let the readers use the app schemas
+      community.postgresql.postgresql_privs:
+        database: "{{ item.name }}"
+        type: schema
+        objs: "{{ item.schema }}"
+        privs: USAGE
+        roles: "{{ item.readers | join(',') }}"
+      loop: "{{ postgresql_app_databases }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Let the readers read new tables of the owner
+      community.postgresql.postgresql_privs:
+        database: "{{ item.name }}"
+        type: default_privs
+        schema: "{{ item.schema }}"
+        objs: TABLES
+        privs: SELECT
+        roles: "{{ item.readers | join(',') }}"
+        target_roles: "{{ item.owner }}"
+      loop: "{{ postgresql_app_databases }}"
+      loop_control:
+        label: "{{ item.name }}"

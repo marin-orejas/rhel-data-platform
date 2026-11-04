@@ -108,3 +108,6 @@
   failed_when: >-
     postgresql_hba_error.rc != 0 or
     postgresql_hba_error.stdout != ""
+
+- name: Roles and app databases
+  ansible.builtin.import_tasks: databases.yml

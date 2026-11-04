@@ -31,3 +31,14 @@ postgresql_hba_extra_rules:
   - {type: host, database: lab, user: remote_test, address: 192.168.122.12/32, method: scram-sha-256}
   - {type: host, database: app, user: app, address: 192.168.122.12/32, method: scram-sha-256}
   - {type: host, database: app, user: report, address: 192.168.122.12/32, method: scram-sha-256}
+
+postgresql_login_roles:
+  - app
+  - report
+
+postgresql_app_databases:
+  - name: app
+    schema: app
+    owner: app
+    readers:
+      - report
