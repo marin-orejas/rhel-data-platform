@@ -1,4 +1,4 @@
-# 0006. autofs for the NFS share on db1
+# autofs for the NFS share on db1
 
 Date: 2026-10-07
 Status: Accepted

@@ -40,6 +40,6 @@ What is stored there: [Backups](backups.md).
 ## Why
 
 - Only db1 may mount the share: with `sec=sys` the server trusts the UID that the client sends.
-- autofs instead of `/etc/fstab`, so the boot of db1 does not wait for db2. See [ADR 0006](../decisions/0006-autofs-for-the-nfs-share.md).
+- [autofs instead of `/etc/fstab`](../decisions/autofs-for-the-nfs-share.md), so the boot of db1 does not wait for db2.
 - `hard` (the default) makes a write wait while db2 is down instead of failing, see the test in [Backups](backups.md#tested).
 - db2 runs on the same NUC and SSD, so the share protects against the loss of db1, not of the NUC.

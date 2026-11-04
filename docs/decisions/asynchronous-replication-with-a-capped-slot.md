@@ -1,4 +1,4 @@
-# 0007. Asynchronous streaming replication with a capped slot
+# Asynchronous streaming replication with a capped slot
 
 Date: 2026-10-27
 Status: Accepted

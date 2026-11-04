@@ -1,4 +1,4 @@
-# 0004. pgBackRest, with its repository on the NFS share
+# pgBackRest, with its repository on the NFS share
 
 Date: 2026-10-26
 Status: Accepted

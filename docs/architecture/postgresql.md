@@ -71,10 +71,10 @@ psql + ~/.pgpass ── TCP 5433 ──►   firewalld     public zone allows 54
 ## Why
 
 - The cluster is one level below the mount point. If the disk is not mounted, `/pgdata/pgsql/data` does not exist, so no cluster gets created on the root disk by mistake.
-- The server listens on all addresses, because the unit does not wait for the network. See [ADR 0002](../decisions/0002-listen-on-all-addresses.md).
-- Port 5433, to practise moving a service through SELinux, the firewall and the clients. See [ADR 0005](../decisions/0005-postgresql-on-port-5433.md).
+- The server [listens on all addresses](../decisions/listen-on-all-addresses.md), because the unit does not wait for the network.
+- [Port 5433](../decisions/postgresql-on-port-5433.md), to practise moving a service through SELinux, the firewall and the clients.
 - db2 has the same data directory, drop-in, SELinux rules, port and `pg_hba.conf` as db1, so the two can swap roles in a failover.
-- Asynchronous, with a slot capped at 1 GB: a long db2 outage costs a rebuild of db2, not a full `/pgdata` on db1. See [ADR 0007](../decisions/0007-asynchronous-replication-with-a-capped-slot.md).
+- [Asynchronous, with a slot capped at 1 GB](../decisions/asynchronous-replication-with-a-capped-slot.md): a long db2 outage costs a rebuild of db2, not a full `/pgdata` on db1.
 
 ## Tested
 

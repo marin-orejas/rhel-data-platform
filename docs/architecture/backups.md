@@ -45,8 +45,8 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 - A full on Sunday and a differential on the other nights: a restore needs at most a full and one differential.
 - The diff timer has no `Persistent=`. After an outage the full catches up at boot, and a second backup at the same time would fail on the stanza lock.
 - The nightly dumps stay next to pgBackRest, to restore one database without touching the others.
-- The repository is on the NFS share to keep the lab small, but db1 can delete its own backups. See [ADR 0004](../decisions/0004-pgbackrest-with-its-repository-on-nfs.md).
-- systemd timers, not cron, so a missed run starts after the next boot and a failure leaves the unit `failed`. See [ADR 0003](../decisions/0003-systemd-timers-for-backups.md).
+- The [repository is on the NFS share](../decisions/pgbackrest-with-its-repository-on-nfs.md) to keep the lab small, but db1 can delete its own backups.
+- [systemd timers, not cron](../decisions/systemd-timers-for-backups.md), so a missed run starts after the next boot and a failure leaves the unit `failed`.
 
 ## Tested
 

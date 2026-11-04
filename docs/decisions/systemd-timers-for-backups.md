@@ -1,4 +1,4 @@
-# 0003. systemd timers for backups, not cron
+# systemd timers for backups, not cron
 
 Date: 2026-10-06
 Status: Accepted

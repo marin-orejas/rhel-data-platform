@@ -1,4 +1,4 @@
-# 0002. PostgreSQL listens on all addresses
+# PostgreSQL listens on all addresses
 
 Date: 2026-10-05
 Status: Accepted
@@ -17,4 +17,4 @@ db2 connects to PostgreSQL on db1 over the network. `listen_addresses` could nam
 - It also listens on every other address of db1, so the firewall and `pg_hba.conf` are the real limits and must stay strict.
 - A change of the IP of db1 needs no change in PostgreSQL.
 
-Details: [PostgreSQL on db1](../architecture/postgresql.md)
+Details: [PostgreSQL](../architecture/postgresql.md)

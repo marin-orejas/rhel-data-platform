@@ -1,4 +1,4 @@
-# 0001. A separate data disk per VM
+# A separate data disk per VM
 
 Date: 2026-10-01
 Status: Accepted

@@ -75,7 +75,7 @@ db2: /dev/vdb (10 GiB)
 
 ## Why
 
-- A separate data disk per VM, because VG `rhel` has only about 420 MiB free, and a full data disk cannot fill `/`. See [ADR 0001](../decisions/0001-a-separate-data-disk-per-vm.md).
+- [A separate data disk per VM](../decisions/a-separate-data-disk-per-vm.md), because VG `rhel` has only about 420 MiB free, and a full data disk cannot fill `/`.
 
 ## Tested
 
