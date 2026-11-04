@@ -25,9 +25,9 @@ Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](.
 | Part | Setup |
 |---|---|
 | Script | `scripts/pg-backup.sh` as `/usr/local/bin/pg-backup.sh`, run as `postgres` over the local socket |
-| Service | `systemd/pg-backup.service`, oneshot, `Wants=` and `After=autofs.service`; only the timer starts it |
+| Service | `systemd/pg-backup.service`, oneshot, `Wants=` and `After=autofs.service`. Only the timer starts it. |
 | Timer | `systemd/pg-backup.timer`, every day at 02:00, `Persistent=true` |
-| Destination | `/mnt/db2/backup/pgsql`, `postgres:dba`, mode `2750`; the files are `640` |
+| Destination | `/mnt/db2/backup/pgsql`, `postgres:dba`, mode `2750`. The files are `640`. |
 | Contents | One gzip SQL dump per database, the roles from `pg_dumpall --globals-only` (with password hashes), the config files in a `.tar.bz2` |
 | Retention | 8 nightly sets (`find -mtime +7`). Nothing is deleted after a failed step. |
 
@@ -54,10 +54,10 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 |---|---|---|
 | 2026-10-07 | `lab` restored from a dump into a new database ([runbook](../runbooks/restore-a-database-from-a-dump.md)) | Row count and `sum(id)` match |
 | 2026-10-25 | db2 shut down while db1 wrote 3 WAL segments | The archiver waited on the `hard` mount and `failed_count` stayed the same. All 3 were archived 10 s after db2 came back. |
-| 2026-10-26 | Restore by hand to 4 s before a `DROP TABLE` ([runbook](../runbooks/restore-to-a-time-by-hand.md)) | Outage 9 min 31 s, almost all of it typing; the replay of 8 segments took 0.67 s |
+| 2026-10-26 | Restore by hand to 4 s before a `DROP TABLE` ([runbook](../runbooks/restore-to-a-time-by-hand.md)) | Outage 9 min 31 s, almost all of it typing. The replay of 8 segments took 0.67 s. |
 | 2026-10-26 | Full backup of the 50.6 MB cluster by `pgbackrest@full` | 19.4 s, 11.1 MB in the repository |
 | 2026-10-26 | Differential after 200,000 new rows, incremental after 100,000 more | 1.4 s and 1.5 s. The incremental copied the whole changed table file. |
-| 2026-10-26 | Restore with pgBackRest to 5 s before a `DROP TABLE` ([runbook](../runbooks/restore-to-a-time-with-pgbackrest.md)) | Outage 1.1 s, `--delta` restore 0.41 s; 300,000 rows back with the same `sum(id)` |
+| 2026-10-26 | Restore with pgBackRest to 5 s before a `DROP TABLE` ([runbook](../runbooks/restore-to-a-time-with-pgbackrest.md)) | Outage 1.1 s, `--delta` restore 0.41 s. All 300,000 rows came back with the same `sum(id)`. |
 | 2026-10-26 | A third full backup | Removed the first full, its differential and incremental, and their WAL |
 
 ## History

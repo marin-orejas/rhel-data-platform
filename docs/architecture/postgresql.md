@@ -15,11 +15,11 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Package | `postgresql18-server` and `postgresql18-contrib` (for `pg_waldump`) from AppStream |
 | Managed by | the Ansible role `postgresql` ([Ansible](ansible.md)): packages, drop-in, `.bash_profile`, `postgresql.conf`, `pg_hba.conf`, the service |
 | Service | `postgresql`, enabled. Drop-in `postgresql.service.d/override.conf` with `PGDATA=/pgdata/pgsql/data` and `RequiresMountsFor=/pgdata`. |
-| Settings | `postgresql.conf` from the role's template; `port = 5433`, `listen_addresses = '*'`, `log_line_prefix` and the archive settings come from `ansible/inventory/group_vars/db.yml` |
+| Settings | `postgresql.conf` from the role's template, with `port = 5433`, `listen_addresses = '*'`, `log_line_prefix` and the archive settings from `ansible/inventory/group_vars/db.yml` |
 | `pg_hba.conf` | from the role's template, the same on both hosts: the `initdb` lines, then `scram-sha-256` lines for `remote_test` from db2 to `postgres` and `lab`, for `replicator` and `rewind` from db1 and db2, and for `app` and `report` from db2 to `app` |
 | SELinux, firewall | Rules for `/pgdata` and port 5433, `5433/tcp` open, see [System settings](system.md) |
 | Logs | `/pgdata/pgsql/data/log/postgresql-<day>.log`, each line with the time, the PID and `user@database` |
-| Admin access | `sudo -iu postgres psql`; `/var/lib/pgsql/.bash_profile` sets `PGDATA` and `PGPORT=5433` |
+| Admin access | `sudo -iu postgres psql`, with `PGDATA` and `PGPORT=5433` from `/var/lib/pgsql/.bash_profile` |
 
 ### db1
 
@@ -32,7 +32,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 
 | Part | Setup |
 |---|---|
-| Database | `app` on db1, on db2 through replication; owner `postgres`. `CONNECT` only for `app` and `report`, none for `PUBLIC`. |
+| Database | `app`, owner `postgres`, on db1 and through replication on db2. `CONNECT` only for `app` and `report`, none for `PUBLIC`. |
 | `app` | Login role, owner of the schema `app`, where it creates its tables |
 | `report` | Login role with `USAGE` on the schema `app`. Default privileges give it `SELECT` on every table `app` creates there. |
 | Logins | From db2 only, to `app` only. Passwords in `.pgpass`, mode 600. |
@@ -88,7 +88,7 @@ Lag is read in bytes on db1, from `pg_stat_replication`.
 | 2026-10-27 | db2 stopped while db1 wrote 300,000 rows | The slot kept 47 MB of WAL, and db2 caught up after its start |
 | 2026-10-27 | A read on db2 right after its start | Showed the old data for a moment: a hot standby answers before it has caught up |
 | 2026-10-27 | A write on db2 | `cannot execute CREATE TABLE in a read-only transaction` |
-| 2026-10-29 | Failover: PostgreSQL on db1 killed with `kill -9`, db2 promoted by hand, see [Fail over to db2](../runbooks/fail-over-to-db2.md) | Writes stopped for 5 min 51 s, the promotion itself about 1 s; none of the 631 rows db1 confirmed was lost |
-| 2026-10-29 | `pg_rewind` of db1 after the failover | Diverged at `0/340628B8` on timeline 3; copied 181 MB of 340 MB; db1 streamed from db2 on timeline 4 |
-| 2026-10-29 | Planned switchover back: db2 stopped cleanly, db1 promoted | No `pg_rewind`, db2 followed on timeline 5. Writes stopped for about 6 min, by hand with a pause; the promotion about 1 s |
+| 2026-10-29 | Failover: PostgreSQL on db1 killed with `kill -9`, db2 promoted by hand ([runbook](../runbooks/fail-over-to-db2.md)) | Writes stopped for 5 min 51 s, the promotion itself about 1 s. None of the 631 rows db1 confirmed was lost. |
+| 2026-10-29 | `pg_rewind` of db1 after the failover | Diverged at `0/340628B8` on timeline 3. Copied 181 MB of 340 MB, then db1 streamed from db2 on timeline 4. |
+| 2026-10-29 | Planned switchover back: db2 stopped cleanly, db1 promoted | No `pg_rewind`, db2 followed on timeline 5. Writes stopped for about 6 min, by hand with a pause. The promotion took about 1 s. |
 | 2026-11-04 | From db2, `report` reads the table `orders`, which `app` created after the default privileges | `SELECT` works with no `GRANT` on the table. `INSERT` fails with `permission denied for table orders`, a login to `lab` with `no pg_hba.conf entry`. |

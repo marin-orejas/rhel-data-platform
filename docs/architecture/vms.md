@@ -16,7 +16,7 @@ Installed with `kickstart/rhel-base-vm.ks` and `virt-install`, only used for clo
 | Firmware, disk | UEFI, 20 GiB thin qcow2 in the `default` pool |
 | Network | DHCP on `default`, a fixed IP from a reservation |
 | Console | Serial console on `ttyS0` (`virsh console <vm>`) |
-| Root account | Locked; admin work goes through `sudo`. Emergency mode gives no shell. |
+| Root account | Locked, so admin work goes through `sudo` and emergency mode gives no shell. |
 | Extra packages | `qemu-guest-agent`, `tuned` |
 | Subscription, autostart | Not registered, autostart off |
 
@@ -36,8 +36,8 @@ A clone starts with the identity of `rhel-base`. Four parts change before the fi
 | Part | Why |
 |---|---|
 | Hostname | copied from `rhel-base` |
-| Machine ID | copied; systemd and the journal use it as the system's unique ID |
-| SSH host keys | copied; every clone would have the same keys |
+| Machine ID | copied, but systemd and the journal use it as the system's unique ID |
+| SSH host keys | copied, so every clone would have the same keys |
 | Subscription | each system needs its own identity |
 
 ### Data disks
@@ -46,7 +46,7 @@ A clone starts with the identity of `rhel-base`. Four parts change before the fi
 |---|---|---|
 | Image | `db1-data.qcow2`, 10 GiB thin qcow2, `vdb` | `db2-data.qcow2`, the same |
 | LVM | PV `/dev/vdb1`, VG `data` | the same |
-| LVs | `pgdata` 7 GiB, XFS, `/pgdata` | `backup` 3 GiB, `/srv/backup`; `pgdata` 5 GiB, `/pgdata`; both XFS |
+| LVs | `pgdata` 7 GiB on `/pgdata`, XFS | `backup` 3 GiB on `/srv/backup` and `pgdata` 5 GiB on `/pgdata`, both XFS |
 | Mount | `/etc/fstab` by file system UUID | the same |
 | Managed by | the Ansible role `storage` ([Ansible](ansible.md)) | the same |
 
