@@ -21,16 +21,19 @@ postgresql_extra_settings:
   archive_command: "pgbackrest --stanza=main archive-push %p"
   max_slot_wal_keep_size: "1GB"
   log_line_prefix: "%m [%p] %q%u@%d "
+  ssl: "on"
+  ssl_cert_file: "{{ postgresql_tls_dir }}/server.crt"
+  ssl_key_file: "{{ postgresql_tls_dir }}/server.key"
 
 postgresql_hba_extra_rules:
-  - {type: host, database: postgres, user: remote_test, address: 192.168.122.12/32, method: scram-sha-256}
-  - {type: host, database: replication, user: replicator, address: 192.168.122.12/32, method: scram-sha-256}
-  - {type: host, database: replication, user: replicator, address: 192.168.122.11/32, method: scram-sha-256}
-  - {type: host, database: postgres, user: rewind, address: 192.168.122.11/32, method: scram-sha-256}
-  - {type: host, database: postgres, user: rewind, address: 192.168.122.12/32, method: scram-sha-256}
-  - {type: host, database: lab, user: remote_test, address: 192.168.122.12/32, method: scram-sha-256}
-  - {type: host, database: app, user: app, address: 192.168.122.12/32, method: scram-sha-256}
-  - {type: host, database: app, user: report, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: hostssl, database: postgres, user: remote_test, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: hostssl, database: replication, user: replicator, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: hostssl, database: replication, user: replicator, address: 192.168.122.11/32, method: scram-sha-256}
+  - {type: hostssl, database: postgres, user: rewind, address: 192.168.122.11/32, method: scram-sha-256}
+  - {type: hostssl, database: postgres, user: rewind, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: hostssl, database: lab, user: remote_test, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: hostssl, database: app, user: app, address: 192.168.122.12/32, method: scram-sha-256}
+  - {type: hostssl, database: app, user: report, address: 192.168.122.12/32, method: scram-sha-256}
 
 postgresql_login_roles:
   - app
@@ -42,3 +45,20 @@ postgresql_app_databases:
     owner: app
     readers:
       - report
+
+postgresql_tls_ca_cert: |
+  -----BEGIN CERTIFICATE-----
+  MIIBkTCCATegAwIBAgIUMNO1xc7mFXRr8+JSPKfA+zC5kFEwCgYIKoZIzj0EAwIw
+  FjEUMBIGA1UEAwwLcmhlbC1sYWIgQ0EwHhcNMjYxMTA0MTg1NzI5WhcNMzYxMTAx
+  MTg1NzI5WjAWMRQwEgYDVQQDDAtyaGVsLWxhYiBDQTBZMBMGByqGSM49AgEGCCqG
+  SM49AwEHA0IABKaoYuHed/eOhqNExfGaZknMO05eRF2ZrkeHYAtJRJJY+yVSr2OL
+  GdkP7FgkPwbTxPnZjph+0T1l46buaDoLnsejYzBhMB0GA1UdDgQWBBRiZWRS+TCz
+  j49Fe6NHMONfuho/KDAfBgNVHSMEGDAWgBRiZWRS+TCzj49Fe6NHMONfuho/KDAP
+  BgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNIADBF
+  AiEAuTKAkUIrsHLQQ9wXblTWvDWgRsfk71+KoEFzMRTfa9ICIBTrOXD5vYqLed9Z
+  z4oSEWHmBoaLCwq8uutzHvEf4Y2Q
+  -----END CERTIFICATE-----
+
+postgresql_tls_client_users:
+  - postgres
+  - makilele

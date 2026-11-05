@@ -2,8 +2,14 @@
 postgresql_packages:
   - postgresql18-server
   - postgresql18-contrib
+  - openssl
+
 postgresql_mount_point: /pgdata
 postgresql_data_dir: /pgdata/pgsql/data
+postgresql_tls_dir: /pgdata/pgsql/tls
+
+postgresql_tls_client_users:
+  - postgres
 
 postgresql_settings:
   max_connections: "100"

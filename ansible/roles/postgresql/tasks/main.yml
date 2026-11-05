@@ -1,5 +1,5 @@
 ---
-- name: Install postgresql server and contrib
+- name: Install the PostgreSQL packages
   ansible.builtin.dnf:
     name: "{{ postgresql_packages }}"
     state: present
@@ -60,6 +60,9 @@
   args:
     creates: "{{ postgresql_data_dir }}/PG_VERSION"
 
+- name: TLS certificates and keys
+  ansible.builtin.import_tasks: tls.yml
+
 - name: Write postgresql.conf from the template
   ansible.builtin.template:
     src: postgresql.conf.j2
@@ -108,6 +111,16 @@
   failed_when: >-
     postgresql_hba_error.rc != 0 or
     postgresql_hba_error.stdout != ""
+
+- name: Stop if the server does not offer TLS with its own certificate
+  ansible.builtin.command: >-
+    openssl s_client -starttls postgres -connect 127.0.0.1:5433
+    -CAfile /var/lib/pgsql/.postgresql/root.crt
+    -verify_hostname {{ inventory_hostname }} -verify_return_error
+  args:
+    stdin: Q
+  changed_when: false
+  when: not ansible_check_mode
 
 - name: Roles and app databases
   ansible.builtin.import_tasks: databases.yml

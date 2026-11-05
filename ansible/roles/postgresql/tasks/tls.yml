@@ -1,0 +1,46 @@
+---
+- name: Create the TLS directory
+  ansible.builtin.file:
+    path: "{{ postgresql_tls_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0700"
+
+- name: Install the server certificate
+  ansible.builtin.copy:
+    dest: "{{ postgresql_tls_dir }}/server.crt"
+    content: "{{ postgresql_tls_cert }}"
+    owner: postgres
+    group: postgres
+    mode: "0644"
+  notify: Reload PostgreSQL
+
+- name: Install the server key
+  ansible.builtin.copy:
+    dest: "{{ postgresql_tls_dir }}/server.key"
+    content: "{{ postgresql_tls_key }}"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  no_log: true
+  diff: false
+  notify: Reload PostgreSQL
+
+- name: Create the libpq directories of the client users
+  ansible.builtin.file:
+    path: "~{{ item }}/.postgresql"
+    state: directory
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: "0700"
+  loop: "{{ postgresql_tls_client_users }}"
+
+- name: Trust the lab CA for the client users
+  ansible.builtin.copy:
+    dest: "~{{ item }}/.postgresql/root.crt"
+    content: "{{ postgresql_tls_ca_cert }}"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: "0644"
+  loop: "{{ postgresql_tls_client_users }}"
