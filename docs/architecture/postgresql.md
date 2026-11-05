@@ -55,7 +55,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 |---|---|
 | Type | Physical streaming, asynchronous |
 | Standby | db2, built with `pg_basebackup -R`, see [Build a standby](../runbooks/build-a-standby.md). It answers read-only queries. |
-| Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator sslmode=verify-full`, the password from `passfile` |
+| Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator sslmode=verify-full`, the password from `passfile`. db1 has the same with `host=192.168.122.12`, used after a failover. |
 | Slot | Physical slot `db2` on db1, capped with `max_slot_wal_keep_size = 1GB` |
 | Archiving | db2 has the same `archive_mode = on` and archive command from the role. A standby does not archive, and as a primary db2 fails with exit code 127, because pgBackRest is only on db1. |
 | `.pgpass` of `postgres` | On both hosts, with the `replicator` and `rewind` passwords for the other host |
@@ -107,3 +107,4 @@ Lag is read in bytes on db1, from `pg_stat_replication`.
 | 2026-10-29 | Planned switchover back: db2 stopped cleanly, db1 promoted | No `pg_rewind`, db2 followed on timeline 5. Writes stopped for about 6 min, by hand with a pause. The promotion took about 1 s. |
 | 2026-11-04 | From db2, `report` reads the table `orders`, which `app` created after the default privileges | `SELECT` works with no `GRANT` on the table. `INSERT` fails with `permission denied for table orders`, a login to `lab` with `no pg_hba.conf entry`. |
 | 2026-11-05 | From db2, `report` logs in to `app` on db1 with `sslmode=disable`, with `verify-full`, and with `verify-full` to the name db2 at db1's address | `no pg_hba.conf entry … no encryption`. With `verify-full`, `ssl` is `t` with TLSv1.3. To the wrong name, `server certificate for "db1" (and 1 other name) does not match host name "db2"`. |
+| 2026-11-05 | From db1, `replicator` and `rewind` log in to db2 with `verify-full`. Then with the `host` of db2 and the `hostaddr` of db1, with `verify-full` and with `prefer`. | `IDENTIFY_SYSTEM` answers on timeline 5, and `rewind` gets TLSv1.3. With the `hostaddr` of db1, `verify-full` stops before the password with `does not match host name "192.168.122.12"`. `prefer` logs in to db1 with no error, and after a refused login it tries again with no encryption. |
