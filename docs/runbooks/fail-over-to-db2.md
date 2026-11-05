@@ -8,6 +8,7 @@ When PostgreSQL on db1 has failed and db2 must take over the writes, and later t
 
 - db2 streams from db1, and data checksums are on, so `pg_rewind` can run.
 - `pg_hba.conf` is the same on both hosts and lets the other host in as `replicator` and `rewind`. `/var/lib/pgsql/.pgpass` on each host holds both passwords for the other host.
+- Both hosts trust the lab CA in `/var/lib/pgsql/.postgresql/root.crt`, so `sslmode=verify-full` in steps 5 and 6 checks the certificate of db2. See [PostgreSQL, TLS](../architecture/postgresql.md#tls).
 - The client names both servers with `target_session_attrs=read-write`, so it follows the primary without a change.
 
 ## Steps
@@ -39,14 +40,14 @@ When PostgreSQL on db1 has failed and db2 must take over the writes, and later t
 5. **db1**: rewind to db2. After a crash, `--dry-run` fails with `target server must be shut down cleanly`, because only the real run does the crash recovery.
 
    ```bash
-   sudo -iu postgres pg_rewind -D /pgdata/pgsql/data --source-server="host=192.168.122.12 port=5433 dbname=postgres user=rewind" --progress
+   sudo -iu postgres pg_rewind -D /pgdata/pgsql/data --source-server="host=192.168.122.12 port=5433 dbname=postgres user=rewind sslmode=verify-full" --progress
    ```
 
 6. **db1**: `pg_rewind` copied `postgresql.auto.conf` from db2, which points at db1 itself. Point it at db2 and the slot `db1`.
 
    ```bash
    sudo -u postgres sed -i -e '/^primary_conninfo/d' -e '/^primary_slot_name/d' /pgdata/pgsql/data/postgresql.auto.conf
-   printf '%s\n' "primary_conninfo = 'host=192.168.122.12 port=5433 user=replicator passfile=''/var/lib/pgsql/.pgpass'''" "primary_slot_name = 'db1'" | sudo -u postgres tee -a /pgdata/pgsql/data/postgresql.auto.conf
+   printf '%s\n' "primary_conninfo = 'host=192.168.122.12 port=5433 user=replicator passfile=/var/lib/pgsql/.pgpass sslmode=verify-full'" "primary_slot_name = 'db1'" | sudo -u postgres tee -a /pgdata/pgsql/data/postgresql.auto.conf
    ```
 
 7. **db1**: start as a standby.
@@ -82,7 +83,7 @@ When PostgreSQL on db1 has failed and db2 must take over the writes, and later t
     sudo -iu postgres psql -c 'SELECT pg_last_wal_replay_lsn()' -c 'SELECT pg_promote()'
     ```
 
-12. **db2**: start as a standby. Its `primary_conninfo` from `pg_basebackup -R` already points at db1 and the slot `db2`. Then drop the slot `db1`.
+12. **db2**: start as a standby. Its `primary_conninfo` and `primary_slot_name` already point at db1 and the slot `db2`. Then drop the slot `db1`.
 
     ```bash
     sudo systemctl start postgresql
@@ -93,5 +94,6 @@ When PostgreSQL on db1 has failed and db2 must take over the writes, and later t
 
 - The client log shows `ok` lines on the new primary, and no ID it confirmed before the switch is missing there.
 - The standby shows `walreceiver streaming` and the primary `walsender replicator … streaming` at the same position. On db1 as the primary, [`checks/15-replication.sh`](../../checks/15-replication.sh) passes.
+- On the primary, the walsender of the standby has `ssl` `t` in `pg_stat_ssl`.
 
-Last tested: 2026-10-29 on db1 and db2, failover in 5 min 51 s with no rows lost, back to db1 without `pg_rewind`
+Last tested: 2026-10-29 on db1 and db2, failover in 5 min 51 s with no rows lost, back to db1 without `pg_rewind`. The `verify-full` connections of steps 5 and 6 tested as logins from db1 on 2026-11-05.
