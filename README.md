@@ -62,6 +62,6 @@ flowchart LR
 | 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | in progress |
 | 5 | RHCE in Enterprise Linux practice: troubleshooting, practice exams, then EX342 | planned |
 
-Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks and PostgreSQL with its config files the same on db1 and db2: my own `base` and `postgresql` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
+Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks and PostgreSQL with its config files the same on db1 and db2: my own `base` and `postgresql` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, and serves TLS with certificates from my own lab CA, the keys in Ansible Vault. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).
