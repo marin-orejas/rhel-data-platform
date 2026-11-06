@@ -1,0 +1,28 @@
+---
+- name: Install the SELinux module compiler
+  ansible.builtin.dnf:
+    name: checkpolicy
+    state: present
+
+- name: Copy the module source
+  ansible.builtin.copy:
+    src: pg_archive_nfs.te
+    dest: /usr/local/share/selinux/
+    owner: root
+    group: root
+    mode: "0644"
+  register: nfs_module_source
+
+- name: List the loaded modules
+  ansible.builtin.command: semodule -l
+  register: nfs_loaded_modules
+  changed_when: false
+  check_mode: false
+
+- name: Build and load the module
+  ansible.builtin.shell: >-
+    cd /usr/local/share/selinux &&
+    checkmodule -M -m -o pg_archive_nfs.mod pg_archive_nfs.te &&
+    semodule_package -o pg_archive_nfs.pp -m pg_archive_nfs.mod &&
+    semodule -i pg_archive_nfs.pp
+  when: nfs_module_source is changed or "pg_archive_nfs" not in nfs_loaded_modules.stdout_lines

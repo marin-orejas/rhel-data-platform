@@ -3,7 +3,7 @@
 SELinux, the firewall, SSH, tuned, the persistent journal, and the DBA group with its shared directory. On db1 and db2, the Ansible role `base` keeps the SELinux labels, the firewall, SSH, tuned, the journal and the `dba` group ([Ansible](ansible.md)).
 
 Verified by: [`checks/05-storage.sh`](../../checks/05-storage.sh) (journal), [`checks/08-tuned-dba.sh`](../../checks/08-tuned-dba.sh) (tuned, `dba`), [`checks/10-nfs.sh`](../../checks/10-nfs.sh) (tuned on db2), [`checks/18-base-role.sh`](../../checks/18-base-role.sh) (the role `base`, from the desktop), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) and [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (the SELinux module)
-Repo files: [`selinux/pg_archive_nfs.te`](../../selinux/pg_archive_nfs.te), [`tuned/`](../../tuned/), [`ansible/roles/base/files/tuned/`](../../ansible/roles/base/files/tuned/)
+Repo files: [`ansible/roles/nfs/files/pg_archive_nfs.te`](../../ansible/roles/nfs/files/pg_archive_nfs.te), [`tuned/`](../../tuned/), [`ansible/roles/base/files/tuned/`](../../ansible/roles/base/files/tuned/)
 
 ## Setup
 
@@ -15,7 +15,7 @@ Enforcing on every host.
 |---|---|
 | db1, db2 | `/pgdata(/.*)?` → `postgresql_db_t` (`semanage fcontext`, then `restorecon`) |
 | db1, db2 | TCP 5433 → `postgresql_port_t` (`semanage port`) |
-| db1 | Module `pg_archive_nfs` 1.1: the archiver (`postgresql_t`) may create, write and rename files on the NFS share (`nfs_t`), not delete them. No boolean allows this. Built with [Build an SELinux module from denials](../runbooks/build-an-selinux-module.md). |
+| db1 | Module `pg_archive_nfs` 1.1: the archiver (`postgresql_t`) may create, write and rename files on the NFS share (`nfs_t`), not delete them. No boolean allows this. Built with [Build an SELinux module from denials](../runbooks/build-an-selinux-module.md), loaded by the role `nfs` ([Ansible](ansible.md)). |
 | db2 | None. `/srv/backup` keeps `var_t`, the default for `/srv`, and the NFS export booleans are on by default. |
 
 ### Firewall
@@ -24,7 +24,7 @@ firewalld, zone `public` on every host.
 
 | Host | Allowed |
 |---|---|
-| nuc | `ssh`, `cockpit` and the other defaults of the zone; `virbr0` is in the zone `libvirt` |
+| nuc | `ssh`, `cockpit` and the other defaults of the zone. `virbr0` is in the zone `libvirt`. |
 | db1 | `ssh`, `cockpit`, `dhcpv6-client`, `5433/tcp` |
 | db2 | `ssh`, `cockpit`, `dhcpv6-client`, `nfs` (NFSv4 only, so `showmount -e` does not work), `5433/tcp` |
 
@@ -33,11 +33,11 @@ firewalld, zone `public` on every host.
 | Host | Setup |
 |---|---|
 | nuc | see [host](host.md#setup) |
-| db1, db2 | key login only; no password or root login (`/etc/ssh/sshd_config.d/10-hardening.conf`, before `50-redhat.conf`) |
+| db1, db2 | Key login only, no password or root login (`/etc/ssh/sshd_config.d/10-hardening.conf`, before `50-redhat.conf`) |
 
 ### Tuning
 
-Each tuned profile is installed as `/etc/tuned/profiles/<name>/tuned.conf`. It includes a profile from a package and drops only what fails on that host. The nuc profile is in `tuned/`; the db profile is in the role `base`.
+Each tuned profile is installed as `/etc/tuned/profiles/<name>/tuned.conf`. It includes a profile from a package and drops only what fails on that host. The nuc profile is in `tuned/`, and the db profile is in the role `base`.
 
 | Host | Profile | Base | Dropped |
 |---|---|---|---|
@@ -68,9 +68,9 @@ Persistent on nuc, db1 and db2: drop-in `/etc/systemd/journald.conf.d/50-persist
 | Date | Test | Result |
 |---|---|---|
 | 2026-10-08 | `tuned-adm verify` on nuc, db1 and db2, after a reboot | Passes |
-| 2026-10-05 | `cp` of a `600` file into `/srv/dba` | The ACL mask became `---` and the group could not read it; `chmod g+rw` fixed it |
-| 2026-10-05 | `mv` of a file into `/srv/dba` on the same file system | It kept its own group and got no ACL; `chgrp dba` and `chmod g+rw` fixed it |
+| 2026-10-05 | `cp` of a `600` file into `/srv/dba` | The ACL mask became `---` and the group could not read it. `chmod g+rw` fixed it. |
+| 2026-10-05 | `mv` of a file into `/srv/dba` on the same file system | It kept its own group and got no ACL. `chgrp dba` and `chmod g+rw` fixed it. |
 
 ## History
 
-- `virtual-guest-lab` (db2, lessons 10–17): `include=virtual-guest`, `[cpu] drop=boost`; still in `/etc/tuned/profiles/` on db2, not active.
+- `virtual-guest-lab` (db2, lessons 10–17): `include=virtual-guest`, `[cpu] drop=boost`. Still in `/etc/tuned/profiles/` on db2, not active.

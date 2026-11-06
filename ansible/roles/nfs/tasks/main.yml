@@ -1,0 +1,12 @@
+---
+- name: NFS server
+  ansible.builtin.import_tasks: server.yml
+  when: nfs_exports | length > 0
+
+- name: autofs client
+  ansible.builtin.import_tasks: client.yml
+  when: nfs_autofs_maps | length > 0
+
+- name: SELinux module for the WAL archive on NFS
+  ansible.builtin.import_tasks: selinux.yml
+  when: nfs_autofs_maps | length > 0

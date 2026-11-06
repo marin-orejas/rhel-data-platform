@@ -1,0 +1,10 @@
+---
+- name: Reload the NFS server
+  ansible.builtin.systemd_service:
+    name: nfs-server
+    state: reloaded
+
+- name: Reload autofs
+  ansible.builtin.systemd_service:
+    name: autofs
+    state: reloaded

@@ -2,11 +2,11 @@
 
 ## When to use
 
-When SELinux blocks a confined service and no boolean allows what it needs. Example: the archiver of PostgreSQL (`postgresql_t`) may not write files labeled `nfs_t`. The module is `selinux/pg_archive_nfs.te`, described in [System settings, SELinux](../architecture/system.md#selinux).
+When SELinux blocks a confined service and no boolean allows what it needs. Example: the archiver of PostgreSQL (`postgresql_t`) may not write files labeled `nfs_t`. The module is `ansible/roles/nfs/files/pg_archive_nfs.te`, described in [System settings, SELinux](../architecture/system.md#selinux).
 
 ## Before you start
 
-- The source of the module is in the repo, so a new version starts from that file. Its `module` line has the version, raised for every change (`module pg_archive_nfs 1.1;`).
+- The source of the module is in the role `nfs`, so a new version starts from that file. Its `module` line has the version, raised for every change (`module pg_archive_nfs 1.1;`).
 - `audit2allow` sees only the actions that really ran. Run the whole job in permissive mode, on the same state as in production. On an empty repository the directories do not exist yet, so the first run missed `getattr` on them.
 
 ## Steps
@@ -29,12 +29,10 @@ When SELinux blocks a confined service and no boolean allows what it needs. Exam
    sudo semanage permissive -d postgresql_t
    ```
 
-4. **db1**: build the module from its source and load it.
+4. **desktop**: from `ansible/`, run the playbook of the role `nfs` on db1. It copies the changed source to `/usr/local/share/selinux/`, builds the module there and loads it.
 
    ```bash
-   checkmodule -M -m -o pg_archive_nfs.mod pg_archive_nfs.te
-   semodule_package -o pg_archive_nfs.pp -m pg_archive_nfs.mod
-   sudo semodule -i pg_archive_nfs.pp
+   ansible-playbook playbooks/nfs.yml --limit db1
    ```
 
 ## Check
@@ -46,4 +44,4 @@ When SELinux blocks a confined service and no boolean allows what it needs. Exam
 
 `sudo semodule -d pg_archive_nfs` disables the module, and `sudo semodule -e pg_archive_nfs` enables it again. With the module disabled, archiving fails, and the segments wait in `pg_wal`.
 
-Last tested: 2026-10-26 on db1, version 1.1 for pgBackRest, archiving works in enforcing mode
+Last tested: 2026-11-06 on db1, version 1.1 loaded by the role `nfs` (steps 1 to 3 on 2026-10-26), archiving works in enforcing mode

@@ -1,0 +1,21 @@
+---
+- name: Install the NFS server
+  ansible.builtin.dnf:
+    name: nfs-utils
+    state: present
+
+- name: Write the exports
+  ansible.builtin.copy:
+    dest: "/etc/exports.d/{{ item.name }}.exports"
+    content: "{{ item.line }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ nfs_exports }}"
+  notify: Reload the NFS server
+
+- name: Keep the NFS server enabled and running
+  ansible.builtin.systemd_service:
+    name: nfs-server
+    enabled: true
+    state: started

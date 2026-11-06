@@ -1,0 +1,33 @@
+---
+- name: Install autofs and the NFS client
+  ansible.builtin.dnf:
+    name:
+      - autofs
+      - nfs-utils
+    state: present
+
+- name: Write the master map entries
+  ansible.builtin.copy:
+    dest: "/etc/auto.master.d/{{ item.name }}.autofs"
+    content: "{{ item.mount_point }} /etc/auto.{{ item.name }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ nfs_autofs_maps }}"
+  notify: Reload autofs
+
+- name: Write the maps
+  ansible.builtin.copy:
+    dest: "/etc/auto.{{ item.name }}"
+    content: "{{ item.line }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ nfs_autofs_maps }}"
+  notify: Reload autofs
+
+- name: Keep autofs enabled and running
+  ansible.builtin.systemd_service:
+    name: autofs
+    enabled: true
+    state: started

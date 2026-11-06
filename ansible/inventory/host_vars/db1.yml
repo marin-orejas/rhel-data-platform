@@ -1,4 +1,9 @@
 ---
+nfs_autofs_maps:
+  - name: db2
+    mount_point: /mnt/db2
+    line: backup -rw,sync db2:/srv/backup
+
 storage_pools:
   - name: data
     type: lvm
@@ -10,6 +15,7 @@ storage_pools:
         fs_type: xfs
         fs_label: pgdata
         mount_point: /pgdata
+
 postgresql_tls_cert: |
   -----BEGIN CERTIFICATE-----
   MIIBoTCCAUegAwIBAgIUSQc16Oxof0KBn0P+IuJZk8l+ZeQwCgYIKoZIzj0EAwIw

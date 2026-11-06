@@ -2,6 +2,10 @@
 base_firewall_extra_services:
   - nfs
 
+nfs_exports:
+  - name: backup
+    line: /srv/backup 192.168.122.11(rw)
+
 storage_pools:
   - name: data
     type: lvm

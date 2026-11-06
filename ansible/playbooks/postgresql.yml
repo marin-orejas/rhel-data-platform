@@ -2,6 +2,5 @@
 - name: PostgreSQL on the db hosts
   hosts: db
   become: true
-
   roles:
     - postgresql

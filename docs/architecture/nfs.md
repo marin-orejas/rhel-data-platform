@@ -1,8 +1,10 @@
 # NFS share
 
-db2 shares `/srv/backup` with db1 over NFS, so the backups of db1 are not on the same machine as the database. db1 mounts the share with autofs when a program opens it.
+db2 shares `/srv/backup` with db1 over NFS, so the backups of db1 are not on the same machine as the database. db1 mounts the share with autofs when a program opens it. The Ansible role `nfs` keeps both sides ([Ansible](ansible.md)).
 
 Verified by: [`checks/10-nfs.sh`](../../checks/10-nfs.sh) (db1 and db2)
+
+Repo files: [`ansible/roles/nfs/`](../../ansible/roles/nfs/)
 
 ## Setup
 
