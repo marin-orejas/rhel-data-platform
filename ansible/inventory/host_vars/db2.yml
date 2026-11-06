@@ -6,6 +6,9 @@ nfs_exports:
   - name: backup
     line: /srv/backup 192.168.122.11(rw)
 
+pgbackrest_repo_path: /srv/backup/pgbackrest
+pgbackrest_create_repo: true
+
 storage_pools:
   - name: data
     type: lvm

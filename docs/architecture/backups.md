@@ -3,7 +3,7 @@
 Backups of db1 go to the NFS share on db2. pgBackRest backs up the cluster and archives every WAL segment, for a restore to any time in the last 7 to 14 days. A nightly dump of each database restores one database to 02:00.
 
 Verified by: [`checks/09-backup.sh`](../../checks/09-backup.sh) (dumps), [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (pgBackRest), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) (the archive by hand)
-Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](../../systemd/), [`pgbackrest/`](../../pgbackrest/)
+Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](../../systemd/), [`ansible/roles/pgbackrest/`](../../ansible/roles/pgbackrest/)
 
 ## Setup
 
@@ -11,13 +11,13 @@ Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](.
 
 | Part | Setup |
 |---|---|
-| Package | `pgbackrest` 2.60 from the PGDG "common" repository (`pgbackrest/pgdg-common.repo`), limited by `includepkgs` to `pgbackrest` and `pgdg-libssh2` |
-| Config | `pgbackrest/pgbackrest.conf` as `/etc/pgbackrest.conf`, stanza `main` |
-| Repository | `/mnt/db2/backup/pgbackrest` on db1, which is `/srv/backup/pgbackrest` on db2. pgBackRest runs only on db1, as `postgres`. |
+| Package | `pgbackrest` 2.60 on db1 and db2, installed by the Ansible role `pgbackrest` ([Ansible](ansible.md)) from the PGDG "common" repository (`pgdg-common.repo`), limited by `includepkgs` to `pgbackrest` and `pgdg-libssh2` |
+| Config | `/etc/pgbackrest.conf` from the role's template `pgbackrest.conf.j2`, stanza `main` |
+| Repository | `/mnt/db2/backup/pgbackrest` on db1, which is `/srv/backup/pgbackrest` on db2. Each host's config names its own path. |
 | Archive command | `pgbackrest --stanza=main archive-push %p`, in `postgresql.conf` from the Ansible role `postgresql` ([Ansible](ansible.md)) |
 | SELinux | module `pg_archive_nfs`, see [SELinux](system.md#selinux) |
-| Service | `systemd/pgbackrest@.service`, the instance is the backup type: `pgbackrest@full`, `pgbackrest@diff` |
-| Schedule | Full on Sunday, differential Monday to Saturday, both at 01:00 (`pgbackrest-full.timer`, `pgbackrest-diff.timer`) |
+| Service | `pgbackrest@.service`, the instance is the backup type: `pgbackrest@full`, `pgbackrest@diff` |
+| Schedule | Full on Sunday, differential Monday to Saturday, both at 01:00 (`pgbackrest-full.timer`, `pgbackrest-diff.timer`). The backups run only on db1, as `postgres`. On db2 the timers are disabled and stopped. |
 | Retention | `repo1-retention-full=2`: the two newest fulls, the backups that depend on them, and their WAL |
 
 ### Nightly dumps

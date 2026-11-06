@@ -1,5 +1,6 @@
+# {{ ansible_managed }}
 [global]
-repo1-path=/mnt/db2/backup/pgbackrest
+repo1-path={{ pgbackrest_repo_path }}
 repo1-retention-full=2
 compress-type=zst
 process-max=2

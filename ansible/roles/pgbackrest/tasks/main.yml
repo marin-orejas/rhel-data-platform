@@ -1,0 +1,67 @@
+---
+- name: Copy the PGDG signing key
+  ansible.builtin.copy:
+    src: PGDG-RPM-GPG-KEY-RHEL
+    dest: /etc/pki/rpm-gpg/PGDG-RPM-GPG-KEY-RHEL
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Import the PGDG signing key
+  ansible.builtin.rpm_key:
+    key: /etc/pki/rpm-gpg/PGDG-RPM-GPG-KEY-RHEL
+    fingerprint: D4BF08AE67A0B4C7A1DBCCD240BCA2B408B40D20
+    state: present
+
+- name: Add the PGDG common repository
+  ansible.builtin.copy:
+    src: pgdg-common.repo
+    dest: /etc/yum.repos.d/pgdg-common.repo
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install pgBackRest
+  ansible.builtin.dnf:
+    name: pgbackrest
+    state: present
+
+- name: Write the pgBackRest config
+  ansible.builtin.template:
+    src: pgbackrest.conf.j2
+    dest: /etc/pgbackrest.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create the local repository directory
+  ansible.builtin.file:
+    path: "{{ pgbackrest_repo_path }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0750"
+  when: pgbackrest_create_repo
+
+- name: Install the backup service and timers
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /etc/systemd/system/
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - pgbackrest@.service
+    - pgbackrest-full.timer
+    - pgbackrest-diff.timer
+  register: pgbackrest_units
+
+- name: Run the timers only where backups run
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: "{{ pgbackrest_timers }}"
+    state: "{{ 'started' if pgbackrest_timers else 'stopped' }}"
+    daemon_reload: "{{ pgbackrest_units is changed }}"
+  loop:
+    - pgbackrest-full.timer
+    - pgbackrest-diff.timer

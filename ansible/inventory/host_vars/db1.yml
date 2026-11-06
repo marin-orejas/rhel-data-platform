@@ -4,6 +4,9 @@ nfs_autofs_maps:
     mount_point: /mnt/db2
     line: backup -rw,sync db2:/srv/backup
 
+pgbackrest_repo_path: /mnt/db2/backup/pgbackrest
+pgbackrest_timers: true
+
 storage_pools:
   - name: data
     type: lvm
