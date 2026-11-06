@@ -3,6 +3,7 @@ postgresql_packages:
   - postgresql18-server
   - postgresql18-contrib
   - openssl
+  - acl
 
 postgresql_mount_point: /pgdata
 postgresql_data_dir: /pgdata/pgsql/data
@@ -46,3 +47,8 @@ postgresql_hba_extra_rules: []
 postgresql_login_roles: []
 
 postgresql_app_databases: []
+
+postgresql_build_standby: false
+postgresql_primary_conninfo: >-
+  host={{ postgresql_peer_address }} port=5433 user=replicator
+  passfile=/var/lib/pgsql/.pgpass sslmode=verify-full

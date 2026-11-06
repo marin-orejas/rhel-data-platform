@@ -25,6 +25,10 @@ storage_pools:
         fs_type: xfs
         fs_label: pgdata
         mount_point: /pgdata
+
+postgresql_build_standby: true
+postgresql_peer_address: 192.168.122.11
+
 postgresql_tls_cert: |
   -----BEGIN CERTIFICATE-----
   MIIBojCCAUegAwIBAgIUIwyRo+FRXZcmX5fM77w0HOBb5AkwCgYIKoZIzj0EAwIw

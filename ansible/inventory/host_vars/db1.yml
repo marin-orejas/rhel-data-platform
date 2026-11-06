@@ -19,6 +19,8 @@ storage_pools:
         fs_label: pgdata
         mount_point: /pgdata
 
+postgresql_peer_address: 192.168.122.12
+
 postgresql_tls_cert: |
   -----BEGIN CERTIFICATE-----
   MIIBoTCCAUegAwIBAgIUSQc16Oxof0KBn0P+IuJZk8l+ZeQwCgYIKoZIzj0EAwIw

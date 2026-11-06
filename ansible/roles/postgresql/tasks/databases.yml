@@ -24,6 +24,16 @@
         role_attr_flags: LOGIN
       loop: "{{ postgresql_login_roles }}"
 
+    - name: Create the replication role
+      community.postgresql.postgresql_user:
+        name: replicator
+        role_attr_flags: REPLICATION,LOGIN
+
+    - name: Create a slot for each other db host
+      community.postgresql.postgresql_slot:
+        name: "{{ item }}"
+      loop: "{{ groups['db'] | difference([inventory_hostname]) }}"
+
     - name: Create the app databases
       community.postgresql.postgresql_db:
         name: "{{ item.name }}"

@@ -36,7 +36,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 
 | Part | Setup |
 |---|---|
-| Roles | `remote_test` (login, `SELECT` and `INSERT` on `lab.failover_test`), `replicator` (`LOGIN REPLICATION`), `rewind` (login, `EXECUTE` on the four file functions `pg_rewind` needs). Passwords only in `.pgpass` files, mode 600. |
+| Roles | `remote_test` (login, `SELECT` and `INSERT` on `lab.failover_test`), `replicator` (`LOGIN REPLICATION`, kept by the role `postgresql`), `rewind` (login, `EXECUTE` on the four file functions `pg_rewind` needs). Passwords only in `.pgpass` files, mode 600. |
 | Test data | Database `lab` with the tables `items` (10,000 rows) and `failover_test`, written by the failover client |
 
 ### Database `app`
@@ -56,9 +56,9 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Type | Physical streaming, asynchronous |
 | Standby | db2, built with `pg_basebackup -R`, see [Build a standby](../runbooks/build-a-standby.md). It answers read-only queries. |
 | Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator sslmode=verify-full`, the password from `passfile`. db1 has the same with `host=192.168.122.12`, used after a failover. |
-| Slot | Physical slot `db2` on db1, capped with `max_slot_wal_keep_size = 1GB` |
-| Archiving | db2 has the same `archive_mode = on` and archive command from the role. A standby does not archive, and as a primary db2 fails with exit code 127, because pgBackRest is only on db1. |
-| `.pgpass` of `postgres` | On both hosts, with the `replicator` and `rewind` passwords for the other host |
+| Slot | Physical slot `db2` on db1, kept by the role `postgresql`, capped with `max_slot_wal_keep_size = 1GB` |
+| Archiving | db2 has the same `archive_mode = on` and archive command from the role. A standby does not archive. db2 has pgBackRest with a local repository ([Backups](backups.md#pgbackrest)), but archiving from db2 as a primary is not tested. |
+| `.pgpass` of `postgres` | On both hosts, written by the role `postgresql` from Vault, with the `replicator` and `rewind` passwords for the other host |
 | `pg_rewind` | Possible because data checksums are on, the PostgreSQL 18 default |
 | Client | `scripts/failover-client.sh`, run by hand on db2. It names both servers with `target_session_attrs=read-write`, so libpq picks the one that accepts writes. |
 
