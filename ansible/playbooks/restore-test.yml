@@ -1,0 +1,69 @@
+---
+- name: Restore test of the newest backup on db2
+  hosts: db2
+  become: true
+  become_user: postgres
+  gather_facts: false
+  vars:
+    restore_test_dir: /pgdata/pgsql/restore-test
+    restore_test_data: >-
+      (SELECT sum(id) FROM items), (SELECT sum(id) FROM pgbr_test),
+      (SELECT count(*) FROM lag_test), (SELECT count(*) FROM failover_test)
+  tasks:
+    - name: Look for a copy left by an earlier run
+      ansible.builtin.stat:
+        path: "{{ restore_test_dir }}"
+      register: restore_test_old
+
+    - name: Stop if that copy is there
+      ansible.builtin.assert:
+        that: not restore_test_old.stat.exists
+        fail_msg: "{{ restore_test_dir }} exists, remove it by hand first"
+
+    - name: Restore, start, compare and remove the copy
+      block:
+        - name: Create the directory for the copy
+          ansible.builtin.file:
+            path: "{{ restore_test_dir }}"
+            state: directory
+            mode: "0700"
+
+        - name: Restore the newest backup with archiving off
+          ansible.builtin.command: >-
+            pgbackrest --stanza=main --pg1-path={{ restore_test_dir }}
+            --archive-mode=off restore
+
+        - name: Start the copy on a socket only
+          ansible.builtin.command: >-
+            pg_ctl start -D {{ restore_test_dir }} -w
+            -l /pgdata/pgsql/restore-test.log
+            -o "-p 5434 -c listen_addresses='' -c hot_standby=off -c logging_collector=off"
+
+        - name: Read the data on the copy after the replay
+          ansible.builtin.command: psql -X -At -p 5434 -d lab -c "SELECT pg_is_in_recovery(), {{ restore_test_data }}"
+          register: restore_test_copy
+          until: restore_test_copy.rc == 0
+          retries: 60
+          delay: 2
+          changed_when: false
+
+        - name: Read the same data on the standby
+          ansible.builtin.command: psql -X -At -p 5433 -d lab -c "SELECT {{ restore_test_data }}"
+          register: restore_test_live
+          changed_when: false
+
+        - name: Compare the copy with the standby
+          ansible.builtin.assert:
+            that: restore_test_copy.stdout == "f|" + restore_test_live.stdout
+            success_msg: "Copy {{ restore_test_copy.stdout }}, standby {{ restore_test_live.stdout }}"
+            fail_msg: "Copy {{ restore_test_copy.stdout }}, standby {{ restore_test_live.stdout }}"
+      always:
+        - name: Stop the copy
+          ansible.builtin.command: pg_ctl stop -D {{ restore_test_dir }} -m fast
+          args:
+            removes: "{{ restore_test_dir }}/postmaster.pid"
+
+        - name: Remove the copy
+          ansible.builtin.file:
+            path: "{{ restore_test_dir }}"
+            state: absent

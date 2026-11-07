@@ -3,7 +3,7 @@
 Backups of db1 go to the NFS share on db2. pgBackRest backs up the cluster and archives every WAL segment, for a restore to any time in the last 7 to 14 days. A nightly dump of each database restores one database to 02:00.
 
 Verified by: [`checks/09-backup.sh`](../../checks/09-backup.sh) (dumps), [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (pgBackRest), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) (the archive by hand)
-Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](../../systemd/), [`ansible/roles/pgbackrest/`](../../ansible/roles/pgbackrest/)
+Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](../../systemd/), [`ansible/roles/pgbackrest/`](../../ansible/roles/pgbackrest/), [`ansible/playbooks/restore-test.yml`](../../ansible/playbooks/restore-test.yml)
 
 ## Setup
 
@@ -19,6 +19,7 @@ Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](.
 | Service | `pgbackrest@.service`, the instance is the backup type: `pgbackrest@full`, `pgbackrest@diff` |
 | Schedule | Full on Sunday, differential Monday to Saturday, both at 01:00 (`pgbackrest-full.timer`, `pgbackrest-diff.timer`). The backups run only on db1, as `postgres`. On db2 the timers are disabled and stopped. |
 | Retention | `repo1-retention-full=2`: the two newest fulls, the backups that depend on them, and their WAL |
+| Restore test | `ansible/playbooks/restore-test.yml`, started by hand from the desktop, runs on db2: the newest backup and the WAL archive after it go into a temporary copy beside the standby. The copy must leave recovery and hold the same data as the standby ([Ansible](ansible.md)). |
 
 ### Nightly dumps
 
@@ -46,6 +47,7 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 - The diff timer has no `Persistent=`. After an outage the full catches up at boot, and a second backup at the same time would fail on the stanza lock.
 - The nightly dumps stay next to pgBackRest, to restore one database without touching the others.
 - The [repository is on the NFS share](../decisions/pgbackrest-with-its-repository-on-nfs.md) to keep the lab small, but db1 can delete its own backups.
+- The restore test runs on db2, beside the standby, so db1 is never touched and the backup is read from the local repository. Archiving is off in the copy. After its promote the copy is on a new timeline, and its WAL in the stanza would clash with the timeline a real failover takes.
 - [systemd timers, not cron](../decisions/systemd-timers-for-backups.md), so a missed run starts after the next boot and a failure leaves the unit `failed`.
 
 ## Tested
