@@ -7,7 +7,7 @@ What I learn here:
 - **RHEL 10 administration** (RHCSA / EX200 topics): storage, SELinux, firewall, systemd, networking and backups, all on a database server.
 - **PostgreSQL administration**: backups and point-in-time recovery, replication and failover, roles and TLS.
 - **Automation**: configure db1 and db2 with Ansible, so one playbook builds both from fresh clones.
-- **Troubleshooting** (RHCE in Enterprise Linux / EX342 topics): boot, storage, packages, network, applications and logins.
+- **Kubernetes**: a kubeadm cluster on RHEL 10 with CRI-O and Calico, PostgreSQL on it with CloudNativePG, built with Ansible and kept in step with Argo CD.
 
 ## What works now
 
@@ -60,8 +60,8 @@ flowchart LR
 | 2 | RHCSA practice: exam topics, practice exams and drills, then EX200 | in progress |
 | 3 | PostgreSQL operations: backups and recovery, replication, failover | done |
 | 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | in progress |
-| 5 | RHCE in Enterprise Linux practice: troubleshooting, practice exams, then EX342 | planned |
+| 5 | Kubernetes: a kubeadm cluster, workloads, networking and storage, CloudNativePG, Argo CD and Ansible | planned |
 
-Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
+Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones, then phase 5: Kubernetes. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).

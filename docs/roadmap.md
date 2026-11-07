@@ -48,21 +48,31 @@ I do every step by hand first, then automate it. Every setting must still work a
 - [x] Roles build the db2 standby and pgBackRest with its timers, and a playbook runs a timed restore test.
 - [ ] One playbook builds db1 and db2 from fresh clones, a second run changes nothing, and GitHub Actions checks the code.
 
-*EX342 topic: configure systems using Ansible.*
-
-## Phase 5: RHCE in Enterprise Linux practice
-- [ ] System health is watched with `sar`, PCP and the web console, logs go to a central host, and AIDE reports changed files.
-- [ ] A system that does not boot (a failed unit, a GRUB entry, a lost root password) is fixed, and kernel modules and hardware are checked.
-- [ ] A damaged XFS, a broken LVM and an encrypted disk are recovered.
-- [ ] Package dependency problems and a corrupted RPM database are fixed, and changed files are found with `rpm -V`.
-- [ ] Network faults are found with `ip`, `ss`, `ping` and `tcpdump`, then fixed.
-- [ ] A failing program is traced to a missing library, a memory leak or an SELinux denial with `ldd`, `strace` and the audit log.
-- [ ] Login problems from PAM and account policies are fixed, and a kernel crash dump and an `sos report` are made for support.
-- [ ] Four-hour EX342-style practice exams and topic drills are taken and checked after a reboot.
-- [ ] The RHCE in Enterprise Linux exam (EX342).
+## Phase 5: Kubernetes
+- [ ] Three clones of the base image get the base role, no swap, CRI-O and the Kubernetes 1.36 packages.
+- [ ] kubeadm builds the cluster from a config file in the repo, with k8s1 as the control plane, two workers and Calico.
+- [ ] An app runs as a Deployment with health checks and resource limits, and a rolling update and a rollback work.
+- [ ] The app takes its settings from a ConfigMap and a Secret, and Kustomize builds it from files in the repo.
+- [ ] Pods reach the app through a Service by its DNS name, and a network policy lets only one client in.
+- [ ] MetalLB gives the app an address on the lab network, and a Gateway API route serves it outside the cluster.
+- [ ] Each worker has its own data disk, a storage class creates volumes on it, and a volume grows while its pod runs.
+- [ ] CloudNativePG runs PostgreSQL 18 as a primary and a standby on the two workers, and a failover is measured.
+- [ ] cert-manager issues the PostgreSQL certificates from the lab CA, and clients check them with `verify-full`.
+- [ ] db2 runs an S3 object store with TLS, set up by hand first, then as an Ansible role.
+- [ ] CloudNativePG archives WAL and backs up to db2, and a dropped table comes back with a timed restore to a set time.
+- [ ] Labels, affinity and taints decide where pods run, and a CronJob dumps the `app` database every night.
+- [ ] metrics-server shows what each pod uses, a quota caps the app namespace, and an autoscaler adds pods under load.
+- [ ] A read-only user signs in with a certificate from the cluster CA, and the CronJob runs with only the rights it needs.
+- [ ] The app namespace enforces the `restricted` pod security level, and every pod in it runs as a non-root user.
+- [ ] A timer on k8s1 takes an etcd snapshot every night, and a timed restore brings back a deleted namespace.
+- [ ] kubeadm upgrades the cluster from 1.36 to 1.37 one node at a time while PostgreSQL stays up, with the outage measured.
+- [ ] Argo CD applies the cluster's apps from this repo, so a change is a commit and a change by hand is undone.
+- [ ] An Ansible role prepares the nodes, and a playbook brings a reset worker back into the cluster.
+- [ ] Ansible builds the cluster from fresh clones in one timed run, Argo CD brings the apps back, and a second run changes nothing.
 
 ## Learning resources
-- RHEL: [Sander van Vugt (YouTube)](https://www.youtube.com/channel/UComgXoI6pysmetOzuNH_TDQ), [EX200 exam topics](https://www.redhat.com/en/services/training/ex200-red-hat-certified-system-administrator-rhcsa-exam), [EX342 exam topics](https://www.redhat.com/en/services/training/ex342-red-hat-certified-specialist-linux-diagnostics-and-troubleshooting)
+- RHEL: [Sander van Vugt (YouTube)](https://www.youtube.com/channel/UComgXoI6pysmetOzuNH_TDQ), [EX200 exam topics](https://www.redhat.com/en/services/training/ex200-red-hat-certified-system-administrator-rhcsa-exam)
+- Kubernetes: [Kubernetes documentation](https://kubernetes.io/docs/home/), [CloudNativePG documentation](https://cloudnative-pg.io/docs/), [Argo CD documentation](https://argo-cd.readthedocs.io/)
 - Databases: [CMU 15-445 Intro to Database Systems](https://www.youtube.com/playlist?list=PLSE8ODhjZXjYMAgsGH-GtY5rJYZ6zjsd5), [Hussein Nasser, PostgreSQL](https://www.youtube.com/playlist?list=PLQnljOFTspQWGrOqslniFlRcwxyY94cjj), [PostgreSQL 18 documentation](https://www.postgresql.org/docs/18/), [PostgreSQL 14 Internals (Egor Rogov, free)](https://postgrespro.com/community/books/internals)
 - Backups: [pgBackRest User Guide for RHEL](https://pgbackrest.org/user-guide-rhel.html)
 - Reliability: *Database Reliability Engineering* (Laine Campbell, Charity Majors, O'Reilly), [Google SRE book (free)](https://sre.google/sre-book/table-of-contents/)
