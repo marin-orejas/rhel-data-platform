@@ -6,56 +6,43 @@ When db2 needs a new read-only copy of db1 that streams WAL from it. How replica
 
 ## Before you start
 
-- db2 has `postgresql18-server`, `/pgdata` mounted, the drop-in, the SELinux rules and port 5433 open, as on db1. See [PostgreSQL, Both hosts](../architecture/postgresql.md#both-hosts).
-- `/pgdata/pgsql` on db2 is empty, owned by `postgres`, mode 700. The server on db2 is stopped.
-- A new password for the role `replicator`.
-- The Ansible role `postgresql` has run on db1. It writes the `pg_hba.conf` line for `replicator` from db2 and `max_slot_wal_keep_size = 1GB`, see [Ansible](../architecture/ansible.md).
+- The Ansible role `postgresql` has run on db1. It keeps the role `replicator`, the slot `db2` and the `pg_hba.conf` rule for `replicator` from db2, see [Ansible](../architecture/ansible.md).
+- `ansible/inventory/host_vars/db2.yml` has `postgresql_build_standby: true` and `postgresql_peer_address: 192.168.122.11`.
+- The Vault value `postgresql_replicator_password` is the password of `replicator` on db1.
+- `/pgdata` on db2 has room for a second copy beside the old one (`df -h /pgdata`).
 
 ## Steps
 
-1. **db1**: create the replication role and set its password. In `sudo -iu postgres psql`:
-
-   ```sql
-   CREATE ROLE replicator WITH REPLICATION LOGIN;
-   \password replicator
-   ```
-
-2. **db1**: create the slot. In `sudo -iu postgres psql`:
-
-   ```sql
-   SELECT pg_create_physical_replication_slot('db2');
-   ```
-
-3. **db2**: store the password for the `postgres` user. The database field must be `replication`. `read -s` keeps the password off the screen and out of the shell history.
+1. **db2**: stop the server.
 
    ```bash
-   read -rsp 'replicator password: ' pw; echo
-   printf '192.168.122.11:5433:replication:replicator:%s\n' "$pw" | sudo -u postgres bash -c 'umask 077; cat > /var/lib/pgsql/.pgpass'
-   unset pw
+   sudo systemctl stop postgresql
    ```
 
-4. **db2**: copy the cluster from db1. `-R` writes `standby.signal` and `primary_conninfo`, and `-S db2` uses the slot and writes `primary_slot_name`.
+2. **db2**: move the old data directory aside. The role copies db1 only when `/pgdata/pgsql/data/PG_VERSION` is missing.
 
    ```bash
-   sudo -iu postgres pg_basebackup -h 192.168.122.11 -p 5433 -U replicator -D /pgdata/pgsql/data -S db2 -R -X stream -c fast -P
+   sudo mv /pgdata/pgsql/data /pgdata/pgsql/data.old
    ```
 
-5. **db2**: check that `primary_conninfo` has `passfile=` and no `password=`.
+3. **desktop**: run the playbook for db2 only, from `ansible/`, with no dry run first: on a missing data directory a dry run fails at the first file it would write there. The role copies db1 with `pg_basebackup` through the slot `db2` and `sslmode=verify-full`, writes `postgresql.auto.conf` and `standby.signal`, and starts the server.
 
    ```bash
-   sudo tail -5 /pgdata/pgsql/data/postgresql.auto.conf
+   ansible-playbook playbooks/postgresql.yml --limit db2
    ```
 
-6. **db2**: enable and start the server.
+4. **db2**: once the checks below pass, remove the old data directory.
 
    ```bash
-   sudo systemctl enable --now postgresql
+   sudo rm -rf /pgdata/pgsql/data.old
    ```
 
 ## Check
 
-- On db2, `SELECT pg_is_in_recovery();` returns `t`, and `pg_stat_wal_receiver` shows `streaming`, the slot `db2` and the timeline of db1.
-- On db1, `pg_stat_replication` shows `192.168.122.12`, `streaming` and `async`, and the slot `db2` is active.
-- A row written on db1 is readable on db2. A write on db2 fails with `cannot execute ... in a read-only transaction`.
+- On db1, `pg_stat_replication` shows `192.168.122.12`, `streaming` and `async`, and the slot `db2` is active with `wal_status` `reserved`.
+- On db2, `postgresql.auto.conf` has `primary_slot_name = 'db2'` and a `primary_conninfo` to `192.168.122.11` with `sslmode=verify-full`.
+- Row counts and sums in `lab` are the same on both hosts.
+- A second run of the playbook shows `changed=0` for db2.
+- `checks/15-replication.sh` passes on both hosts and `checks/20-postgresql-templates.sh` on the desktop.
 
-Last tested: 2026-10-27 on db1 and db2, 52,552 kB copied in 0.8 s, streaming on timeline 3
+Last tested: 2026-11-07 on db2, about 205 MB copied in 2 s, streaming 19 s after the playbook started

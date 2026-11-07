@@ -54,7 +54,7 @@ Repo files: [`scripts/failover-client.sh`](../../scripts/failover-client.sh), [`
 | Part | Setup |
 |---|---|
 | Type | Physical streaming, asynchronous |
-| Standby | db2, built with `pg_basebackup -R`, see [Build a standby](../runbooks/build-a-standby.md). It answers read-only queries. |
+| Standby | db2, copied from db1 by the role `postgresql` with `pg_basebackup`, see [Build a standby](../runbooks/build-a-standby.md). It answers read-only queries. |
 | Connection | `primary_conninfo` on db2: `host=192.168.122.11 port=5433 user=replicator sslmode=verify-full`, the password from `passfile`. db1 has the same with `host=192.168.122.12`, used after a failover. |
 | Slot | Physical slot `db2` on db1, kept by the role `postgresql`, capped with `max_slot_wal_keep_size = 1GB` |
 | Archiving | db2 has the same `archive_mode = on` and archive command from the role. A standby does not archive. db2 has pgBackRest with a local repository ([Backups](backups.md#pgbackrest)), but archiving from db2 as a primary is not tested. |
