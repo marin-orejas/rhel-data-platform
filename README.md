@@ -14,7 +14,7 @@ What I learn here:
 - db1 runs PostgreSQL 18 on its own data disk, with SELinux enforcing. [Check scripts](checks/) verify every setting after a reboot.
 - db2 is a streaming standby. During a 1,000,000-row insert on db1 it stayed at most 0.33 s behind.
 - When PostgreSQL on db1 failed, db2 took over by hand in 5 min 51 s with no rows lost, and db1 came back as its standby with `pg_rewind`. See the [failover runbook](docs/runbooks/fail-over-to-db2.md).
-- pgBackRest backs db1 up to db2 every night. A dropped table came back with a restore to a set time: 9 min 31 s by hand, 1.1 s of outage with pgBackRest.
+- pgBackRest backs db1 up to db2 every night, and a playbook restores the newest backup on db2 and compares it with the standby in 18 s. A dropped table came back with a restore to a set time: 9 min 31 s by hand, 1.1 s of outage with pgBackRest.
 - RHCSA practice: every exam from exam 09 on passed, see [EX200 practice](docs/journal/ex200-practice.md).
 
 ## Lab
@@ -62,6 +62,6 @@ flowchart LR
 | 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | in progress |
 | 5 | RHCE in Enterprise Linux practice: troubleshooting, practice exams, then EX342 | planned |
 
-Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks and PostgreSQL with its config files the same on db1 and db2: my own `base` and `postgresql` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, and serves TLS with certificates from my own lab CA, the keys in Ansible Vault. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
+Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).

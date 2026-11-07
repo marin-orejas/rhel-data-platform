@@ -2,7 +2,7 @@
 
 Backups of db1 go to the NFS share on db2. pgBackRest backs up the cluster and archives every WAL segment, for a restore to any time in the last 7 to 14 days. A nightly dump of each database restores one database to 02:00.
 
-Verified by: [`checks/09-backup.sh`](../../checks/09-backup.sh) (dumps), [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (pgBackRest), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) (the archive by hand)
+Verified by: [`checks/09-backup.sh`](../../checks/09-backup.sh) (dumps), [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (pgBackRest), [`checks/23-standby-backup-roles.sh`](../../checks/23-standby-backup-roles.sh) (the role `pgbackrest` and the restore test, desktop), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) (the archive by hand)
 Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](../../systemd/), [`ansible/roles/pgbackrest/`](../../ansible/roles/pgbackrest/), [`ansible/playbooks/restore-test.yml`](../../ansible/playbooks/restore-test.yml)
 
 ## Setup
@@ -43,8 +43,7 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 
 ## Why
 
-- A full on Sunday and a differential on the other nights: a restore needs at most a full and one differential.
-- The diff timer has no `Persistent=`. After an outage the full catches up at boot, and a second backup at the same time would fail on the stanza lock.
+- A full on Sunday and a differential on the other nights, so a restore needs at most a full and one differential. Only the full catches up after an outage (`Persistent=true`), because two backups at once would fail on the stanza lock, and a missed differential leaves no line in the journal.
 - The nightly dumps stay next to pgBackRest, to restore one database without touching the others.
 - The [repository is on the NFS share](../decisions/pgbackrest-with-its-repository-on-nfs.md) to keep the lab small, but db1 can delete its own backups.
 - The restore test runs on db2, beside the standby, so db1 is never touched and the backup is read from the local repository. Archiving is off in the copy. After its promote the copy is on a new timeline, and its WAL in the stanza would clash with the timeline a real failover takes.
@@ -61,7 +60,12 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 | 2026-10-26 | Differential after 200,000 new rows, incremental after 100,000 more | 1.4 s and 1.5 s. The incremental copied the whole changed table file. |
 | 2026-10-26 | Restore with pgBackRest to 5 s before a `DROP TABLE` ([runbook](../runbooks/restore-to-a-time-with-pgbackrest.md)) | Outage 1.1 s, `--delta` restore 0.41 s. All 300,000 rows came back with the same `sum(id)`. |
 | 2026-10-26 | A third full backup | Removed the first full, its differential and incremental, and their WAL |
+| 2026-11-07 | `ansible/playbooks/restore-test.yml` on db2: the newest backup (a differential of 2026-10-31) and the WAL after it restored into a temporary copy | Restore 9.1 s (163.7 MB), replay of 18 WAL segments in 1.37 s, the whole run 18.1 s. The copy left recovery on timeline 6 with the same data as the standby, and the repository got no `00000006.history`. |
 
 ## History
 
 - `/srv/backup/pgsql/wal` and `base` on db2: the WAL archive by hand (`cp`) and its base backup from `pg_basebackup`, 2026-10-25 to 2026-10-26, up to segment `00000002000000000000000E`. Nothing writes there any more.
+
+## Planned
+
+- Phase 4: `Restart=on-failure` and a `RestartSec=` in `pgbackrest@.service`. On 2026-11-01 db1 and db2 booted together, and the full that caught up at 17:45:21 failed with `[055]`, `backup.info` missing: autofs on db1 logged `hostname lookup for db2 failed`, and `nfs-server` on db2 was up only at 17:45:24.
