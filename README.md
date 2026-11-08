@@ -53,15 +53,21 @@ flowchart LR
 
 ## Roadmap
 
-| # | Phase | Status |
+| Items | Topic | Status |
 |---|---|---|
-| 0 | Lab: the NUC from a kickstart, KVM, a base VM image, db1 and db2 | done |
-| 1 | PostgreSQL by hand: LVM, XFS, SELinux, firewall, timers, NFS | done |
-| 2 | RHCSA practice: exam topics, practice exams and drills, then EX200 | in progress |
-| 3 | PostgreSQL operations: backups and recovery, replication, failover | done |
-| 4 | Ansible: base role, PostgreSQL as code, roles and TLS, Vault, CI | in progress |
-| 5 | Kubernetes: a kubeadm cluster, workloads, networking and storage, CloudNativePG, Argo CD and Ansible | planned |
+| 01–04 | Lab: the NUC from a kickstart, KVM, a base VM image, db1 and db2 | done |
+| 05–08 | One PostgreSQL host: LVM, XFS, SELinux, firewall, tuned | done |
+| 09–12 | Backups, NFS and failures by hand: timers, autofs, a full disk, emergency boot | done |
+| R1–R4 | RHCSA practice: exam topics, practice exams and drills, then EX200 | in progress |
+| 13–16 | PostgreSQL recovery and failover: point-in-time recovery, pgBackRest, replication | done |
+| 17–20 | Ansible, the hosts as code: base role, data disks, PostgreSQL role, templates | done |
+| 21–24 | Ansible, PostgreSQL services: app roles, TLS, Vault, standby, backups, CI | in progress |
+| 25–28 | Kubernetes, cluster and apps: kubeadm, CRI-O, Calico, Deployments, Kustomize | planned |
+| 29–31 | Kubernetes, traffic and storage: Services, network policy, MetalLB, Gateway API, volumes | planned |
+| 32–35 | PostgreSQL on Kubernetes: CloudNativePG, cert-manager, an object store, backups | planned |
+| 36–40 | Kubernetes, safe operations: placement, autoscaling, RBAC, pod security, etcd backup | planned |
+| 41–44 | Kubernetes, upgrade and automation: kubeadm upgrade, Argo CD, Ansible, fresh clones | planned |
 
-Right now I am on phase 4: Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones, then phase 5: Kubernetes. Phase 3 is done: point-in-time recovery, pgBackRest, streaming replication and failover. Phase 2 ends with the RHCSA exam (EX200) once its date is set.
+Right now I am on Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones, then Kubernetes. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover. The RHCSA topic ends with the exam (EX200) once its date is set.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).

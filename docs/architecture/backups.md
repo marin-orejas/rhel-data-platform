@@ -68,4 +68,4 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 
 ## Planned
 
-- Phase 4: `Restart=on-failure` and a `RestartSec=` in `pgbackrest@.service`. On 2026-11-01 db1 and db2 booted together, and the full that caught up at 17:45:21 failed with `[055]`, `backup.info` missing: autofs on db1 logged `hostname lookup for db2 failed`, and `nfs-server` on db2 was up only at 17:45:24.
+- Item 24: `Restart=on-failure` and a `RestartSec=` in `pgbackrest@.service`. On 2026-11-01 db1 and db2 booted together, and the full that caught up at 17:45:21 failed with `[055]`, `backup.info` missing: autofs on db1 logged `hostname lookup for db2 failed`, and `nfs-server` on db2 was up only at 17:45:24.
