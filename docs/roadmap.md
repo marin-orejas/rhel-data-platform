@@ -1,8 +1,8 @@
 # Roadmap
 
-I do every step by hand first, then automate it. Every setting must still work after a reboot, like on the Red Hat exams. Each numbered item is one lesson, ending in a verified and committed result. An item's number is also the number of its script in [`checks/`](../checks/) when the lesson has one. A new topic goes in when the current ones are nearly done.
+I do every step by hand first, then automate it. Every setting must still work after a reboot. Each numbered item is one lesson, ending in a verified and committed result. An item's number is also the number of its script in [`checks/`](../checks/) when the lesson has one. A new topic goes in when the current ones are nearly done.
 
-Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, phase 2 is R1–R4, phase 3 is 13–16, phase 4 is 17–24 and phase 5 is 25–44.
+Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, phase 2 was the RHCSA practice (now in its own repo), phase 3 is 13–16, phase 4 is 17–24 and phase 5 is 25–44.
 
 ## Lab (01–04)
 - [x] **01 NUC install.** The NUC runs a registered RHEL 10.2 from a kickstart file, with a static IP, a sudo user, SSH with keys only, time sync, a firewall and Secure Boot.
@@ -10,29 +10,17 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 - [x] **03 Base image.** A base VM image from a kickstart file, with a fixed IP and a thin disk.
 - [x] **04 Clones.** db1 and db2 are clones of the base image, each with its own name, IP, machine ID, SSH keys and registration.
 
-*RHCSA topics: software from the CDN, services, SSH, network, users and sudo, time, firewall.*
-
 ## One PostgreSQL host (05–08)
 - [x] **[05 Storage](../checks/05-storage.sh).** db1 has a data disk with LVM and XFS, mounted on `/pgdata` by UUID, and the system journal is kept across reboots on the NUC, db1 and db2.
 - [x] **[06 PostgreSQL](../checks/06-postgres.sh).** PostgreSQL 18 is installed and starts only after `/pgdata` is mounted, and its data directory has the right SELinux labels.
 - [x] **[07 Remote access](../checks/07-postgres-remote.sh).** PostgreSQL listens on port 5433, and db2 can connect through SELinux and the firewall.
 - [x] **[08 Tuned and dba group](../checks/08-tuned-dba.sh).** PostgreSQL has its own tuned profile, and the `dba` group shares a directory with setgid, default ACLs and a umask.
 
-*RHCSA topics: storage, file systems, SELinux, packages, services, logs, tuned, groups and permissions.*
-
 ## Backups, NFS and failures by hand (09–12)
 - [x] **[09 Backup](../checks/09-backup.sh).** A script run by a systemd timer dumps every database and the config files, and a test restore works.
 - [x] **[10 NFS](../checks/10-nfs.sh).** db2 shares a backup disk over NFS, and db1 mounts it with autofs.
 - [x] **11 Full disk.** A full `/pgdata` stopped PostgreSQL, and the volume was grown while a `psql` session stayed open.
 - [x] **12 Emergency boot.** db2 was booted into emergency mode from GRUB, and its default target and kernel arguments were changed.
-
-*RHCSA topics: scripts, scheduled jobs, NFS and autofs, storage, boot.*
-
-## RHCSA practice (R1–R4)
-- [x] **R1 Other exam topics.** The other exam topics were practised: Flatpak, VFAT, IPv6, `at`, nice, `sudoers.d` and the root password reset.
-- [x] **R2 Bad fstab.** A boot stopped by a bad fstab line was fixed from the emergency shell.
-- [x] **R3 Practice exams.** 20 three-hour practice exams and topic drills were taken, and every exam from 09 to 20 passed.
-- [ ] **R4 EX200.** The RHCSA exam (EX200).
 
 ## PostgreSQL recovery and failover (13–16)
 - [x] **[13 PITR](../checks/13-pitr.sh).** db1 was restored by hand to a set time from a base backup and WAL archived on db2, and the restore was timed.
@@ -83,7 +71,7 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 - [ ] **44 Fresh cluster.** Ansible builds the cluster from fresh clones in one timed run, Argo CD brings the apps back, and a second run changes nothing.
 
 ## Learning resources
-- RHEL: [Sander van Vugt (YouTube)](https://www.youtube.com/channel/UComgXoI6pysmetOzuNH_TDQ), [EX200 exam topics](https://www.redhat.com/en/services/training/ex200-red-hat-certified-system-administrator-rhcsa-exam)
+- RHEL: [Sander van Vugt (YouTube)](https://www.youtube.com/channel/UComgXoI6pysmetOzuNH_TDQ)
 - Kubernetes: [Kubernetes documentation](https://kubernetes.io/docs/home/), [CloudNativePG documentation](https://cloudnative-pg.io/docs/), [Argo CD documentation](https://argo-cd.readthedocs.io/)
 - Databases: [CMU 15-445 Intro to Database Systems](https://www.youtube.com/playlist?list=PLSE8ODhjZXjYMAgsGH-GtY5rJYZ6zjsd5), [Hussein Nasser, PostgreSQL](https://www.youtube.com/playlist?list=PLQnljOFTspQWGrOqslniFlRcwxyY94cjj), [PostgreSQL 18 documentation](https://www.postgresql.org/docs/18/), [PostgreSQL 14 Internals (Egor Rogov, free)](https://postgrespro.com/community/books/internals)
 - Backups: [pgBackRest User Guide for RHEL](https://pgbackrest.org/user-guide-rhel.html)

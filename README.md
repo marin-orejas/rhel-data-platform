@@ -4,7 +4,7 @@ A learning project. I build a small PostgreSQL setup on Red Hat Enterprise Linux
 
 What I learn here:
 
-- **RHEL 10 administration** (RHCSA / EX200 topics): storage, SELinux, firewall, systemd, networking and backups, all on a database server.
+- **RHEL 10 administration**: storage, SELinux, firewall, systemd, networking and backups, all on a database server. My RHCSA (EX200) practice is in its own repo, [rhcsa-practice-lab](https://github.com/marin-orejas/rhcsa-practice-lab).
 - **PostgreSQL administration**: backups and point-in-time recovery, replication and failover, roles and TLS.
 - **Automation**: configure db1 and db2 with Ansible, so one playbook builds both from fresh clones.
 - **Kubernetes**: a kubeadm cluster on RHEL 10 with CRI-O and Calico, PostgreSQL on it with CloudNativePG, built with Ansible and kept in step with Argo CD.
@@ -15,7 +15,6 @@ What I learn here:
 - db2 is a streaming standby. During a 1,000,000-row insert on db1 it stayed at most 0.33 s behind.
 - When PostgreSQL on db1 failed, db2 took over by hand in 5 min 51 s with no rows lost, and db1 came back as its standby with `pg_rewind`. See the [failover runbook](docs/runbooks/fail-over-to-db2.md).
 - pgBackRest backs db1 up to db2 every night, and a playbook restores the newest backup on db2 and compares it with the standby in 18 s. A dropped table came back with a restore to a set time: 9 min 31 s by hand, 1.1 s of outage with pgBackRest.
-- RHCSA practice: every exam from exam 09 on passed, see [EX200 practice](docs/journal/ex200-practice.md).
 
 ## Lab
 
@@ -49,7 +48,7 @@ flowchart LR
 | [architecture](docs/architecture/) | One page per layer: [NUC host](docs/architecture/host.md), [VMs](docs/architecture/vms.md), [PostgreSQL](docs/architecture/postgresql.md), [backups](docs/architecture/backups.md), [NFS](docs/architecture/nfs.md), [system settings](docs/architecture/system.md), [Ansible](docs/architecture/ansible.md) |
 | [runbooks](docs/runbooks/) | Tested procedures, step by step |
 | [decisions](docs/decisions/) | Why the lab is built this way, one record per decision |
-| [journal](docs/journal/) | My notes, one file per lesson day, and the EX200 practice results |
+| [journal](docs/journal/) | My notes, one file per lesson day |
 
 ## Roadmap
 
@@ -58,7 +57,6 @@ flowchart LR
 | 01–04 | Lab: the NUC from a kickstart, KVM, a base VM image, db1 and db2 | done |
 | 05–08 | One PostgreSQL host: LVM, XFS, SELinux, firewall, tuned | done |
 | 09–12 | Backups, NFS and failures by hand: timers, autofs, a full disk, emergency boot | done |
-| R1–R4 | RHCSA practice: exam topics, practice exams and drills, then EX200 | in progress |
 | 13–16 | PostgreSQL recovery and failover: point-in-time recovery, pgBackRest, replication | done |
 | 17–20 | Ansible, the hosts as code: base role, data disks, PostgreSQL role, templates | done |
 | 21–24 | Ansible, PostgreSQL services: app roles, TLS, Vault, standby, backups, CI | in progress |
@@ -68,6 +66,6 @@ flowchart LR
 | 36–40 | Kubernetes, safe operations: placement, autoscaling, RBAC, pod security, etcd backup | planned |
 | 41–44 | Kubernetes, upgrade and automation: kubeadm upgrade, Argo CD, Ansible, fresh clones | planned |
 
-Right now I am on Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones, then Kubernetes. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover. The RHCSA topic ends with the exam (EX200) once its date is set.
+Right now I am on Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones, then Kubernetes. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).
