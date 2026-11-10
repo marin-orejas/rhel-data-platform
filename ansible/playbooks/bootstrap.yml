@@ -1,0 +1,9 @@
+---
+- name: The ansible user on a fresh db host
+  hosts: db
+  become: true
+  tasks:
+    - name: Create the ansible user, its key and its sudo rule
+      ansible.builtin.import_role:
+        name: base
+        tasks_from: users
