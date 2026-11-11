@@ -25,4 +25,5 @@
     checkmodule -M -m -o pg_archive_nfs.mod pg_archive_nfs.te &&
     semodule_package -o pg_archive_nfs.pp -m pg_archive_nfs.mod &&
     semodule -i pg_archive_nfs.pp
+  changed_when: true
   when: nfs_module_source is changed or "pg_archive_nfs" not in nfs_loaded_modules.stdout_lines

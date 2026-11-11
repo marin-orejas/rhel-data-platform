@@ -1,5 +1,5 @@
 ---
-- name: pgBackRest on the db hosts
+- name: Backups with pgBackRest on the db hosts
   hosts: db
   become: true
   roles:

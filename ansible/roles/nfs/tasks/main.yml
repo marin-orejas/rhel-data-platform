@@ -3,7 +3,7 @@
   ansible.builtin.import_tasks: server.yml
   when: nfs_exports | length > 0
 
-- name: autofs client
+- name: NFS client with autofs
   ansible.builtin.import_tasks: client.yml
   when: nfs_autofs_maps | length > 0
 

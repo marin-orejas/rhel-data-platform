@@ -13,6 +13,7 @@
 
 - name: Roles and app databases on the primary
   when: postgresql_in_recovery.stdout == "f"
+  become: true
   become_user: postgres
   module_defaults:
     group/community.postgresql.all:

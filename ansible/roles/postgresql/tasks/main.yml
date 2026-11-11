@@ -82,10 +82,12 @@
     -D {{ postgresql_data_dir }} -S {{ inventory_hostname }} -X stream -c fast
   args:
     creates: "{{ postgresql_data_dir }}/PG_VERSION"
+  become: true
   become_user: postgres
   register: postgresql_copy
   when: postgresql_build_standby
 
+# Not handlers: both files must be in place before PostgreSQL starts below.
 - name: Point the new copy at the primary
   ansible.builtin.copy:
     dest: "{{ postgresql_data_dir }}/postgresql.auto.conf"
@@ -97,7 +99,7 @@
     owner: postgres
     group: postgres
     mode: "0600"
-  when: postgresql_copy is changed
+  when: postgresql_copy is changed  # noqa: no-handler
 
 - name: Start the new copy as a standby
   ansible.builtin.file:
@@ -106,7 +108,7 @@
     owner: postgres
     group: postgres
     mode: "0600"
-  when: postgresql_copy is changed
+  when: postgresql_copy is changed  # noqa: no-handler
 
 - name: Write postgresql.conf from the template
   ansible.builtin.template:

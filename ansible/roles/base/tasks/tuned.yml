@@ -32,9 +32,10 @@
 - name: Check the active profile
   ansible.builtin.command: tuned-adm active
   register: base_tuned_active
-  changed_when: 'base_tuned_active.stdout != "Current active profile: " ~ base_tuned_profile'
+  changed_when: false
   check_mode: false
 
 - name: Switch to the profile
   ansible.builtin.command: "tuned-adm profile {{ base_tuned_profile }}"
-  when: base_tuned_active is changed
+  changed_when: true
+  when: 'base_tuned_active.stdout != "Current active profile: " ~ base_tuned_profile'

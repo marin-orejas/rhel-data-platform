@@ -32,12 +32,14 @@
           ansible.builtin.command: >-
             pgbackrest --stanza=main --pg1-path={{ restore_test_dir }}
             --archive-mode=off restore
+          changed_when: true
 
         - name: Start the copy on a socket only
           ansible.builtin.command: >-
             pg_ctl start -D {{ restore_test_dir }} -w
             -l /pgdata/pgsql/restore-test.log
             -o "-p 5434 -c listen_addresses='' -c hot_standby=off -c logging_collector=off"
+          changed_when: true
 
         - name: Read the data on the copy after the replay
           ansible.builtin.command: psql -X -At -p 5434 -d lab -c "SELECT pg_is_in_recovery(), {{ restore_test_data }}"

@@ -1,7 +1,18 @@
 ---
-- ansible.builtin.import_playbook: base.yml
-- ansible.builtin.import_playbook: storage.yml
-- ansible.builtin.import_playbook: postgresql.yml
-- ansible.builtin.import_playbook: nfs.yml
-- ansible.builtin.import_playbook: pgbackrest.yml
-- ansible.builtin.import_playbook: pgdump.yml
+- name: Base settings
+  ansible.builtin.import_playbook: base.yml
+
+- name: Data disks
+  ansible.builtin.import_playbook: storage.yml
+
+- name: PostgreSQL
+  ansible.builtin.import_playbook: postgresql.yml
+
+- name: NFS backup share
+  ansible.builtin.import_playbook: nfs.yml
+
+- name: Backups with pgBackRest
+  ansible.builtin.import_playbook: pgbackrest.yml
+
+- name: Nightly dumps
+  ansible.builtin.import_playbook: pgdump.yml
