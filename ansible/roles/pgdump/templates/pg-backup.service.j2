@@ -3,8 +3,12 @@
 Description=Back up PostgreSQL databases, roles and config files
 Wants=autofs.service
 After=postgresql.service autofs.service
+StartLimitIntervalSec=10min
+StartLimitBurst=3
 
 [Service]
 Type=oneshot
 User=postgres
 ExecStart=/usr/local/bin/pg-backup.sh {{ pgdump_dest }}
+Restart=on-failure
+RestartSec=1min

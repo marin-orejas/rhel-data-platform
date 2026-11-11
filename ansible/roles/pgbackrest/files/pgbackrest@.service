@@ -2,8 +2,12 @@
 Description=pgBackRest %i backup of stanza main
 Wants=autofs.service
 After=postgresql.service autofs.service
+StartLimitIntervalSec=10min
+StartLimitBurst=3
 
 [Service]
 Type=oneshot
 User=postgres
 ExecStart=/usr/bin/pgbackrest --stanza=main --type=%i backup
+Restart=on-failure
+RestartSec=1min

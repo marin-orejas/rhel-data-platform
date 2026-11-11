@@ -17,6 +17,7 @@ Repo files: [`ansible/roles/pgdump/`](../../ansible/roles/pgdump/), [`ansible/ro
 | Archive command | `pgbackrest --stanza=main archive-push %p`, in `postgresql.conf` from the Ansible role `postgresql` ([Ansible](ansible.md)) |
 | SELinux | module `pg_archive_nfs`, see [SELinux](system.md#selinux) |
 | Service | `pgbackrest@.service`, the instance is the backup type: `pgbackrest@full`, `pgbackrest@diff` |
+| Retry | A failed run starts again after 1 min, at most 3 starts in 10 min (`Restart=on-failure`, `RestartSec=1min`, `StartLimitBurst=3`). Then the unit stays `failed`. |
 | Schedule | Full on Sunday, differential Monday to Saturday, both at 01:00 (`pgbackrest-full.timer`, `pgbackrest-diff.timer`). The backups run only on db1, as `postgres`. On db2 the timers are disabled and stopped. |
 | Retention | `repo1-retention-full=2`: the two newest fulls, the backups that depend on them, and their WAL |
 | Restore test | `ansible/playbooks/restore-test.yml`, started by hand from the desktop, runs on db2: the newest backup and the WAL archive after it go into a temporary copy beside the standby. The copy must leave recovery and hold the same data as the standby ([Ansible](ansible.md)). |
@@ -27,6 +28,7 @@ Repo files: [`ansible/roles/pgdump/`](../../ansible/roles/pgdump/), [`ansible/ro
 |---|---|
 | Script | `pg-backup.sh` in the role `pgdump`, as `/usr/local/bin/pg-backup.sh`, run as `postgres` over the local socket |
 | Service | `pg-backup.service`, oneshot, `Wants=` and `After=autofs.service`. Only the timer starts it. |
+| Retry | The same as for `pgbackrest@.service` |
 | Timer | `pg-backup.timer`, every day at 02:00, `Persistent=true` |
 | Destination | `/mnt/db2/backup/pgsql`, `postgres:dba`, mode `2750`. The files are `640`. |
 | Contents | One gzip SQL dump per database, the roles from `pg_dumpall --globals-only` (with password hashes), the config files in a `.tar.bz2` |
@@ -47,7 +49,7 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 - The nightly dumps stay next to pgBackRest, to restore one database without touching the others.
 - The [repository is on the NFS share](../decisions/pgbackrest-with-its-repository-on-nfs.md) to keep the lab small, but db1 can delete its own backups.
 - The restore test runs on db2, beside the standby, so db1 is never touched and the backup is read from the local repository. Archiving is off in the copy. After its promote the copy is on a new timeline, and its WAL in the stanza would clash with the timeline a real failover takes.
-- [systemd timers, not cron](../decisions/systemd-timers-for-backups.md), so a missed run starts after the next boot and a failure leaves the unit `failed`.
+- [systemd timers, not cron](../decisions/systemd-timers-for-backups.md), so a missed run starts after the next boot and a failure leaves the unit `failed`. Both services retry a failed run, because the run after a boot can start before db2 is up, and `After=` orders units only on one host.
 
 ## Tested
 
@@ -65,7 +67,3 @@ pg-backup.sh, every night at 02:00 ───────────►   pgsql/
 ## History
 
 - `/srv/backup/pgsql/wal` and `base` on db2: the WAL archive by hand (`cp`) and its base backup from `pg_basebackup`, 2026-10-25 to 2026-10-26, up to segment `00000002000000000000000E`. Nothing writes there any more.
-
-## Planned
-
-- Item 24: `Restart=on-failure` and a `RestartSec=` in `pgbackrest@.service`. On 2026-11-01 db1 and db2 booted together, and the full that caught up at 17:45:21 failed with `[055]`, `backup.info` missing: autofs on db1 logged `hostname lookup for db2 failed`, and `nfs-server` on db2 was up only at 17:45:24.
