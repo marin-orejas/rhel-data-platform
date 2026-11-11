@@ -1,0 +1,6 @@
+---
+- name: Nightly dumps of the db hosts
+  hosts: db
+  become: true
+  roles:
+    - pgdump

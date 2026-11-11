@@ -7,6 +7,11 @@ nfs_autofs_maps:
 pgbackrest_repo_path: /mnt/db2/backup/pgbackrest
 pgbackrest_timers: true
 
+base_dba_dirs:
+  - "/srv/dba"
+pgdump_dest: /mnt/db2/backup/pgsql
+pgdump_enabled: true
+
 storage_pools:
   - name: data
     type: lvm

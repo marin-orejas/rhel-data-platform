@@ -6,3 +6,4 @@ base_firewall_extra_services: []
 base_selinux_fcontexts: []
 base_selinux_ports: []
 base_tuned_profile: postgresql-guest
+base_dba_dirs: []

@@ -1,3 +1,4 @@
+# {{ ansible_managed }}
 [Unit]
 Description=Back up PostgreSQL databases, roles and config files
 Wants=autofs.service
@@ -6,4 +7,4 @@ After=postgresql.service autofs.service
 [Service]
 Type=oneshot
 User=postgres
-ExecStart=/usr/local/bin/pg-backup.sh /mnt/db2/backup/pgsql
+ExecStart=/usr/local/bin/pg-backup.sh {{ pgdump_dest }}

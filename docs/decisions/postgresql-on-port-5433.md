@@ -13,7 +13,7 @@ PostgreSQL on db1 listens on 5433. The port is set with `ALTER SYSTEM`, labeled 
 
 ## Consequences
 
-- Every client has to name the port. The postgres user's `.bash_profile` sets `PGPORT=5433`, and `scripts/pg-backup.sh` sets it itself, because `sudo -u`, cron and systemd do not read that file.
+- Every client has to name the port. The postgres user's `.bash_profile` sets `PGPORT=5433`, and `pg-backup.sh` sets it itself, because `sudo -u`, cron and systemd do not read that file.
 - The local socket is `.s.PGSQL.5433`, so a client without the port looks for `.s.PGSQL.5432` and fails.
 - The firewalld service `postgresql` cannot be used, because it opens 5432.
 - The other port is not a security measure. Access is limited by the firewall and `pg_hba.conf`.

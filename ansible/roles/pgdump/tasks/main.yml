@@ -1,0 +1,13 @@
+---
+- name: Create the dump directory on the backup host
+  ansible.builtin.file:
+    path: "{{ pgdump_dest }}"
+    state: directory
+    owner: postgres
+    group: dba
+    mode: "2750"
+  when: pgdump_create_dest
+
+- name: Nightly dumps
+  ansible.builtin.import_tasks: dumps.yml
+  when: pgdump_enabled

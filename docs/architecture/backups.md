@@ -3,7 +3,7 @@
 Backups of db1 go to the NFS share on db2. pgBackRest backs up the cluster and archives every WAL segment, for a restore to any time in the last 7 to 14 days. A nightly dump of each database restores one database to 02:00.
 
 Verified by: [`checks/09-backup.sh`](../../checks/09-backup.sh) (dumps), [`checks/14-pgbackrest.sh`](../../checks/14-pgbackrest.sh) (pgBackRest), [`checks/23-standby-backup-roles.sh`](../../checks/23-standby-backup-roles.sh) (the role `pgbackrest` and the restore test, desktop), [`checks/13-pitr.sh`](../../checks/13-pitr.sh) (the archive by hand)
-Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](../../systemd/), [`ansible/roles/pgbackrest/`](../../ansible/roles/pgbackrest/), [`ansible/playbooks/restore-test.yml`](../../ansible/playbooks/restore-test.yml)
+Repo files: [`ansible/roles/pgdump/`](../../ansible/roles/pgdump/), [`ansible/roles/pgbackrest/`](../../ansible/roles/pgbackrest/), [`ansible/playbooks/restore-test.yml`](../../ansible/playbooks/restore-test.yml)
 
 ## Setup
 
@@ -25,9 +25,9 @@ Repo files: [`scripts/pg-backup.sh`](../../scripts/pg-backup.sh), [`systemd/`](.
 
 | Part | Setup |
 |---|---|
-| Script | `scripts/pg-backup.sh` as `/usr/local/bin/pg-backup.sh`, run as `postgres` over the local socket |
-| Service | `systemd/pg-backup.service`, oneshot, `Wants=` and `After=autofs.service`. Only the timer starts it. |
-| Timer | `systemd/pg-backup.timer`, every day at 02:00, `Persistent=true` |
+| Script | `pg-backup.sh` in the role `pgdump`, as `/usr/local/bin/pg-backup.sh`, run as `postgres` over the local socket |
+| Service | `pg-backup.service`, oneshot, `Wants=` and `After=autofs.service`. Only the timer starts it. |
+| Timer | `pg-backup.timer`, every day at 02:00, `Persistent=true` |
 | Destination | `/mnt/db2/backup/pgsql`, `postgres:dba`, mode `2750`. The files are `640`. |
 | Contents | One gzip SQL dump per database, the roles from `pg_dumpall --globals-only` (with password hashes), the config files in a `.tar.bz2` |
 | Retention | 8 nightly sets (`find -mtime +7`). Nothing is deleted after a failed step. |

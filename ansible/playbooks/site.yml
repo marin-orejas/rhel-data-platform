@@ -4,3 +4,4 @@
 - ansible.builtin.import_playbook: postgresql.yml
 - ansible.builtin.import_playbook: nfs.yml
 - ansible.builtin.import_playbook: pgbackrest.yml
+- ansible.builtin.import_playbook: pgdump.yml

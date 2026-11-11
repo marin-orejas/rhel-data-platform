@@ -9,6 +9,9 @@ nfs_exports:
 pgbackrest_repo_path: /srv/backup/pgbackrest
 pgbackrest_create_repo: true
 
+pgdump_dest: /srv/backup/pgsql
+pgdump_create_dest: true
+
 storage_pools:
   - name: data
     type: lvm

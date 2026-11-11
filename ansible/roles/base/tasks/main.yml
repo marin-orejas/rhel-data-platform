@@ -2,6 +2,9 @@
 - name: Users and sudo
   ansible.builtin.import_tasks: users.yml
 
+- name: Shared dba directories
+  ansible.builtin.import_tasks: dba.yml
+
 - name: Firewall
   ansible.builtin.import_tasks: firewall.yml
 
