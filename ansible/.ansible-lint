@@ -1,0 +1,3 @@
+---
+# The collections come from requirements.yml in the CI workflow.
+offline: true

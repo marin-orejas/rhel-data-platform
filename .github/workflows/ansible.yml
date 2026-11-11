@@ -1,0 +1,42 @@
+---
+name: Ansible
+
+on:
+  push:
+    paths:
+      - "ansible/**"
+      - ".github/workflows/ansible.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ansible
+    env:
+      ANSIBLE_VAULT_PASSWORD_FILE: /tmp/ci-vault-pass
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install ansible-core and ansible-lint
+        run: pip install ansible-core==2.20.7 ansible-lint==26.10.1
+
+      - name: Install the collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      # The runner has no vault password: nothing here decrypts the !vault values.
+      - name: Write a dummy vault password file
+        run: echo "ci-no-vault-password" > /tmp/ci-vault-pass
+
+      - name: Syntax check
+        run: ansible-playbook --syntax-check playbooks/site.yml playbooks/bootstrap.yml playbooks/restore-test.yml
+
+      - name: Lint
+        run: ansible-lint
