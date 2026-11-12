@@ -33,3 +33,9 @@
       when: data_vg_on_disk.rc == 0
   roles:
     - fedora.linux_system_roles.storage
+  post_tasks:
+    - name: Label the data file systems for SELinux
+      ansible.builtin.command: restorecon -Rv {{ item }}
+      register: data_relabel
+      changed_when: data_relabel.stdout | length > 0
+      loop: "{{ storage_pools | map(attribute='volumes') | flatten | map(attribute='mount_point') | list }}"
