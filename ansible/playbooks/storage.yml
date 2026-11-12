@@ -4,5 +4,32 @@
   become: true
   vars:
     storage_safe_mode: true
+  pre_tasks:
+    - name: Look for the data VG outside the LVM devices file
+      ansible.builtin.command: 'vgs --devicesfile "" data'
+      register: data_vg_on_disk
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Look for the data VG in the LVM devices file
+      ansible.builtin.command: vgs data
+      register: data_vg_listed
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Add the disks of the data VG to the LVM devices file and activate it
+      ansible.builtin.shell: vgimportdevices data && vgchange -ay data
+      changed_when: true
+      when: data_vg_on_disk.rc == 0 and data_vg_listed.rc != 0
+
+    - name: Stop if an LV of the data VG is not active
+      ansible.builtin.command: lvs --noheadings --binary -o lv_active_locally data
+      register: data_lvs_active
+      changed_when: false
+      check_mode: false
+      failed_when: data_lvs_active.rc != 0 or '0' in (data_lvs_active.stdout_lines | map('trim') | list)
+      when: data_vg_on_disk.rc == 0
   roles:
     - fedora.linux_system_roles.storage
