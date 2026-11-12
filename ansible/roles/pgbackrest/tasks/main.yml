@@ -43,6 +43,14 @@
     mode: "0750"
   when: pgbackrest_create_repo
 
+- name: Create the stanza where backups run
+  ansible.builtin.command: pgbackrest --stanza=main stanza-create
+  become: true
+  become_user: postgres
+  register: pgbackrest_stanza
+  changed_when: "'already exists' not in pgbackrest_stanza.stdout"
+  when: pgbackrest_timers
+
 - name: Install the backup service and timers
   ansible.builtin.copy:
     src: "{{ item }}"
