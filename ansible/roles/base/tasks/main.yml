@@ -23,9 +23,12 @@
 - name: Journal
   ansible.builtin.import_tasks: journal.yml
 
-- name: Install vim
+- name: Install vim and the shell extras
   ansible.builtin.dnf:
-    name: vim-enhanced
+    name:
+      - vim-enhanced
+      - bash-completion
+      - bash-color-prompt
     state: present
 
 - name: Write the login message
