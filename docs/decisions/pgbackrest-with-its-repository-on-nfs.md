@@ -20,4 +20,4 @@ pgBackRest 2.60 from PGDG archives the WAL and takes the backups (a full on Sund
 - The SELinux module `pg_archive_nfs` needed version 1.1, with rules for directories and `rename` on NFS.
 - The package comes from outside RHEL, limited with `includepkgs` so no PGDG package can replace PostgreSQL from AppStream.
 
-Details: [Backups, pgBackRest](../architecture/backups.md#pgbackrest)
+Details: [pgBackRest](../architecture/backups/pgbackrest.md)

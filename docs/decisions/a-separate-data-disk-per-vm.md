@@ -18,4 +18,4 @@ Each VM gets a second thin qcow2 disk of 10 GiB with its own volume group `data`
 - Without the disk, the server does not start, and no cluster can be created on the root disk by mistake.
 - One more disk to attach and set up on every new VM.
 
-Details: [VMs, Data disks](../architecture/vms.md#data-disks)
+Details: [VMs, Data disks](../architecture/hosts/vms.md#data-disks)

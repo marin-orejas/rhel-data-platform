@@ -2,12 +2,12 @@
 
 ## When to use
 
-To make a new VM such as db1 or db2 from `rhel-base`, or to give a VM a new system disk and keep its data disk ([Rebuild the db hosts from fresh clones](rebuild-the-db-hosts-from-fresh-clones.md)). A clone starts with the identity of `rhel-base`, so its hostname, machine ID, SSH host keys and registration must change before it is used. Why each one must change: [VMs, Clones](../architecture/vms.md#clones).
+To make a new VM such as db1 or db2 from `rhel-base`, or to give a VM a new system disk and keep its data disk ([Rebuild the db hosts from fresh clones](rebuild-the-db-hosts-from-fresh-clones.md)). A clone starts with the identity of `rhel-base`, so its hostname, machine ID, SSH host keys and registration must change before it is used. Why each one must change: [VMs, Why](../architecture/hosts/vms.md#why).
 
 ## Before you start
 
 - `rhel-base` is shut off.
-- The new VM has a MAC address and an IP address from the table in [VMs](../architecture/vms.md#clones). The example below is db1.
+- The new VM has a MAC address and an IP address from the table in [VMs](../architecture/hosts/vms.md#clones). The example below is db1.
 - A shell on the nuc as a user in the `libvirt` group.
 
 ## Steps

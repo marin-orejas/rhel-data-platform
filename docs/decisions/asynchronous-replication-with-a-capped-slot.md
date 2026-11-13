@@ -19,4 +19,4 @@ Physical streaming replication from db1 to db2, asynchronous. db2 uses the physi
 - If db2 falls more than 1 GB behind, db1 removes the WAL, the slot becomes `lost`, and db2 must be built again with `pg_basebackup`. db1 never fills `/pgdata` because of the standby.
 - A synchronous standby on the same NUC would protect nothing extra against a NUC failure, but would slow every commit and stop writes when db2 is down.
 
-Details: [PostgreSQL, Replication](../architecture/postgresql.md#replication)
+Details: [Streaming replication](../architecture/postgresql/replication.md)

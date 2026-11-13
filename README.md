@@ -45,7 +45,7 @@ flowchart LR
 
 | Folder | What it holds |
 |---|---|
-| [architecture](docs/architecture/) | One page per layer: [NUC host](docs/architecture/host.md), [VMs](docs/architecture/vms.md), [PostgreSQL](docs/architecture/postgresql.md), [backups](docs/architecture/backups.md), [NFS](docs/architecture/nfs.md), [system settings](docs/architecture/system.md), [Ansible](docs/architecture/ansible.md) |
+| [architecture](docs/architecture/) | What is built, one folder per area: [hosts](docs/architecture/hosts/), [PostgreSQL](docs/architecture/postgresql/), [backups](docs/architecture/backups/), [Ansible](docs/architecture/ansible/) |
 | [runbooks](docs/runbooks/) | Tested procedures, step by step |
 | [decisions](docs/decisions/) | Why the lab is built this way, one record per decision |
 | [journal](docs/journal/) | My notes, one file per lesson day |

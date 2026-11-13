@@ -2,14 +2,14 @@
 
 ## When to use
 
-When the system disk of db1 or db2 is lost or broken but its data disk is intact, or to start both hosts again from `rhel-base`. Each host gets a new clone and keeps its data disk, and `ansible/playbooks/site.yml` builds the rest. What the playbook sets up: [Ansible](../architecture/ansible.md).
+When the system disk of db1 or db2 is lost or broken but its data disk is intact, or to start both hosts again from `rhel-base`. Each host gets a new clone and keeps its data disk, and `ansible/playbooks/site.yml` builds the rest. What the playbook sets up: [Ansible playbooks](../architecture/ansible/playbooks.md).
 
 ## Before you start
 
 - db1 is the primary and db2 its standby, as `ansible/inventory/host_vars/` says. After a failover to db2, the data disk of db1 still holds a primary, and the playbook would start it as a second one.
 - The data disk of db1 holds the cluster. The roles set no passwords, so `replicator`, `rewind` and the app logins come from it.
-- `rhel-base` is shut off, and the DHCP reservations of db1 and db2 exist ([VMs, Clones](../architecture/vms.md#clones)).
-- The desktop has the Vault password file and the key `~/.ssh/id_ed25519_ansible` ([Ansible, Setup](../architecture/ansible.md#setup)).
+- `rhel-base` is shut off, and the DHCP reservations of db1 and db2 exist ([VMs, Clones](../architecture/hosts/vms.md#clones)).
+- The desktop has the Vault password file and the key `~/.ssh/id_ed25519_ansible` ([Ansible control node](../architecture/ansible/control-node.md)).
 
 ## Steps
 

@@ -18,4 +18,4 @@ autofs mounts the share on db1 with an indirect map: `/mnt/db2` in `/etc/auto.ma
 - systemd does not know the autofs paths, so `RequiresMountsFor=` cannot be used. The backup units have `Wants=` and `After=autofs.service` instead.
 - `ls /mnt/db2` shows nothing until a program opens `/mnt/db2/backup`, which can be confusing when the share is checked by hand.
 
-Details: [NFS share](../architecture/nfs.md)
+Details: [NFS share](../architecture/backups/nfs.md)

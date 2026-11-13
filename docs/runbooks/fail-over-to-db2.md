@@ -2,13 +2,13 @@
 
 ## When to use
 
-When PostgreSQL on db1 has failed and db2 must take over the writes, and later to make db1 the primary again. How replication is set up: [PostgreSQL, Replication](../architecture/postgresql.md#replication).
+When PostgreSQL on db1 has failed and db2 must take over the writes, and later to make db1 the primary again. How replication is set up: [Streaming replication](../architecture/postgresql/replication.md).
 
 ## Before you start
 
 - db2 streams from db1, and data checksums are on, so `pg_rewind` can run.
 - `pg_hba.conf` is the same on both hosts and lets the other host in as `replicator` and `rewind`. `/var/lib/pgsql/.pgpass` on each host holds both passwords for the other host.
-- Both hosts trust the lab CA in `/var/lib/pgsql/.postgresql/root.crt`, so `sslmode=verify-full` in steps 5 and 6 checks the certificate of db2. See [PostgreSQL, TLS](../architecture/postgresql.md#tls).
+- Both hosts trust the lab CA in `/var/lib/pgsql/.postgresql/root.crt`, so `sslmode=verify-full` in steps 5 and 6 checks the certificate of db2. See [PostgreSQL TLS](../architecture/postgresql/tls.md).
 - The client names both servers with `target_session_attrs=read-write`, so it follows the primary without a change.
 
 ## Steps

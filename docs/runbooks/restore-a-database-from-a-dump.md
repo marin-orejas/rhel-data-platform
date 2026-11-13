@@ -2,7 +2,7 @@
 
 ## When to use
 
-To bring back one database, or to look at an old copy of it next to the live one. A dump restores the state of the nightly run at 02:00. To restore the whole cluster to a set time, use [Restore to a set time with pgBackRest](restore-to-a-time-with-pgbackrest.md). How the dumps are made: [Backups, Nightly dumps](../architecture/backups.md#nightly-dumps).
+To bring back one database, or to look at an old copy of it next to the live one. A dump restores the state of the nightly run at 02:00. To restore the whole cluster to a set time, use [Restore to a set time with pgBackRest](restore-to-a-time-with-pgbackrest.md). How the dumps are made: [Nightly dumps](../architecture/backups/dumps.md).
 
 ## Before you start
 

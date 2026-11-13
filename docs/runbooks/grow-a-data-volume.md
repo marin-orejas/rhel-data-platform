@@ -2,7 +2,7 @@
 
 ## When to use
 
-When `/pgdata` on db1 (LV `data/pgdata`) is close to full and VG `data` still has free space. The same steps work for `data/backup` on db2. The layout of the data disks: [VMs, Data disks](../architecture/vms.md#data-disks).
+When `/pgdata` on db1 (LV `data/pgdata`) is close to full and VG `data` still has free space. The same steps work for `data/backup` on db2. The layout of the data disks: [VMs, Data disks](../architecture/hosts/vms.md#data-disks).
 
 ## Before you start
 

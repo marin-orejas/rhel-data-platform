@@ -2,11 +2,11 @@
 
 ## When to use
 
-When db2 needs a new read-only copy of db1 that streams WAL from it. How replication is set up: [PostgreSQL, Replication](../architecture/postgresql.md#replication).
+When db2 needs a new read-only copy of db1 that streams WAL from it. How replication is set up: [Streaming replication](../architecture/postgresql/replication.md).
 
 ## Before you start
 
-- The Ansible role `postgresql` has run on db1. It keeps the role `replicator`, the slot `db2` and the `pg_hba.conf` rule for `replicator` from db2, see [Ansible](../architecture/ansible.md).
+- The Ansible role `postgresql` has run on db1. It keeps the role `replicator`, the slot `db2` and the `pg_hba.conf` rule for `replicator` from db2, see [Role postgresql](../architecture/ansible/postgresql.md).
 - `ansible/inventory/host_vars/db2.yml` has `postgresql_build_standby: true` and `postgresql_peer_address: 192.168.122.11`.
 - The Vault value `postgresql_replicator_password` is the password of `replicator` on db1.
 - `/pgdata` on db2 has room for a second copy beside the old one (`df -h /pgdata`).

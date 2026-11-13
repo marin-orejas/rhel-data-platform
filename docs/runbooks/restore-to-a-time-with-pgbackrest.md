@@ -2,7 +2,7 @@
 
 ## When to use
 
-When a change destroyed data in the cluster on db1, such as a dropped table, and the whole cluster must go back to a time just before it. Everything written after that time is lost, in every database. To bring back only one database, use [Restore a database from a nightly dump](restore-a-database-from-a-dump.md). How pgBackRest is set up: [Backups, pgBackRest](../architecture/backups.md#pgbackrest).
+When a change destroyed data in the cluster on db1, such as a dropped table, and the whole cluster must go back to a time just before it. Everything written after that time is lost, in every database. To bring back only one database, use [Restore a database from a nightly dump](restore-a-database-from-a-dump.md). How pgBackRest is set up: [pgBackRest](../architecture/backups/pgbackrest.md).
 
 ## Before you start
 

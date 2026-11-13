@@ -19,4 +19,4 @@ Backups run from systemd timers: `pg-backup.timer` for the dumps, and `pgbackres
 - Neither cron nor systemd reads the `.bash_profile` of postgres, so the script sets `PGPORT` itself.
 - Two files per job instead of one crontab line.
 
-Details: [Backups](../architecture/backups.md)
+Details: [Nightly dumps](../architecture/backups/dumps.md)

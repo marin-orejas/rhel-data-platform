@@ -2,7 +2,7 @@
 
 ## When to use
 
-When SELinux blocks a confined service and no boolean allows what it needs. Example: the archiver of PostgreSQL (`postgresql_t`) may not write files labeled `nfs_t`. The module is `ansible/roles/nfs/files/pg_archive_nfs.te`, described in [System settings, SELinux](../architecture/system.md#selinux).
+When SELinux blocks a confined service and no boolean allows what it needs. Example: the archiver of PostgreSQL (`postgresql_t`) may not write files labeled `nfs_t`. The module is `ansible/roles/nfs/files/pg_archive_nfs.te`, described in [System settings, SELinux](../architecture/hosts/system.md#selinux).
 
 ## Before you start
 
