@@ -1,8 +1,8 @@
 # pgBackRest
 
-pgBackRest backs up the cluster on db1 and archives every WAL segment to the NFS share on db2, for a restore to any time in the last 7 to 14 days. The backups run only on db1, and a playbook tests the newest one on db2.
+pgBackRest backs up the cluster on db1 and archives every WAL segment to the NFS share on db2, for a restore to any time in the last 7 to 14 days. The backups run only on db1, and a playbook tests the newest one on db2. The repository was made again on 2026-11-12, and its oldest backup is from that day.
 
-Checks: [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh), [23](../../../checks/23-standby-backup-roles.sh) · Managed by: [Role pgbackrest](../ansible/pgbackrest.md), [Role postgresql](../ansible/postgresql.md)
+Checks: [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh), [23](../../../checks/23-standby-backup-roles.sh), [24](../../../checks/24-fresh-clones.sh) · Managed by: [Role pgbackrest](../ansible/pgbackrest.md), [Role postgresql](../ansible/postgresql.md)
 
 ## Setup
 
@@ -39,7 +39,4 @@ Checks: [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh)
 | 2026-10-26 | Restore with pgBackRest to 5 s before a `DROP TABLE` ([runbook](../../runbooks/restore-to-a-time-with-pgbackrest.md)) | Outage 1.1 s, `--delta` restore 0.41 s. All 300,000 rows came back with the same `sum(id)`. |
 | 2026-10-26 | A third full backup | Removed the first full, its differential and incremental, and their WAL. |
 | 2026-11-07 | `ansible/playbooks/restore-test.yml` on db2: the newest backup (a differential of 2026-10-31) and the WAL after it restored into a temporary copy | Restore 9.1 s (163.7 MB), replay of 18 WAL segments in 1.37 s, the whole run 18.1 s. The copy left recovery on timeline 6 with the same data as the standby, and the repository got no `00000006.history`. |
-
-## History
-
-- `/srv/backup/pgsql/wal` and `base` (db2, lesson 13): the WAL archive by hand (`cp`) and its base backup from `pg_basebackup`, up to segment `00000002000000000000000E`. Nothing writes there any more.
+| 2026-11-13 | Missed runs of the dump and backup timers, caught up after two boots | 16:42 the dump after the first boot. 16:48 the dump and full `20261113-164816F` (171.8MB, 20.6 s) after a reboot with the timer stamps set back. db2 was up 22 s before db1, so the retry was not needed. |

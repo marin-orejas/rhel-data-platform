@@ -51,8 +51,6 @@ The directories on db2:
 ```
 /srv/backup          root:root           755    mount point of LV data/backup, exported
 ├─ pgsql             postgres:dba        2750   nightly dumps
-│   ├─ wal           postgres:dba        2750   WAL archive by hand, no longer written
-│   └─ base          postgres:dba        2750   base backups by hand, no longer written
 └─ pgbackrest        postgres:postgres   750    pgBackRest repository
 ```
 

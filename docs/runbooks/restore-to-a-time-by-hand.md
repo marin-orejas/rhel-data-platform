@@ -2,7 +2,7 @@
 
 ## When to use
 
-Only for the archive by hand in `/mnt/db2/backup/pgsql/wal` and `base`, which ends at segment `00000002000000000000000E`. Every later time is in the pgBackRest repository: use [Restore to a set time with pgBackRest](restore-to-a-time-with-pgbackrest.md). The archive by hand: [pgBackRest, History](../architecture/backups/pgbackrest.md#history).
+For a WAL archive kept by hand with `cp`, as db1 had in `/mnt/db2/backup/pgsql/wal` and `base` until 2026-11-12. The lab has no such archive now. Every time is in the pgBackRest repository: use [Restore to a set time with pgBackRest](restore-to-a-time-with-pgbackrest.md).
 
 ## Before you start
 
