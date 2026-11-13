@@ -15,6 +15,7 @@ What I learn here:
 - db2 is a streaming standby. During a 1,000,000-row insert on db1 it stayed at most 0.33 s behind.
 - When PostgreSQL on db1 failed, db2 took over by hand in 5 min 51 s with no rows lost, and db1 came back as its standby with `pg_rewind`. See the [failover runbook](docs/runbooks/fail-over-to-db2.md).
 - pgBackRest backs db1 up to db2 every night, and a playbook restores the newest backup on db2 and compares it with the standby in 18 s. A dropped table came back with a restore to a set time: 9 min 31 s by hand, 1.1 s of outage with pgBackRest.
+- One playbook builds db1 and db2 from fresh clones (db1 in 3 min 46 s), a second run changes nothing, and GitHub Actions checks the Ansible code on every push.
 
 ## Lab
 
@@ -59,13 +60,13 @@ flowchart LR
 | 09–12 | Backups, NFS and failures by hand: timers, autofs, a full disk, emergency boot | done |
 | 13–16 | PostgreSQL recovery and failover: point-in-time recovery, pgBackRest, replication | done |
 | 17–20 | Ansible, the hosts as code: base role, data disks, PostgreSQL role, templates | done |
-| 21–24 | Ansible, PostgreSQL services: app roles, TLS, Vault, standby, backups, CI | in progress |
+| 21–24 | Ansible, PostgreSQL services: app roles, TLS, Vault, standby, backups, CI | done |
 | 25–28 | Kubernetes, cluster and apps: kubeadm, CRI-O, Calico, Deployments, Kustomize | planned |
 | 29–31 | Kubernetes, traffic and storage: Services, network policy, MetalLB, Gateway API, volumes | planned |
 | 32–35 | PostgreSQL on Kubernetes: CloudNativePG, cert-manager, an object store, backups | planned |
 | 36–40 | Kubernetes, safe operations: placement, autoscaling, RBAC, pod security, etcd backup | planned |
 | 41–44 | Kubernetes, upgrade and automation: kubeadm upgrade, Argo CD, Ansible, fresh clones | planned |
 
-Right now I am on Ansible. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share and pgBackRest the same on db1 and db2: my own `base`, `postgresql`, `nfs` and `pgbackrest` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. Next comes one playbook that builds db1 and db2 from fresh clones, then Kubernetes. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover.
+Ansible is done. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share, pgBackRest and the nightly dumps the same on db1 and db2: my own `base`, `postgresql`, `nfs`, `pgbackrest` and `pgdump` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. One playbook builds both hosts from fresh clones, and GitHub Actions checks the code on every push. Next comes Kubernetes, starting with a kubeadm cluster on three new VMs. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).

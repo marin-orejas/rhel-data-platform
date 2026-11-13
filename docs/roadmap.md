@@ -38,7 +38,7 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 - [x] **[21 App roles](../checks/21-app-roles.sh).** An app role and a read-only role get default privileges and their own `pg_hba.conf` rules, by hand first, then as code.
 - [x] **[22 TLS](../checks/22-tls.sh).** PostgreSQL uses TLS with a certificate from a small internal CA that clients check, by hand first, then as code with the keys in Vault.
 - [x] **[23 Standby and backup roles](../checks/23-standby-backup-roles.sh).** Roles build the db2 standby and pgBackRest with its timers, and a playbook runs a timed restore test.
-- [ ] **24 Fresh clones.** One playbook builds db1 and db2 from fresh clones, a second run changes nothing, and GitHub Actions checks the code.
+- [x] **[24 Fresh clones](../checks/24-fresh-clones.sh).** One playbook builds db1 and db2 from fresh clones, a second run changes nothing, and GitHub Actions checks the code.
 
 ## Kubernetes: cluster and apps (25–28)
 - [ ] **25 Nodes.** Three clones of the base image get the base role, no swap, CRI-O and the Kubernetes 1.36 packages.
