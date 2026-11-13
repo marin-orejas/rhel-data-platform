@@ -8,15 +8,17 @@ Checks: [14](../../../checks/14-pgbackrest.sh), [23](../../../checks/23-standby-
 
 | Part | Setup |
 |---|---|
-| Keeps | The PGDG key, `pgdg-common.repo`, the package, `/etc/pgbackrest.conf` from a template, the service and both timers ([pgBackRest](../backups/pgbackrest.md#setup)) |
+| Keeps | The PGDG key, `pgdg-common.repo`, the package, `/etc/pgbackrest.conf` from a template, the stanza, the service and both timers ([pgBackRest](../backups/pgbackrest.md#setup)) |
 | PGDG key | `roles/pgbackrest/files/PGDG-RPM-GPG-KEY-RHEL`, imported by `rpm_key` only when its fingerprint matches the one in the task |
-| Timers | Enabled where `pgbackrest_timers` is true (db1). Elsewhere they are disabled and stopped. |
-| Repository directory | Made where `pgbackrest_create_repo` is true (db2) |
 | Repository path | `pgbackrest_repo_path` in each host's file in `inventory/host_vars/` |
+| Repository directory | Made where `pgbackrest_create_repo` is true (db2) |
+| Stanza | `stanza-create` as `postgres` where `pgbackrest_timers` is true (db1), `changed` only when the output has no `already exists` |
+| Timers | Enabled where `pgbackrest_timers` is true (db1). Elsewhere they are disabled and stopped. |
 
 ## Why
 
 - The timers run only on db1, so only the primary takes backups, and a timer started by hand on db2 is stopped by the next run. db2 has the same package and config, because it archives with `pgbackrest` after a failover.
+- The role makes the stanza, because in an empty repository every `archive-push` fails with `[103]` and the WAL piles up in `pg_wal`.
 - The PGDG key is kept in the role and imported only with its fingerprint, so a different key file fails the run instead of being trusted.
 
 ## Limits

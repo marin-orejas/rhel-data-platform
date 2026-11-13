@@ -64,6 +64,11 @@ Checks: [19](../../../checks/19-storage-postgresql.sh), [20](../../../checks/20-
 - The `pg_hba.conf` lines are a list, not a map like the settings, because the first line that matches a connection decides.
 - The server keys are in the repo only as Vault strings, and the Vault password is outside the repo, so the repo alone gives no key. Only the key is encrypted, not the whole file, so the rest of `host_vars` stays readable in `git diff`.
 
+## Limits
+
+- In a build of both fresh clones, an empty `/pgdata` on db2 fails at the copy with `Connection refused`, because the role starts PostgreSQL on db1 later in the same play. A second run with `--limit db2` makes the copy ([Rebuild the db hosts from fresh clones](../../runbooks/rebuild-the-db-hosts-from-fresh-clones.md)).
+- The copy needs `replicator` and the slot on db1, which `databases.yml` makes later in the run, and the role sets no passwords. A build on two empty data disks fails, so the data disk of db1 must keep its cluster.
+
 ## Tested
 
 | Date | Test | Result |

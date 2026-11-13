@@ -2,7 +2,7 @@
 
 db1 and db2 are clones of the base VM image `rhel-base`. Each one keeps its data on a second disk with its own volume group.
 
-Checks: [05](../../../checks/05-storage.sh), [10](../../../checks/10-nfs.sh), [15](../../../checks/15-replication.sh) · Managed by: [System role storage](../ansible/storage.md) · Files: [`kickstart/rhel-base-vm.ks`](../../../kickstart/rhel-base-vm.ks)
+Checks: [05](../../../checks/05-storage.sh), [10](../../../checks/10-nfs.sh), [15](../../../checks/15-replication.sh), [24](../../../checks/24-fresh-clones.sh) · Managed by: [System role storage](../ansible/storage.md) · Files: [`kickstart/rhel-base-vm.ks`](../../../kickstart/rhel-base-vm.ks)
 
 ## Setup
 
@@ -28,6 +28,7 @@ The clones are made with `virt-clone` while `rhel-base` is shut off ([Clone a VM
 | MAC | `52:54:00:00:00:11` | `52:54:00:00:00:12` |
 | IP | `192.168.122.11` | `192.168.122.12` |
 | RAM | 3 GB | 3 GB |
+| Release | RHEL 10.3, from `dnf -y upgrade` after the clone | Same as db1 |
 | Subscription, autostart | Registered, on | Registered, on |
 
 ### Data disks
@@ -38,6 +39,8 @@ The clones are made with `virt-clone` while `rhel-base` is shut off ([Clone a VM
 | LVM | PV `/dev/vdb1`, VG `data` | Same as db1 |
 | LVs | `pgdata` 7 GiB on `/pgdata`, XFS | `backup` 3 GiB on `/srv/backup` and `pgdata` 5 GiB on `/pgdata`, both XFS |
 | Mount | `/etc/fstab` by file system UUID | Same as db1 |
+| LVM devices file | `/etc/lvm/devices/system.devices` lists `vda3` and `vdb1`. A new clone of `rhel-base` lists only `vda3`. | Same as db1 |
+| Rebuild | The data disk stays and goes to the new clone as `vdb` ([Rebuild the db hosts from fresh clones](../../runbooks/rebuild-the-db-hosts-from-fresh-clones.md)). | Same as db1 |
 
 ## Layout
 

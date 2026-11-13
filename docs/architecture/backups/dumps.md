@@ -2,7 +2,7 @@
 
 A dump of each database on db1 goes to the NFS share on db2 every night, to restore one database to its state at 02:00.
 
-Checks: [09](../../../checks/09-backup.sh) · Files: [`ansible/roles/pgdump/`](../../../ansible/roles/pgdump/)
+Checks: [09](../../../checks/09-backup.sh), [24](../../../checks/24-fresh-clones.sh) · Managed by: [Role pgdump](../ansible/pgdump.md)
 
 ## Setup
 

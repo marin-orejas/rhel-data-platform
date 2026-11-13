@@ -73,7 +73,3 @@ Every host runs firewalld with the zone `public`.
 | 2026-10-05 | `cp` of a `600` file into `/srv/dba` | The ACL mask became `---` and the group could not read it. `chmod g+rw` fixed it. |
 | 2026-10-05 | `mv` of a file into `/srv/dba` on the same file system | It kept its own group and got no ACL. `chgrp dba` and `chmod g+rw` fixed it. |
 | 2026-10-08 | `tuned-adm verify` on nuc, db1 and db2, after a reboot | Passes on all three. |
-
-## History
-
-- `virtual-guest-lab` (db2, lessons 10–17): `include=virtual-guest`, `[cpu] drop=boost`. Still in `/etc/tuned/profiles/` on db2, not active.

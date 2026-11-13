@@ -1,15 +1,17 @@
 # Role base
 
-The role `base` keeps the users, sudo, SSH, the firewall, SELinux, time sync, tuned and the journal the same on db1 and db2.
+The role `base` keeps the users, sudo, the shared `dba` directories, SSH, the firewall, SELinux, time sync, tuned and the journal the same on db1 and db2.
 
-Checks: [18](../../../checks/18-base-role.sh) · Files: [`ansible/roles/base/`](../../../ansible/roles/base/)
+Checks: [18](../../../checks/18-base-role.sh), [24](../../../checks/24-fresh-clones.sh) · Files: [`ansible/roles/base/`](../../../ansible/roles/base/)
 
 ## Setup
 
 | Part | Setup |
 |---|---|
-| Keeps | The `dba` group, the user `ansible` with its key and sudo rule, the firewall, SELinux, SSH, tuned and the journal ([System settings](../hosts/system.md)) |
-| Time and packages | `chronyd` and `vim-enhanced` |
+| Keeps | The `dba` group, the user `ansible` with its key and sudo rule, the shared `dba` directories, the firewall, SELinux, SSH, tuned and the journal ([System settings](../hosts/system.md)) |
+| Users tasks | `tasks/users.yml`, also run alone by `playbooks/bootstrap.yml` on a fresh clone ([Ansible playbooks](playbooks.md#playbooks)) |
+| Shared directories | `base_dba_dirs` in `inventory/host_vars/`: `/srv/dba` on db1 ([System settings, DBA group and shared directory](../hosts/system.md#dba-group-and-shared-directory)) |
+| Time and packages | `chronyd`, and `vim-enhanced`, `bash-completion` and `bash-color-prompt` for the admin shell |
 | Login message | `/etc/motd.d/ansible` |
 | tuned | Another profile in `tuned-adm active` is reported as changed, also in a dry run. Only then `tuned-adm profile` runs. |
 | Firewall services | `base_firewall_extra_services` in `inventory/host_vars/` adds the services of one host: `nfs` on db2 |
@@ -19,6 +21,10 @@ Checks: [18](../../../checks/18-base-role.sh) · Files: [`ansible/roles/base/`](
 - The role keeps the public key in `files/ansible.pub` and writes the whole `authorized_keys`, so a key added by hand is removed on the next run.
 - The sudo rule and the SSH drop-in are written with `validate` (`visudo -cf`, `sshd -t -f`), because a broken file would lock Ansible out of both hosts.
 - The role reads its values from variables, and a host adds to a list through its own variable (`base_firewall_extra_services`), because `host_vars` replaces a list from `group_vars` instead of merging it.
+
+## Limits
+
+- The role restarts journald with `Storage=persistent`, but `/var/log/journal` gets its group `systemd-journal` and its ACLs only at the next boot, from `systemd-tmpfiles`. A fresh build passes checks 05 and 18 only after its first reboot.
 
 ## Tested
 
