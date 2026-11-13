@@ -7,6 +7,8 @@
 # .pgpass of postgres holds the logins to the other host, only the standby has standby.signal,
 # and the primary has replicator and one slot, named for the standby. The restore test left
 # no copy and no server on db2, and no new timeline in the archive.
+# Since lesson 24 the archive starts on timeline 5 with no history file, so the newest
+# timeline also comes from the WAL directories.
 # Checks 10, 14 and 15 cover the share, the backups of db1 and the replication.
 # Run on the desktop from the repo root, with the key loaded (ssh-add ~/.ssh/id_ed25519_ansible):
 #   bash checks/23-standby-backup-roles.sh
@@ -65,11 +67,14 @@ unit_state() {
     echo "$(on "$1" "systemctl show -p UnitFileState --value $2") $(on "$1" "systemctl show -p ActiveState --value $2")"
 }
 
-# The name of the newest timeline history file in the archive on db2.
-newest_history() {
-    local path
-    path=$(on db2 'find /srv/backup/pgbackrest/archive/main -name *.history' | sort | tail -n 1)
-    echo "${path##*/}"
+# The newest timeline in the archive on db2, as a number: the first 8 hex digits of the history
+# files and the WAL directories (one per timeline and log file). The WAL directory of the
+# primary's timeline is always there, so a lost connection never passes.
+newest_archive_tl() {
+    local tl
+    tl=$(on db2 'find /srv/backup/pgbackrest/archive/main -mindepth 2 -maxdepth 2' |
+        sed 's|.*/||' | grep -oE '^[0-9A-F]{8}' | sort | tail -n 1)
+    [ -n "$tl" ] && echo $((16#$tl))
 }
 
 for h in $hosts; do
@@ -114,7 +119,7 @@ done
 # The restore test on db2 left no copy, no server and no new timeline in the archive
 check "db2: no restore test copy is left in /pgdata/pgsql" lists db2 /pgdata/pgsql data restore-test
 check "db2: no server listens on port 5434" lists db2 /run/postgresql .s.PGSQL.5433 .s.PGSQL.5434
-check "the newest timeline in the archive is the timeline of the primary" [ "$(newest_history)" = "$(printf '%08X.history' "$primary_tl")" ]
+check "the newest timeline in the archive is the timeline of the primary" [ "$(newest_archive_tl)" = "$primary_tl" ]
 
 echo
 if [ "$failed" -eq 0 ]; then
