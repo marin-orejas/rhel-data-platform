@@ -1,8 +1,8 @@
 # Ansible playbooks
 
-The playbooks in `playbooks/` run the roles on the group `db`. `site.yml` builds db1 and db2 from fresh clones, and `restore-test.yml` restores the newest pgBackRest backup on db2 and compares it with the standby. GitHub Actions checks the code on every push.
+The playbooks in `playbooks/` run the roles on the group `db`, and `bootstrap.yml` and `base.yml` also on the group `k8s`. `site.yml` builds db1 and db2 from fresh clones, and `restore-test.yml` restores the newest pgBackRest backup on db2 and compares it with the standby. GitHub Actions checks the code on every push.
 
-Checks: [23](../../../checks/23-standby-backup-roles.sh), [24](../../../checks/24-fresh-clones.sh) · Files: [`ansible/playbooks/`](../../../ansible/playbooks/), [`.github/workflows/ansible.yml`](../../../.github/workflows/ansible.yml)
+Checks: [23](../../../checks/23-standby-backup-roles.sh), [24](../../../checks/24-fresh-clones.sh), [25](../../../checks/25-nodes.sh) · Files: [`ansible/playbooks/`](../../../ansible/playbooks/), [`.github/workflows/ansible.yml`](../../../.github/workflows/ansible.yml)
 
 ## Setup
 
@@ -11,8 +11,8 @@ Checks: [23](../../../checks/23-standby-backup-roles.sh), [24](../../../checks/2
 | Part | Setup |
 |---|---|
 | `bootstrap.yml` | The users tasks of the role `base`, run once on a fresh clone with `-u makilele -K`. They make the user `ansible` that the other playbooks log in as. |
-| `site.yml` | Imports the six playbooks below in this order, with one `PLAY RECAP` for both hosts. |
-| `base.yml` | Role `base` on group `db` ([Role base](base.md)) |
+| `site.yml` | Imports the six playbooks below in this order, with one `PLAY RECAP` for all hosts. |
+| `base.yml` | Role `base` on groups `db` and `k8s` ([Role base](base.md)) |
 | `storage.yml` | System role `storage` on group `db`, with tasks before it for the data VG and after it for the SELinux labels ([System role storage](storage.md)) |
 | `postgresql.yml` | Role `postgresql` on group `db` ([Role postgresql](postgresql.md)) |
 | `nfs.yml` | Role `nfs` on group `db` ([Role nfs](nfs.md)) |
@@ -53,6 +53,7 @@ What the test proves: [pgBackRest, Setup](../backups/pgbackrest.md#setup).
 
 - The inventory fixes db1 as the primary: `pgbackrest_timers`, `pgdump_enabled` and `postgresql_build_standby` name the hosts. After a failover, a run would start the data disk of db1 as a second primary and keep the backups on db1, and no runbook step moves them to db2 yet.
 - CI runs only the syntax check and `ansible-lint`, and `ansible-lint` runs only there. A dry run and a real run need the hosts, so they run from the desktop, and a lint finding shows only after the push.
+- `site.yml` imports `base.yml`, so it also runs the role `base` on the nodes. A build of db1 and db2 while the nodes are off needs `--limit db`, or the recap shows the nodes as unreachable.
 - One dry run of `site.yml` before the first reboot of the fresh clones reported a change that was not captured. It did not come back after the reboot.
 
 ## Tested

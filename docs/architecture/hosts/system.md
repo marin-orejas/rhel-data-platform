@@ -1,8 +1,8 @@
 # System settings
 
-Every host runs SELinux in enforcing mode, firewalld, key-only SSH, a tuned profile of its own and a persistent journal. db1 and db2 also have the group `dba`, with a shared directory on db1.
+Every host runs SELinux in enforcing mode, firewalld, key-only SSH, a tuned profile of its own and a persistent journal. db1, db2 and k8s1–k8s3 also have the group `dba`, with a shared directory on db1.
 
-Checks: [05](../../../checks/05-storage.sh), [08](../../../checks/08-tuned-dba.sh), [10](../../../checks/10-nfs.sh), [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh), [18](../../../checks/18-base-role.sh) · Managed by: [Role base](../ansible/base.md), [Role nfs](../ansible/nfs.md) · Files: [`tuned/`](../../../tuned/)
+Checks: [05](../../../checks/05-storage.sh), [08](../../../checks/08-tuned-dba.sh), [10](../../../checks/10-nfs.sh), [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh), [18](../../../checks/18-base-role.sh), [25](../../../checks/25-nodes.sh) · Managed by: [Role base](../ansible/base.md), [Role nfs](../ansible/nfs.md) · Files: [`tuned/`](../../../tuned/)
 
 ## Setup
 
@@ -27,6 +27,19 @@ Every host runs firewalld with the zone `public`.
 | Allowed | `ssh`, `cockpit` and the other defaults of the zone | `ssh`, `cockpit`, `dhcpv6-client`, `5433/tcp` | `ssh`, `cockpit`, `dhcpv6-client`, `nfs` (NFSv4 only, no `showmount -e`), `5433/tcp` |
 | Other zones | `virbr0` in the zone `libvirt` | None | None |
 
+### Firewall on the Kubernetes nodes
+
+| Part | k8s1 | k8s2, k8s3 |
+|---|---|---|
+| Services | `ssh`, `cockpit`, `dhcpv6-client` | Same as k8s1 |
+| API server | `6443/tcp` | None |
+| etcd | `2379-2380/tcp` | None |
+| Kubelet API | `10250/tcp` | Same as k8s1 |
+| Controller manager | `10257/tcp` | None |
+| Scheduler | `10259/tcp` | None |
+| NodePort services | None | `30000-32767/tcp`, no UDP |
+| VXLAN | `4789/udp` (for Calico) | Same as k8s1 |
+
 ### SSH
 
 | Part | Setup |
@@ -36,25 +49,26 @@ Every host runs firewalld with the zone `public`.
 
 ### Tuning
 
-| Part | nuc | db1, db2 |
-|---|---|---|
-| Profile | `virtual-host-nuc` | `postgresql-guest` |
-| Includes | `virtual-host` | `postgresql` (`tuned-profiles-postgresql`) |
-| Dropped | `[cpu] boost` | `[cpu] boost`, `[scheduler]` |
-| File | `/etc/tuned/profiles/virtual-host-nuc/tuned.conf`, from `tuned/` | `/etc/tuned/profiles/postgresql-guest/tuned.conf`, from the role `base` |
+| Part | nuc | db1, db2 | k8s1–k8s3 |
+|---|---|---|---|
+| Packages | `tuned` | `tuned`, `tuned-profiles-postgresql` | Same as db1, db2 |
+| Profile | `virtual-host-nuc` | `postgresql-guest` | `k8s-guest` |
+| Includes | `virtual-host` | `postgresql` | `virtual-guest` |
+| Dropped | `[cpu] boost` | `[cpu] boost`, `[scheduler]` | `[cpu] boost` |
+| File | `/etc/tuned/profiles/virtual-host-nuc/tuned.conf`, from `tuned/` | `/etc/tuned/profiles/postgresql-guest/tuned.conf`, from the role `base` | `/etc/tuned/profiles/k8s-guest/tuned.conf`, from the role `base` |
 
 ### Journal
 
 | Part | Setup |
 |---|---|
-| Storage | Persistent on nuc, db1 and db2 |
+| Storage | Persistent on nuc, db1, db2 and k8s1–k8s3 |
 | Drop-in | `/etc/systemd/journald.conf.d/50-persistent-storage.conf` with `Storage=persistent` |
 
 ### DBA group and shared directory
 
 | Part | Setup |
 |---|---|
-| Group | `dba`, GID 2000 on db1 and db2. `makilele` is a member, UID 1000 on both. |
+| Group | `dba`, GID 2000 on db1, db2 and k8s1–k8s3. `makilele` is a member, UID 1000 on all of them. |
 | Shared directory | `/srv/dba` on db1, `root:dba`, mode `2770` |
 | Default ACL | `default:group:dba:rwx` on `/srv/dba` |
 
@@ -65,6 +79,10 @@ Every host runs firewalld with the zone `public`.
 - A module of its own for the archiver, because no boolean lets `postgresql_t` write to `nfs_t`.
 - The GID of `dba` is fixed, because NFS compares numeric IDs, not names.
 - `/srv/dba` has setgid and a default ACL, so every new file gets the group `dba` with write access, whatever the umask of its creator.
+
+## Limits
+
+- The nodes open no port for Calico's BGP (`179/tcp`) or Typha (`5473/tcp`) yet. Item 26 decides them with the Calico settings.
 
 ## Tested
 
