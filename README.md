@@ -26,8 +26,10 @@ flowchart LR
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
         db2["db2<br/>backup storage<br/>PostgreSQL standby"]
+        k8s["k8s1, k8s2, k8s3<br/>Kubernetes nodes"]
         base -. clone .-> db1
         base -. clone .-> db2
+        base -. clone .-> k8s
         db1 -- "streaming replication" --> db2
         db1 -- "backups (NFS)" --> db2
     end
@@ -41,6 +43,9 @@ flowchart LR
 | rhel-base | Base VM image, only for cloning | 2 CPU / 2 GB | 20 GB |
 | db1 | PostgreSQL primary | 2 CPU / 3 GB | 20 GB + 10 GB data |
 | db2 | Backup storage (NFS), PostgreSQL standby | 2 CPU / 3 GB | 20 GB + 10 GB data |
+| k8s1 | Kubernetes node with CRI-O, later the control plane | 2 CPU / 2.5 GB | 20 GB |
+| k8s2 | Kubernetes node with CRI-O, later a worker | 2 CPU / 2.5 GB | 20 GB |
+| k8s3 | Kubernetes node with CRI-O, later a worker | 2 CPU / 2.5 GB | 20 GB |
 
 ## Docs
 
@@ -61,12 +66,14 @@ flowchart LR
 | 13–16 | PostgreSQL recovery and failover: point-in-time recovery, pgBackRest, replication | done |
 | 17–20 | Ansible, the hosts as code: base role, data disks, PostgreSQL role, templates | done |
 | 21–24 | Ansible, PostgreSQL services: app roles, TLS, Vault, standby, backups, CI | done |
-| 25–28 | Kubernetes, cluster and apps: kubeadm, CRI-O, Calico, Deployments, Kustomize | planned |
+| 25–28 | Kubernetes, cluster and apps: kubeadm, CRI-O, Calico, Deployments, Kustomize | in progress |
 | 29–31 | Kubernetes, traffic and storage: Services, network policy, MetalLB, Gateway API, volumes | planned |
 | 32–35 | PostgreSQL on Kubernetes: CloudNativePG, cert-manager, an object store, backups | planned |
 | 36–40 | Kubernetes, safe operations: placement, autoscaling, RBAC, pod security, etcd backup | planned |
 | 41–44 | Kubernetes, upgrade and automation: kubeadm upgrade, Argo CD, Ansible, fresh clones | planned |
 
-Ansible is done. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share, pgBackRest and the nightly dumps the same on db1 and db2: my own `base`, `postgresql`, `nfs`, `pgbackrest` and `pgdump` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. One playbook builds both hosts from fresh clones, and GitHub Actions checks the code on every push. Next comes Kubernetes, starting with a kubeadm cluster on three new VMs. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover.
+I work on Kubernetes now. Three new VMs, k8s1 to k8s3, are clones of the base image with the base role, no swap, CRI-O and the Kubernetes 1.36 packages. Next, kubeadm builds the cluster on them.
+
+Ansible is done. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share, pgBackRest and the nightly dumps the same on db1 and db2: my own `base`, `postgresql`, `nfs`, `pgbackrest` and `pgdump` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. One playbook builds both hosts from fresh clones, and GitHub Actions checks the code on every push. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover.
 
 Full list: [docs/roadmap.md](docs/roadmap.md).

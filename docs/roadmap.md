@@ -41,7 +41,7 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 - [x] **[24 Fresh clones](../checks/24-fresh-clones.sh).** One playbook builds db1 and db2 from fresh clones, a second run changes nothing, and GitHub Actions checks the code.
 
 ## Kubernetes: cluster and apps (25–28)
-- [ ] **25 Nodes.** Three clones of the base image get the base role, no swap, CRI-O and the Kubernetes 1.36 packages.
+- [x] **[25 Nodes](../checks/25-nodes.sh).** Three clones of the base image get the base role, no swap, CRI-O and the Kubernetes 1.36 packages.
 - [ ] **26 Cluster.** kubeadm builds the cluster from a config file in the repo, with k8s1 as the control plane, two workers and Calico.
 - [ ] **27 Deployment.** An app runs as a Deployment with health checks and resource limits, and a rolling update and a rollback work.
 - [ ] **28 App settings.** The app takes its settings from a ConfigMap and a Secret, and Kustomize builds it from files in the repo.
