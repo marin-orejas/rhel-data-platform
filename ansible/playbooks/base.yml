@@ -1,6 +1,6 @@
 ---
-- name: Base settings for the db hosts
-  hosts: db
+- name: Base settings for the lab hosts
+  hosts: db:k8s
   become: true
   roles:
     - base

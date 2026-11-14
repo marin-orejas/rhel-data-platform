@@ -1,0 +1,4 @@
+---
+base_tuned_profile: k8s-guest
+base_firewall_ports:
+  - 4789/udp

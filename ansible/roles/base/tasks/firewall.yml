@@ -21,4 +21,4 @@
     permanent: true
     immediate: true
     state: enabled
-  loop: "{{ base_firewall_ports }}"
+  loop: "{{ base_firewall_ports + base_firewall_extra_ports }}"
