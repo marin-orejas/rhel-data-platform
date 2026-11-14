@@ -60,24 +60,25 @@ To make a new VM such as db1 or db2 from `rhel-base`, or to give a VM a new syst
    ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
    ```
 
-8. **desktop**: when the IP had a VM before, remove its old host key. `known_hosts` holds the IP from `~/.ssh/config`, not the name, so `ssh-keygen -R db1` finds nothing.
+8. **desktop**: when the name is new, add it to `~/.ssh/config`: to a shared `Host` block with `ProxyJump nuc`, and to a block of its own with the reserved IP.
+
+   ```
+   Host db1
+       HostName 192.168.122.11
+   ```
+
+9. **desktop**: when the IP had a VM before, remove its old host key. `known_hosts` holds the IP from `~/.ssh/config`, not the name, so `ssh-keygen -R db1` finds nothing.
 
    ```bash
    ssh-keygen -R 192.168.122.11
    ```
 
-9. **db1**: register the system, update it and reboot into the new kernel.
-
-   ```bash
-   sudo subscription-manager register
-   sudo dnf -y upgrade
-   sudo reboot
-   ```
-
-10. **nuc**: turn on autostart for the clone. `rhel-base` stays without it.
+10. **db1**: register the system, update it and reboot into the new kernel. Without the reboot, `uname -r` still shows the kernel of `rhel-base`.
 
     ```bash
-    virsh autostart db1
+    sudo subscription-manager register
+    sudo dnf -y upgrade
+    sudo reboot
     ```
 
 ## Check
@@ -85,6 +86,6 @@ To make a new VM such as db1 or db2 from `rhel-base`, or to give a VM a new syst
 - The machine ID, the SSH fingerprint and the subscription identity are different on nuc, rhel-base, db1 and db2: `cat /etc/machine-id`, `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`, `sudo subscription-manager identity`.
 - From another VM, the name resolves to the reserved IP: `getent hosts db1` returns `192.168.122.11`.
 - With a data disk, `lsblk -f /dev/vdb` shows `vdb1` as `LVM2_member`. Its volumes show only after `ansible/playbooks/storage.yml` adds the disk to the LVM devices file.
-- After a reboot of the nuc, the clone runs with the same IP, hostname and RAM, and SSH asks for no new host key.
+- After a reboot of the clone, it runs with the same IP, hostname and RAM, and SSH asks for no new host key.
 
-Last tested: 2026-11-12 on db1 and db2, new clones with their old data disks, both running after a reboot of the nuc on 2026-11-13
+Last tested: 2026-11-14 on k8s1, k8s2 and k8s3, three new clones without data disks, each with its own identity on RHEL 10.3
