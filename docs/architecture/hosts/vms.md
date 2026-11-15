@@ -2,7 +2,7 @@
 
 db1, db2 and the Kubernetes nodes k8s1, k8s2 and k8s3 are clones of the base VM image `rhel-base`. db1 and db2 keep their data on a second disk with its own volume group. The nodes have no swap and run CRI-O with the Kubernetes 1.36 packages.
 
-Checks: [05](../../../checks/05-storage.sh), [10](../../../checks/10-nfs.sh), [15](../../../checks/15-replication.sh), [24](../../../checks/24-fresh-clones.sh), [25](../../../checks/25-nodes.sh) · Managed by: [System role storage](../ansible/storage.md) · Files: [`kickstart/rhel-base-vm.ks`](../../../kickstart/rhel-base-vm.ks)
+Checks: [05](../../../checks/05-storage.sh), [10](../../../checks/10-nfs.sh), [15](../../../checks/15-replication.sh), [24](../../../checks/24-fresh-clones.sh), [25](../../../checks/25-nodes.sh) · Managed by: [System role storage](../ansible/storage.md) · Files: [`kickstart/rhel-base-vm.ks`](../../../kickstart/rhel-base-vm.ks), [`kubernetes/nodes/`](../../../kubernetes/nodes/)
 
 ## Setup
 
@@ -44,7 +44,7 @@ The clones are made with `virt-clone` while `rhel-base` is shut off ([Clone a VM
 
 ### Kubernetes nodes
 
-The same on k8s1, k8s2 and k8s3, set up by hand.
+The same on k8s1, k8s2 and k8s3, set up by hand. Copies of the two repo files, `k8s.conf` and the pause drop-in are in `kubernetes/nodes/`, under the same paths.
 
 | Part | Setup |
 |---|---|
@@ -100,7 +100,7 @@ db2: /dev/vdb (10 GiB)
 
 ## Limits
 
-- No role keeps the node setup yet. The repos, the packages, the locks, `k8s.conf` and the pause drop-in were set by hand, so a rebuilt node needs them by hand again.
+- No role keeps the node setup yet. A rebuilt node needs the packages, the locks and the files from `kubernetes/nodes/` by hand again.
 - kdump reserves 256 MiB on every VM (`crashkernel=`). With the kernel's own share, a node shows about 2139 MiB of its 2.5 GiB in `MemTotal`.
 
 ## Tested
