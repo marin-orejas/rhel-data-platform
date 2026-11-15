@@ -44,13 +44,14 @@ The clones are made with `virt-clone` while `rhel-base` is shut off ([Clone a VM
 
 ### Kubernetes nodes
 
-The same on k8s1, k8s2 and k8s3, set up by hand. Copies of the two repo files, `k8s.conf` and the pause drop-in are in `kubernetes/nodes/`, under the same paths.
+The same on k8s1, k8s2 and k8s3, set up by hand. Copies of the two repo files, `k8s.conf`, the pause drop-in and the NetworkManager drop-in are in `kubernetes/nodes/`, under the same paths.
 
 | Part | Setup |
 |---|---|
 | Swap | None. LV `rhel/swap` and its line in `/etc/fstab` are removed. |
 | Kernel arguments | No `resume=` or `rd.lvm.lv=rhel/swap` in any boot entry, in `GRUB_CMDLINE_LINUX` or in `/etc/kernel/cmdline` |
 | Sysctl | `net.ipv4.ip_forward = 1` in `/etc/sysctl.d/k8s.conf` |
+| NetworkManager | `/etc/NetworkManager/conf.d/calico.conf` leaves the Calico interfaces (`cali*`, `vxlan.calico` and the others from the Calico docs) unmanaged. |
 | Repo `kubernetes` | `https://pkgs.k8s.io/core:/stable:/v1.36/rpm/`. Its `exclude=` line hides `kubelet`, `kubeadm`, `kubectl`, `cri-tools` and `kubernetes-cni` unless `dnf` runs with `--disableexcludes=kubernetes`. |
 | Repo `cri-o` | `https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v1.36/rpm/` |
 | Packages | `container-selinux` from AppStream, `cri-o` 1.36.8, `kubelet`, `kubeadm` and `kubectl` 1.36.6, `cri-tools` 1.36.0, `kubernetes-cni` 1.9.1 |

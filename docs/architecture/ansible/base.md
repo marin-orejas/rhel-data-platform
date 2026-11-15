@@ -17,6 +17,7 @@ Checks: [18](../../../checks/18-base-role.sh), [24](../../../checks/24-fresh-clo
 | tuned profile | `base_tuned_profile`, `postgresql-guest` by default and `k8s-guest` in `inventory/group_vars/k8s.yml`. The profiles are in `files/tuned/`. |
 | Firewall services | `base_firewall_extra_services` in `inventory/host_vars/` adds the services of one host: `nfs` on db2 |
 | Firewall ports | `base_firewall_ports` in `inventory/group_vars/k8s.yml` for every node, and `base_firewall_extra_ports` in `inventory/group_vars/k8s_control.yml` and `inventory/group_vars/k8s_workers.yml` ([System settings, Firewall on the Kubernetes nodes](../hosts/system.md#firewall-on-the-kubernetes-nodes)) |
+| Trusted sources | `base_firewall_trusted_sources` in `inventory/group_vars/k8s.yml`, for the zone `trusted` ([System settings, Firewall on the Kubernetes nodes](../hosts/system.md#firewall-on-the-kubernetes-nodes)) |
 
 ## Why
 

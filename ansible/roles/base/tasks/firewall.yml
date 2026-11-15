@@ -22,3 +22,12 @@
     immediate: true
     state: enabled
   loop: "{{ base_firewall_ports + base_firewall_extra_ports }}"
+
+- name: Trust the sources
+  ansible.posix.firewalld:
+    source: "{{ item }}"
+    zone: trusted
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ base_firewall_trusted_sources }}"

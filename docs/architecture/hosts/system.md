@@ -39,6 +39,8 @@ Every host runs firewalld with the zone `public`.
 | Scheduler | `10259/tcp` | None |
 | NodePort services | None | `30000-32767/tcp`, no UDP |
 | VXLAN | `4789/udp` (for Calico) | Same as k8s1 |
+| Typha | `5473/tcp` (for Calico) | Same as k8s1 |
+| Pod network | `10.244.0.0/16` in the zone `trusted` (for traffic between pods) | Same as k8s1 |
 
 ### SSH
 
@@ -82,7 +84,7 @@ Every host runs firewalld with the zone `public`.
 
 ## Limits
 
-- The nodes open no port for Calico's BGP (`179/tcp`) or Typha (`5473/tcp`) yet. Item 26 decides them with the Calico settings.
+- The nodes open no port for Calico's BGP (`179/tcp`) yet. Item 26 decides it with the Calico settings.
 
 ## Tested
 

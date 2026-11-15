@@ -5,7 +5,8 @@
 # kernel arguments of this boot, of every boot entry and of the files new kernels take them
 # from), IPv4 forwarding, the CRI-O and Kubernetes packages at the versions that dnf
 # versionlock holds, CRI-O running with the pause image kubeadm expects, kubelet enabled,
-# SELinux enforcing and the firewall ports of each node's role. Then a check run of
+# SELinux enforcing, the firewall ports of each node's role and the pod network in the zone
+# trusted. Then a check run of
 # playbooks/base.yml must change nothing on the nodes, because checks 17 and 18 read only
 # db1 and db2.
 # Run on the desktop from the repo root, with the key loaded (ssh-add ~/.ssh/id_ed25519_ansible):
@@ -32,8 +33,10 @@ packages="cri-o-1.36.8 kubelet-1.36.6 kubeadm-1.36.6 kubectl-1.36.6 cri-tools-1.
 locked="cri-o-1.36.8 kubelet-1.36.6 kubeadm-1.36.6 kubectl-1.36.6"
 exclude="exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni"
 pause=registry.k8s.io/pause:3.10.2
-control_ports="10250/tcp 10257/tcp 10259/tcp 2379-2380/tcp 4789/udp 6443/tcp"
-worker_ports="10250/tcp 30000-32767/tcp 4789/udp"
+control_ports="10250/tcp 10257/tcp 10259/tcp 2379-2380/tcp 4789/udp 5473/tcp 6443/tcp"
+worker_ports="10250/tcp 30000-32767/tcp 4789/udp 5473/tcp"
+# podSubnet in kubernetes/kubeadm/config.yaml, the source of all pod traffic
+pod_network=10.244.0.0/16
 # Never ask for the passphrase: without the key in ssh-agent the login fails at once.
 opts=(--timeout 10 "--ssh-extra-args=-o BatchMode=yes")
 
@@ -103,9 +106,10 @@ for h in $hosts; do
     check "$h: CRI-O uses the pause image $pause" grep -Eq "^\s*pause_image = \"$pause\"" <<< "$(on "$h" 'crio status config')"
     check "$h: kubelet is enabled" [ "$(on "$h" 'systemctl is-enabled kubelet')" = enabled ]
 
-    # SELinux and the firewall ports of the node's role
+    # SELinux, the firewall ports of the node's role and the trusted pod network
     check "$h: SELinux is enforcing" [ "$(on "$h" getenforce)" = Enforcing ]
     check "$h: firewall allows $ports" [ "$(on "$h" 'firewall-cmd --list-ports' | sorted)" = "$ports" ]
+    check "$h: firewall trusts $pod_network" [ "$(on "$h" 'firewall-cmd --zone=trusted --list-sources')" = "$pod_network" ]
 done
 
 # The nodes match the base role: a check run would change nothing
