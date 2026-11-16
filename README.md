@@ -21,12 +21,12 @@ What I learn here:
 
 ```mermaid
 flowchart LR
-    desk["Desktop (Fedora 44)<br/>workstation, git, Ansible"]
+    desk["Desktop (Fedora 44)<br/>git, Ansible, kubectl"]
     subgraph nuc["NUC (RHEL 10.2)"]
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
         db2["db2<br/>backup storage<br/>PostgreSQL standby"]
-        k8s["k8s1, k8s2, k8s3<br/>Kubernetes nodes"]
+        k8s["k8s1, k8s2, k8s3<br/>Kubernetes cluster"]
         base -. clone .-> db1
         base -. clone .-> db2
         base -. clone .-> k8s
@@ -38,20 +38,20 @@ flowchart LR
 
 | Host | Role | CPU / RAM | Disk |
 |---|---|---|---|
-| desktop | Fedora 44 workstation, git, SSH, Ansible control node | i3-12100F / 16 GB | |
+| desktop | Fedora 44 workstation, git, SSH, Ansible control node, `kubectl` | i3-12100F / 16 GB | |
 | nuc | RHEL 10.2 KVM host with Cockpit, no monitor | i3-1315U / 16 GB | 120 GB SSD |
 | rhel-base | Base VM image, only for cloning | 2 CPU / 2 GB | 20 GB |
 | db1 | PostgreSQL primary | 2 CPU / 3 GB | 20 GB + 10 GB data |
 | db2 | Backup storage (NFS), PostgreSQL standby | 2 CPU / 3 GB | 20 GB + 10 GB data |
-| k8s1 | Kubernetes node with CRI-O, later the control plane | 2 CPU / 2.5 GB | 20 GB |
-| k8s2 | Kubernetes node with CRI-O, later a worker | 2 CPU / 2.5 GB | 20 GB |
-| k8s3 | Kubernetes node with CRI-O, later a worker | 2 CPU / 2.5 GB | 20 GB |
+| k8s1 | Kubernetes control plane with CRI-O | 2 CPU / 2.5 GB | 20 GB |
+| k8s2 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB |
+| k8s3 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB |
 
 ## Docs
 
 | Folder | What it holds |
 |---|---|
-| [architecture](docs/architecture/) | What is built, one folder per area: [hosts](docs/architecture/hosts/), [PostgreSQL](docs/architecture/postgresql/), [backups](docs/architecture/backups/), [Ansible](docs/architecture/ansible/) |
+| [architecture](docs/architecture/) | What is built, one folder per area: [hosts](docs/architecture/hosts/), [PostgreSQL](docs/architecture/postgresql/), [backups](docs/architecture/backups/), [Ansible](docs/architecture/ansible/), [Kubernetes](docs/architecture/kubernetes/) |
 | [runbooks](docs/runbooks/) | Tested procedures, step by step |
 | [decisions](docs/decisions/) | Why the lab is built this way, one record per decision |
 | [journal](docs/journal/) | My notes, one file per lesson day |
