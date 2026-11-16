@@ -11,7 +11,7 @@ Checks: [18](../../../checks/18-base-role.sh), [24](../../../checks/24-fresh-clo
 | Keeps | The `dba` group, the user `ansible` with its key and sudo rule, the shared `dba` directories, the firewall, SELinux, SSH, tuned and the journal ([System settings](../hosts/system.md)) |
 | Users tasks | `tasks/users.yml`, also run alone by `playbooks/bootstrap.yml` on a fresh clone ([Ansible playbooks](playbooks.md#playbooks)) |
 | Shared directories | `base_dba_dirs` in `inventory/host_vars/`: `/srv/dba` on db1 ([System settings, DBA group and shared directory](../hosts/system.md#dba-group-and-shared-directory)) |
-| Time and packages | `chronyd`, and `vim-enhanced`, `bash-completion` and `bash-color-prompt` for the admin shell |
+| Time and packages | `chronyd`, `vim-enhanced`, `bash-completion` and `bash-color-prompt` for the admin shell, and `openssl` to read certificates |
 | Login message | `/etc/motd.d/ansible` |
 | tuned | Another profile in `tuned-adm active` is reported as changed, also in a dry run. Only then `tuned-adm profile` runs. |
 | tuned profile | `base_tuned_profile`, `postgresql-guest` by default and `k8s-guest` in `inventory/group_vars/k8s.yml`. The profiles are in `files/tuned/`. |

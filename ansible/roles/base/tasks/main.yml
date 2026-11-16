@@ -23,10 +23,11 @@
 - name: Journal
   ansible.builtin.import_tasks: journal.yml
 
-- name: Install vim and the shell extras
+- name: Install vim, openssl and the shell extras
   ansible.builtin.dnf:
     name:
       - vim-enhanced
+      - openssl
       - bash-completion
       - bash-color-prompt
     state: present
