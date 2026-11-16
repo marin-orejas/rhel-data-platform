@@ -25,7 +25,7 @@ Checks: [26](../../../checks/26-cluster.sh) · Files: [`kubernetes/kubeadm/confi
 | Built by | `kubeadm init --config`, with `--skip-token-print` | `kubeadm join`, with a token from `kubeadm token create --ttl 1h --print-join-command` on k8s1 |
 | API server | `192.168.122.21:6443` (`advertiseAddress`) | None |
 | Static pods | `etcd`, `kube-apiserver`, `kube-controller-manager` and `kube-scheduler` in `/etc/kubernetes/manifests/` | None |
-| Taint | `node-role.kubernetes.io/control-plane:NoSchedule` (app pods run on the workers) | None |
+| Taint | `node-role.kubernetes.io/control-plane:NoSchedule` (the [app pods](workloads.md) run on the workers) | None |
 | Admin kubeconfig | `~/.kube/config` of `makilele`, mode 600 | None |
 
 ### Access from the desktop
