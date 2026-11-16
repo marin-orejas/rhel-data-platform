@@ -82,10 +82,6 @@ Every host runs firewalld with the zone `public`.
 - The GID of `dba` is fixed, because NFS compares numeric IDs, not names.
 - `/srv/dba` has setgid and a default ACL, so every new file gets the group `dba` with write access, whatever the umask of its creator.
 
-## Limits
-
-- The nodes open no port for Calico's BGP (`179/tcp`) yet. Item 26 decides it with the Calico settings.
-
 ## Tested
 
 | Date | Test | Result |
