@@ -42,7 +42,7 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 
 ## Kubernetes: cluster and apps (25–28)
 - [x] **[25 Nodes](../checks/25-nodes.sh).** Three clones of the base image get the base role, no swap, CRI-O and the Kubernetes 1.36 packages.
-- [ ] **26 Cluster.** kubeadm builds the cluster from a config file in the repo, with k8s1 as the control plane, two workers and Calico.
+- [x] **[26 Cluster](../checks/26-cluster.sh).** kubeadm builds the cluster from a config file in the repo, with k8s1 as the control plane, two workers and Calico.
 - [ ] **27 Deployment.** An app runs as a Deployment with health checks and resource limits, and a rolling update and a rollback work.
 - [ ] **28 App settings.** The app takes its settings from a ConfigMap and a Secret, and Kustomize builds it from files in the repo.
 
