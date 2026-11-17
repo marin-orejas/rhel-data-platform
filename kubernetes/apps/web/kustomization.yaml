@@ -5,6 +5,8 @@ resources:
   - namespace.yaml
   - deployment.yaml
   - service.yaml
+  - policy-deny-ingress.yaml
+  - policy-allow-client.yaml
 configMapGenerator:
   - name: web-config
     files:
