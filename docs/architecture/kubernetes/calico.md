@@ -48,14 +48,10 @@ flowchart LR
 
 ## Limits
 
-- Every pod can reach every other pod, because no network policy exists yet.
+- Only the namespace `web` has [network policies](services.md#network-policies), so every pod outside it takes connections from any pod.
 
 ## Tested
 
 | Date | Test | Result |
 |---|---|---|
 | 2026-11-16 | `wget` from a pod on k8s2 to a pod on k8s3, by pod IP | The pod on k8s3 (`10.244.219.2:8080`) answered `smoke-b` to `10.244.109.66` on k8s2, with firewalld on. |
-
-## Planned
-
-- A network policy that lets only one client reach the app (item 29).

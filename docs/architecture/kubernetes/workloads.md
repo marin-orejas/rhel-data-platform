@@ -1,8 +1,8 @@
 # Kubernetes workloads
 
-The Deployment `web` in the namespace `web` runs two httpd pods on the workers of the [Kubernetes cluster](cluster.md), with health checks and CPU and memory limits. Its files are in `kubernetes/apps/web/`, and `kubectl apply -k` from the desktop builds them with Kustomize and puts them on the cluster. The pods take their [settings](app-settings.md) from a ConfigMap and a Secret.
+The Deployment `web` in the namespace `web` runs two httpd pods on the workers of the [Kubernetes cluster](cluster.md), with health checks and CPU and memory limits, and the Deployment `client` in the namespace `client` runs one idle pod that tests the traffic to them. Their files are in `kubernetes/apps/web/` and `kubernetes/apps/client/`, and `kubectl apply -k` from the desktop builds them with Kustomize and puts them on the cluster. The web pods take their [settings](app-settings.md) from a ConfigMap and a Secret, and the client reaches them through the [Service `web`](services.md).
 
-Checks: [27](../../../checks/27-deployment.sh) · Files: [`kubernetes/apps/web/`](../../../kubernetes/apps/web/)
+Checks: [27](../../../checks/27-deployment.sh), [29](../../../checks/29-in-cluster.sh) · Files: [`kubernetes/apps/web/`](../../../kubernetes/apps/web/), [`kubernetes/apps/client/`](../../../kubernetes/apps/client/)
 
 ## Setup
 
@@ -21,6 +21,17 @@ Checks: [27](../../../checks/27-deployment.sh) · Files: [`kubernetes/apps/web/`
 | Rollout | `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` |
 | Progress deadline | `progressDeadlineSeconds: 120` |
 | Change cause | `kubernetes.io/change-cause: web-config made by Kustomize, a new name on every change`, the CHANGE-CAUSE in `kubectl rollout history` |
+
+### Deployment client
+
+| Part | Setup |
+|---|---|
+| Namespace | `client`, from `kubernetes/apps/client/kustomization.yaml` |
+| Image | The image of `web` (it has `curl` and `getent`) |
+| Replicas | 1 |
+| Container | `client`, the command `sleep infinity`, no ports and no probes |
+| Requests | CPU `10m`, memory `16Mi` |
+| Limits | CPU `100m`, memory `64Mi` |
 
 ## Layout
 
@@ -49,7 +60,8 @@ flowchart LR
 
 ## Limits
 
-- No Service points at the pods yet, so no client uses httpd, and a rollout without an outage is seen only in the Ready pods, not measured from a client.
+- A rollout without an outage is not measured from the client yet, only seen in the Ready pods.
+- The client runs `sleep` as PID 1, which ignores SIGTERM, so a deleted client pod stops only after the grace period of 30 s.
 - `kubectl rollout undo` changes only the live Deployment. After a bad version from the file, `kubectl diff -k kubernetes/apps/web/` shows the difference until the file is fixed and applied again.
 - The Calico and `kube-proxy` pods set no requests, so the scheduler does not count the 170–230 MB they use on each worker out of its `2088280Ki` (1.99 GiB) allocatable.
 - Nothing keeps the two pods on different workers, so both can end up on one worker and stop together with it.
@@ -64,6 +76,5 @@ flowchart LR
 
 ## Planned
 
-- A Service with a DNS name and a network policy for the app (item 29).
 - Affinity rules that decide where the pods run (item 36).
 - Argo CD applies the app from this repo and undoes a change by hand (item 42).
