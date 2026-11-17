@@ -6,7 +6,7 @@ metadata:
   labels:
     app: web
   annotations:
-    kubernetes.io/change-cause: httpd 10.3-1793879148
+    kubernetes.io/change-cause: token from the Secret web-token as APP_TOKEN and /etc/web/token
 spec:
   replicas: 2
   progressDeadlineSeconds: 120
@@ -29,6 +29,17 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          env:
+            - name: APP_RELEASE
+              valueFrom:
+                configMapKeyRef:
+                  name: web-config
+                  key: APP_RELEASE
+            - name: APP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: web-token
+                  key: token
           resources:
             requests:
               cpu: 50m
@@ -46,3 +57,19 @@ spec:
               path: /.noindex.html
               port: http
             periodSeconds: 10
+          volumeMounts:
+            - name: page
+              mountPath: /var/www/html
+            - name: token
+              mountPath: /etc/web
+      volumes:
+        - name: page
+          configMap:
+            name: web-config
+            items:
+              - key: index.html
+                path: index.html
+        - name: token
+          secret:
+            secretName: web-token
+            defaultMode: 0440
