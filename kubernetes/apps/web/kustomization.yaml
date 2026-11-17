@@ -4,6 +4,7 @@ namespace: web
 resources:
   - namespace.yaml
   - deployment.yaml
+  - service.yaml
 configMapGenerator:
   - name: web-config
     files:
