@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Lesson 27 checks: the Deployment web from kubernetes/apps/web/.
 # Reads the cluster with kubectl through the tunnel: the namespace web, a complete rollout of the
-# Deployment web, no difference between the live objects and the files (kubectl diff), a readiness
-# and a liveness probe and CPU and memory requests and limits on its container httpd, and every
-# Pod of web Ready on a worker with the image of deployment.yaml.
+# Deployment web, no difference between the live objects and what Kustomize builds from the files
+# (kubectl diff -k), a readiness and a liveness probe and CPU and memory requests and limits on
+# its container httpd, and every Pod of web Ready on a worker with the image of deployment.yaml.
 # The Pods are checked for Ready, not for 0 restarts: a reboot of a node restarts every container
 # on it and raises its restart count.
-# On a fresh cluster apply namespace.yaml first: kubectl apply -f on the folder reads
-# deployment.yaml before namespace.yaml.
+# The folder is applied with kubectl apply -k since lesson 28. kubectl apply -f and diff -f fail on
+# it, because they read kustomization.yaml as an object.
 # Run on the desktop from the repo root, with the tunnel open in a second terminal
 # (ssh -N -L 6443:192.168.122.21:6443 nuc):
 #   bash checks/27-deployment.sh
@@ -64,9 +64,9 @@ rolled_out() {
     kube rollout status deployment/"$app" -n "$ns" --timeout=10s >/dev/null
 }
 
-# kubectl diff exits 0 only when the live objects equal the files
+# kubectl diff -k exits 0 only when the live objects equal what Kustomize builds from the files
 matches_repo() {
-    kube diff -f "$manifests" >/dev/null
+    kube diff -k "$manifests" >/dev/null
 }
 
 # The API server through the tunnel

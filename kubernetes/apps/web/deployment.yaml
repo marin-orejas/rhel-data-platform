@@ -6,7 +6,7 @@ metadata:
   labels:
     app: web
   annotations:
-    kubernetes.io/change-cause: token from the Secret web-token as APP_TOKEN and /etc/web/token
+    kubernetes.io/change-cause: web-config made by Kustomize, a new name on every change
 spec:
   replicas: 2
   progressDeadlineSeconds: 120

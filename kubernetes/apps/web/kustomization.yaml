@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: web
+resources:
+  - namespace.yaml
+  - deployment.yaml
+configMapGenerator:
+  - name: web-config
+    files:
+      - index.html
+    literals:
+      - APP_RELEASE=3
+    options:
+      labels:
+        app: web
+# The Secret web-token is made by hand and is not in the repo.
