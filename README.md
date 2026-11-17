@@ -66,13 +66,13 @@ flowchart LR
 | 13–16 | PostgreSQL recovery and failover: point-in-time recovery, pgBackRest, replication | done |
 | 17–20 | Ansible, the hosts as code: base role, data disks, PostgreSQL role, templates | done |
 | 21–24 | Ansible, PostgreSQL services: app roles, TLS, Vault, standby, backups, CI | done |
-| 25–28 | Kubernetes, cluster and apps: kubeadm, CRI-O, Calico, Deployments, Kustomize | in progress |
+| 25–28 | Kubernetes, cluster and apps: kubeadm, CRI-O, Calico, Deployments, Kustomize | done |
 | 29–31 | Kubernetes, traffic and storage: Services, network policy, MetalLB, Gateway API, volumes | planned |
 | 32–35 | PostgreSQL on Kubernetes: CloudNativePG, cert-manager, an object store, backups | planned |
 | 36–40 | Kubernetes, safe operations: placement, autoscaling, RBAC, pod security, etcd backup | planned |
 | 41–44 | Kubernetes, upgrade and automation: kubeadm upgrade, Argo CD, Ansible, fresh clones | planned |
 
-I work on Kubernetes now. kubeadm built a cluster from a config file in this repo on three clones of the base image: k8s1 is the control plane, k8s2 and k8s3 are workers, and Calico connects their pods. I use `kubectl` from my desktop through an SSH tunnel over the nuc. An httpd app runs on the cluster as a Deployment with health checks and resource limits, and both a rolling update and a rollback work. Next, the app takes its settings from a ConfigMap and a Secret, and Kustomize builds it.
+I work on Kubernetes now. kubeadm built a cluster from a config file in this repo on three clones of the base image: k8s1 is the control plane, k8s2 and k8s3 are workers, and Calico connects their pods. I use `kubectl` from my desktop through an SSH tunnel over the nuc. An httpd app runs on the cluster as a Deployment with health checks and resource limits, and both a rolling update and a rollback work. Kustomize builds the app from files in this repo, and it takes its settings from a ConfigMap and a Secret that stays out of the repo. Next, other pods reach the app through a Service by its DNS name, and a network policy lets only one client in.
 
 Ansible is done. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share, pgBackRest and the nightly dumps the same on db1 and db2: my own `base`, `postgresql`, `nfs`, `pgbackrest` and `pgdump` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. One playbook builds both hosts from fresh clones, and GitHub Actions checks the code on every push. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover.
 
