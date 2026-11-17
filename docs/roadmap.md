@@ -47,7 +47,7 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 - [x] **[28 App settings](../checks/28-app-settings.sh).** The app takes its settings from a ConfigMap and a Secret, and Kustomize builds it from files in the repo.
 
 ## Kubernetes: traffic and storage (29–31)
-- [ ] **29 Inside the cluster.** Pods reach the app through a Service by its DNS name, and a network policy lets only one client in.
+- [x] **[29 Inside the cluster](../checks/29-in-cluster.sh).** Pods reach the app through a Service by its DNS name, and a network policy lets only one client in.
 - [ ] **30 From outside.** MetalLB gives the app an address on the lab network, and a Gateway API route serves it outside the cluster.
 - [ ] **31 Storage.** Each worker has its own data disk, a storage class creates volumes on it, and a volume grows while its pod runs.
 
