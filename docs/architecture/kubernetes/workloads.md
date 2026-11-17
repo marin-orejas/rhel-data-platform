@@ -1,6 +1,6 @@
 # Kubernetes workloads
 
-The Deployment `web` in the namespace `web` runs two httpd pods on the workers of the [Kubernetes cluster](cluster.md), with health checks and CPU and memory limits. Its files are in `kubernetes/apps/web/`, and `kubectl apply` from the desktop puts them on the cluster.
+The Deployment `web` in the namespace `web` runs two httpd pods on the workers of the [Kubernetes cluster](cluster.md), with health checks and CPU and memory limits. Its files are in `kubernetes/apps/web/`, and `kubectl apply -k` from the desktop builds them with Kustomize and puts them on the cluster. The pods take their [settings](app-settings.md) from a ConfigMap and a Secret.
 
 Checks: [27](../../../checks/27-deployment.sh) · Files: [`kubernetes/apps/web/`](../../../kubernetes/apps/web/)
 
@@ -20,7 +20,7 @@ Checks: [27](../../../checks/27-deployment.sh) · Files: [`kubernetes/apps/web/`
 | Liveness probe | `httpGet` on `/.noindex.html`, port `http`, every 10 s |
 | Rollout | `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` |
 | Progress deadline | `progressDeadlineSeconds: 120` |
-| Change cause | `kubernetes.io/change-cause: httpd 10.3-1793879148`, the CHANGE-CAUSE in `kubectl rollout history` |
+| Change cause | `kubernetes.io/change-cause: web-config made by Kustomize, a new name on every change`, the CHANGE-CAUSE in `kubectl rollout history` |
 
 ## Layout
 
@@ -33,7 +33,7 @@ flowchart LR
     rs["ReplicaSet<br/>current revision"]
     pod2["pod on k8s2<br/>httpd, 8080"]
     pod3["pod on k8s3<br/>httpd, 8080"]
-    files -- "kubectl apply, tunnel" --> dep
+    files -- "kubectl apply -k, tunnel" --> dep
     dep -. "pod template" .-> rs
     rs -. "replica 1" .-> pod2
     rs -. "replica 2" .-> pod3
@@ -42,7 +42,7 @@ flowchart LR
 ## Why
 
 - Both probes ask for `/.noindex.html`, because `/` answers `403` on an empty document root, and an HTTP probe checks httpd itself, not only its port.
-- The memory request is about four times what idle httpd uses (17 MB), and each limit is twice its request, so httpd has room to start child processes under load.
+- The memory request is about four times what idle httpd uses (17 MB), and the memory limit is twice the request, so httpd has room to start child processes under load.
 - `maxSurge: 1` and `maxUnavailable: 0` are written out (the default for two replicas), so a rollout starts one new pod and stops an old one only when the new one is Ready.
 - `progressDeadlineSeconds` is 120 instead of the default 600, because that is long enough for an image pull over Wi-Fi (7.1 s for the first one) and shows a stalled rollout in two minutes.
 - The image has a build tag, not `10.3` or `latest`, so every pod runs the same build and a new version is a change in `deployment.yaml`.
@@ -50,8 +50,7 @@ flowchart LR
 ## Limits
 
 - No Service points at the pods yet, so no client uses httpd, and a rollout without an outage is seen only in the Ready pods, not measured from a client.
-- On a fresh cluster, `kubectl apply -f kubernetes/apps/web/` reads `deployment.yaml` before `namespace.yaml`, so the Deployment fails with `namespaces "web" not found`. Apply `namespace.yaml` on its own first.
-- `kubectl rollout undo` changes only the live Deployment. After a bad version from the file, `kubectl diff -f kubernetes/apps/web/` shows the difference until the file is fixed and applied again.
+- `kubectl rollout undo` changes only the live Deployment. After a bad version from the file, `kubectl diff -k kubernetes/apps/web/` shows the difference until the file is fixed and applied again.
 - The Calico and `kube-proxy` pods set no requests, so the scheduler does not count the 170–230 MB they use on each worker out of its `2088280Ki` (1.99 GiB) allocatable.
 - Nothing keeps the two pods on different workers, so both can end up on one worker and stop together with it.
 
@@ -65,7 +64,6 @@ flowchart LR
 
 ## Planned
 
-- Settings from a ConfigMap and a Secret, and Kustomize builds the app from its files (item 28).
 - A Service with a DNS name and a network policy for the app (item 29).
 - Affinity rules that decide where the pods run (item 36).
 - Argo CD applies the app from this repo and undoes a change by hand (item 42).
