@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: metallb-system
+resources:
+  - ipaddresspool.yaml
+  - l2advertisement.yaml
+# MetalLB and its CRDs come from the Helm chart 0.16.2 with values.yaml, installed before this apply.

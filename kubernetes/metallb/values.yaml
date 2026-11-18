@@ -1,0 +1,3 @@
+# L2 mode only. The chart's default FRR-K8s backend runs FRR for BGP on every node, which L2 does not need.
+frrk8s:
+  enabled: false

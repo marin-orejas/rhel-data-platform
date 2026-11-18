@@ -3,5 +3,7 @@ base_tuned_profile: k8s-guest
 base_firewall_ports:
   - 4789/udp
   - 5473/tcp
+  - 7946/tcp
+  - 7946/udp
 base_firewall_trusted_sources:
   - 10.244.0.0/16

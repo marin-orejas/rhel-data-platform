@@ -33,8 +33,9 @@ packages="cri-o-1.36.8 kubelet-1.36.6 kubeadm-1.36.6 kubectl-1.36.6 cri-tools-1.
 locked="cri-o-1.36.8 kubelet-1.36.6 kubeadm-1.36.6 kubectl-1.36.6"
 exclude="exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni"
 pause=registry.k8s.io/pause:3.10.2
-control_ports="10250/tcp 10257/tcp 10259/tcp 2379-2380/tcp 4789/udp 5473/tcp 6443/tcp"
-worker_ports="10250/tcp 30000-32767/tcp 4789/udp 5473/tcp"
+# 7946 (TCP and UDP) since lesson 30: memberlist between the MetalLB speakers
+control_ports="10250/tcp 10257/tcp 10259/tcp 2379-2380/tcp 4789/udp 5473/tcp 6443/tcp 7946/tcp 7946/udp"
+worker_ports="10250/tcp 30000-32767/tcp 4789/udp 5473/tcp 7946/tcp 7946/udp"
 # podSubnet in kubernetes/kubeadm/config.yaml, the source of all pod traffic
 pod_network=10.244.0.0/16
 # Never ask for the passphrase: without the key in ssh-agent the login fails at once.
