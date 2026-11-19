@@ -13,6 +13,7 @@ Files: [`kickstart/nuc-host.ks`](../../../kickstart/nuc-host.ks), [`tuned/virtua
 | Hypervisor | KVM with QEMU, managed by libvirt (`qemu:///system`). The admin user is in the group `libvirt`. |
 | Storage pool | `default`: `/var/lib/libvirt/images` on LV `vms/images` (60 GiB), autostart |
 | Network | `default`: NAT on `virbr0` (`192.168.122.1/24`), autostart |
+| DHCP range | `192.168.122.2` to `192.168.122.199` on `default`, below the [MetalLB address pool](../kubernetes/metallb.md#setup) |
 | Tuning | tuned profile `virtual-host-nuc` ([System settings, Tuning](system.md#tuning)) |
 | VM shutdown | `libvirt-guests` shuts the running VMs down cleanly with the NUC (`ON_SHUTDOWN=shutdown`, `ON_BOOT=ignore`). |
 | Web console | Cockpit with `cockpit-machines`, `https://192.168.1.50:9090` |
@@ -24,7 +25,7 @@ Files: [`kickstart/nuc-host.ks`](../../../kickstart/nuc-host.ks), [`tuned/virtua
 | Home network | Wi-Fi with the static IP `192.168.1.50`, power saving off |
 | Wired fallback | `enp85s0` has the same static IP: plug in the cable and reboot. |
 | SSH | Key login only ([System settings, SSH](system.md#ssh)) |
-| VM addresses | A DHCP reservation per MAC address: rhel-base `.10`, db1 `.11`, db2 `.12`. The names resolve between the VMs. |
+| VM addresses | A DHCP reservation per MAC address: rhel-base `.10`, db1 `.11`, db2 `.12`, k8s1 to k8s3 `.21` to `.23`. The names resolve between the VMs. |
 | From the desktop | `ProxyJump nuc` in `~/.ssh/config`, so `ssh db1` works directly. |
 
 ## Layout

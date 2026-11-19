@@ -33,6 +33,7 @@ Checks: [26](../../../checks/26-cluster.sh) · Files: [`kubernetes/kubeadm/confi
 | Part | Setup |
 |---|---|
 | Client | `kubectl` 1.36.6 from the Fedora package `kubernetes1.36-client` |
+| Helm | `helm` 4.2.2 from the Fedora package `helm`, for the charts of [MetalLB](metallb.md) and [Traefik](gateway.md#traefik) |
 | Tunnel | `ssh -N -L 6443:192.168.122.21:6443 nuc` in a second terminal (the desktop has no route to `192.168.122.0/24`) |
 | Kubeconfig | `~/.kube/config`, mode 600, in `~/.kube` with mode 700. It is the admin kubeconfig of k8s1 with `server: https://127.0.0.1:6443`. |
 
@@ -68,7 +69,7 @@ flowchart LR
 ## Limits
 
 - k8s1 is the only control plane node and runs the only etcd, so the API server is down while k8s1 restarts, and etcd has no backup yet.
-- `kubectl` on the desktop works only while the tunnel runs. A reboot of k8s1 does not close it, because the tunnel ends on the nuc.
+- `kubectl` and `helm` on the desktop work only while the tunnel runs. A reboot of k8s1 does not close it, because the tunnel ends on the nuc.
 - No role or playbook builds the cluster yet. A rebuilt node needs `kubeadm init` or `kubeadm join` by hand.
 
 ## Tested

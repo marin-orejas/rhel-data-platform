@@ -37,10 +37,12 @@ Every host runs firewalld with the zone `public`.
 | Kubelet API | `10250/tcp` | Same as k8s1 |
 | Controller manager | `10257/tcp` | None |
 | Scheduler | `10259/tcp` | None |
-| NodePort services | None | `30000-32767/tcp`, no UDP |
+| NodePort services | None | `30000-32767/tcp`, no UDP. A NodePort gets in without it. |
 | VXLAN | `4789/udp` (for Calico) | Same as k8s1 |
 | Typha | `5473/tcp` (for Calico) | Same as k8s1 |
+| MetalLB | `7946/tcp` and `7946/udp` (for the MetalLB speakers) | Same as k8s1 |
 | Pod network | `10.244.0.0/16` in the zone `trusted` (for traffic between pods) | Same as k8s1 |
+| Traffic to Services | firewalld accepts every connection that `kube-proxy` has DNATed (`ct status dnat accept` in `filter_FORWARD`), before the zone rules. | Same as k8s1 |
 
 ### SSH
 
