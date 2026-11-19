@@ -21,7 +21,7 @@ What I learn here:
 
 ```mermaid
 flowchart LR
-    desk["Desktop (Fedora 44)<br/>git, Ansible, kubectl"]
+    desk["Desktop (Fedora 44)<br/>git, Ansible, kubectl, helm"]
     subgraph nuc["NUC (RHEL 10.2)"]
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
@@ -38,7 +38,7 @@ flowchart LR
 
 | Host | Role | CPU / RAM | Disk |
 |---|---|---|---|
-| desktop | Fedora 44 workstation, git, SSH, Ansible control node, `kubectl` | i3-12100F / 16 GB | |
+| desktop | Fedora 44 workstation, git, SSH, Ansible control node, `kubectl`, `helm` | i3-12100F / 16 GB | |
 | nuc | RHEL 10.2 KVM host with Cockpit, no monitor | i3-1315U / 16 GB | 120 GB SSD |
 | rhel-base | Base VM image, only for cloning | 2 CPU / 2 GB | 20 GB |
 | db1 | PostgreSQL primary | 2 CPU / 3 GB | 20 GB + 10 GB data |
@@ -72,7 +72,7 @@ flowchart LR
 | 36–40 | Kubernetes, safe operations: placement, autoscaling, RBAC, pod security, etcd backup | planned |
 | 41–44 | Kubernetes, upgrade and automation: kubeadm upgrade, Argo CD, Ansible, fresh clones | planned |
 
-I work on Kubernetes now. kubeadm built a cluster from a config file in this repo on three clones of the base image: k8s1 is the control plane, k8s2 and k8s3 are workers, and Calico connects their pods. I use `kubectl` from my desktop through an SSH tunnel over the nuc. An httpd app runs on the cluster as a Deployment with health checks and resource limits, and both a rolling update and a rollback work. Kustomize builds the app from files in this repo, and it takes its settings from a ConfigMap and a Secret that stays out of the repo. Other pods reach the app through a Service by its DNS name, and network policies let in only one client pod. Next, MetalLB gives the app an address on the lab network, and a Gateway API route serves it outside the cluster.
+I work on Kubernetes now. kubeadm built a cluster from a config file in this repo on three clones of the base image: k8s1 is the control plane, k8s2 and k8s3 are workers, and Calico connects their pods. I use `kubectl` from my desktop through an SSH tunnel over the nuc. An httpd app runs on the cluster as a Deployment with health checks and resource limits, and both a rolling update and a rollback work. Kustomize builds the app from files in this repo, and it takes its settings from a ConfigMap and a Secret that stays out of the repo. Other pods reach the app through a Service by its DNS name, and network policies let in only one client pod. MetalLB gives the app an address on the lab network, and Traefik serves it there through a Gateway API route. Next, each worker gets its own data disk, and a storage class creates volumes on it.
 
 Ansible is done. Roles keep the system settings, the data disks, PostgreSQL with its config files, the NFS share, pgBackRest and the nightly dumps the same on db1 and db2: my own `base`, `postgresql`, `nfs`, `pgbackrest` and `pgdump` roles and the system role `storage`. The `postgresql` role also keeps an app login and a read-only login for the database `app`, serves TLS with certificates from my own lab CA (the keys in Ansible Vault), and builds db2 as a standby from an empty data disk. One playbook builds both hosts from fresh clones, and GitHub Actions checks the code on every push. PostgreSQL recovery and failover are done: point-in-time recovery, pgBackRest, streaming replication and failover.
 
