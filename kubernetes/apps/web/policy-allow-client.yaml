@@ -12,7 +12,6 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # One from element: the namespace client AND the label app: client.
     - from:
         - namespaceSelector:
             matchLabels:
@@ -20,7 +19,6 @@ spec:
           podSelector:
             matchLabels:
               app: client
-      # The pod's named port (8080), not the Service port 80.
       ports:
         - protocol: TCP
           port: http

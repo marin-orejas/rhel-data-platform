@@ -1,0 +1,18 @@
+providers:
+  kubernetesGateway:
+    enabled: true
+gateway:
+  listeners:
+    web:
+      namespacePolicy:
+        from: Selector
+        selector:
+          matchLabels:
+            kubernetes.io/metadata.name: web
+ports:
+  websecure:
+    expose:
+      default: false
+service:
+  annotations:
+    metallb.io/loadBalancerIPs: 192.168.122.200

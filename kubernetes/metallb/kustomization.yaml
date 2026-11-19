@@ -4,4 +4,3 @@ namespace: metallb-system
 resources:
   - ipaddresspool.yaml
   - l2advertisement.yaml
-# MetalLB and its CRDs come from the Helm chart 0.16.2 with values.yaml, installed before this apply.

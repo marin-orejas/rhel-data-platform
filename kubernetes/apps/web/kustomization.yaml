@@ -7,6 +7,8 @@ resources:
   - service.yaml
   - policy-deny-ingress.yaml
   - policy-allow-client.yaml
+  - policy-allow-gateway.yaml
+  - httproute.yaml
 configMapGenerator:
   - name: web-config
     files:
@@ -16,4 +18,3 @@ configMapGenerator:
     options:
       labels:
         app: web
-# The Secret web-token is made by hand and is not in the repo.

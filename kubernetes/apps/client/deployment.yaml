@@ -17,7 +17,6 @@ spec:
     spec:
       containers:
         - name: client
-          # The web image is already on the workers and has curl and getent.
           image: registry.access.redhat.com/ubi10/httpd-24:10.3-1793879148
           command: ["sleep", "infinity"]
           resources:
