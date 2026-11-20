@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: writer
+  namespace: writer
+  labels:
+    app: writer
+spec:
+  serviceName: writer
+  replicas: 2
+  selector:
+    matchLabels:
+      app: writer
+  template:
+    metadata:
+      labels:
+        app: writer
+    spec:
+      securityContext:
+        fsGroup: 1001
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: writer
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: writer
+          image: registry.access.redhat.com/ubi10/httpd-24:10.3-1793879148
+          command: ["/bin/sh", "-c", "while true; do date -u +%FT%TZ >> /data/log.txt; sleep 5; done"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: topolvm
+        resources:
+          requests:
+            storage: 1Gi
