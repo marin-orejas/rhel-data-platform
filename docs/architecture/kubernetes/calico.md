@@ -17,7 +17,7 @@ Checks: [26](../../../checks/26-cluster.sh) · Files: [`kubernetes/calico/custom
 | Data plane | `Nftables`, with the tables `ip calico` and `arp calico-arp` |
 | Pods | `calico-node` and `csi-node-driver` on every node, `calico-typha` (two, host network), `calico-kube-controllers` and `calico-webhooks` (two), all in `calico-system` |
 | CNI config | `/etc/cni/net.d/10-calico.conflist` and `calico-kubeconfig`, root 600, on every node |
-| Goldmane, Whisker | Not installed (a technology preview, and each node has 2.5 GiB) |
+| Goldmane, Whisker | Not installed (a technology preview, and the workers have 2.5 GiB each) |
 
 ## Layout
 

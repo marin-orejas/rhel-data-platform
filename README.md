@@ -43,9 +43,9 @@ flowchart LR
 | rhel-base | Base VM image, only for cloning | 2 CPU / 2 GB | 20 GB |
 | db1 | PostgreSQL primary | 2 CPU / 3 GB | 20 GB + 10 GB data |
 | db2 | Backup storage (NFS), PostgreSQL standby | 2 CPU / 3 GB | 20 GB + 10 GB data |
-| k8s1 | Kubernetes control plane with CRI-O | 2 CPU / 2.5 GB | 20 GB |
-| k8s2 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB |
-| k8s3 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB |
+| k8s1 | Kubernetes control plane with CRI-O | 2 CPU / 3 GB | 20 GB |
+| k8s2 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB + 5 GB data |
+| k8s3 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB + 5 GB data |
 
 ## Docs
 
