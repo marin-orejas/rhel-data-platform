@@ -1,0 +1,21 @@
+crd:
+  annotations:
+    helm.sh/resource-policy: keep
+lvmd:
+  deviceClasses:
+    - name: data
+      volume-group: data
+      type: thick
+      default: true
+      spare-gb: 0
+controller:
+  replicaCount: 1
+snapshot:
+  enabled: false
+storageClasses:
+  - name: topolvm
+    storageClass:
+      fsType: xfs
+      isDefaultClass: true
+      volumeBindingMode: WaitForFirstConsumer
+      allowVolumeExpansion: true
