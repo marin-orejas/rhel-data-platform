@@ -49,7 +49,7 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 ## Kubernetes: traffic and storage (29–31)
 - [x] **[29 Inside the cluster](../checks/29-in-cluster.sh).** Pods reach the app through a Service by its DNS name, and a network policy lets only one client in.
 - [x] **[30 From outside](../checks/30-outside.sh).** MetalLB gives the app an address on the lab network, and a Gateway API route serves it outside the cluster.
-- [ ] **31 Storage.** Each worker has its own data disk, a storage class creates volumes on it, and a volume grows while its pod runs.
+- [x] **[31 Storage](../checks/31-storage.sh).** Each worker has its own data disk, a storage class creates volumes on it, and a volume grows while its pod runs.
 
 ## PostgreSQL on Kubernetes (32–35)
 - [ ] **32 CloudNativePG.** CloudNativePG runs PostgreSQL 18 as a primary and a standby on the two workers, and a failover is measured.
