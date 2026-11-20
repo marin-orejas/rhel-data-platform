@@ -70,7 +70,7 @@ flowchart LR
 
 - k8s1 is the only control plane node and runs the only etcd, so the API server is down while k8s1 restarts, and etcd has no backup yet.
 - `kubectl` and `helm` on the desktop work only while the tunnel runs. A reboot of k8s1 does not close it, because the tunnel ends on the nuc.
-- No role or playbook builds the cluster yet. A rebuilt node needs `kubeadm init` or `kubeadm join` by hand.
+- No role or playbook builds the cluster. A rebuilt node needs `kubeadm init` or `kubeadm join` by hand.
 
 ## Tested
 
@@ -80,6 +80,5 @@ flowchart LR
 
 ## Planned
 
-- An etcd snapshot every night and a timed restore (item 40).
-- The upgrade from 1.36 to 1.37, one node at a time (item 41).
-- An Ansible role for the nodes, and the whole cluster from fresh clones in one run (items 43 and 44).
+- An etcd snapshot every night and a timed restore (item 35).
+- The upgrade one node at a time while PostgreSQL stays up (item 36).

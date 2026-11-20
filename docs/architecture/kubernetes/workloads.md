@@ -73,8 +73,3 @@ flowchart LR
 | 2026-11-16 | Rolling update from httpd `10.2-1794215538` to `10.3-1793879148` | 2 new pods, the second 9 s after the first. The old pods stopped only after the new ones were Ready. |
 | 2026-11-16 | Update with a readiness probe that fails (`/healthz`), then `kubectl rollout undo` | New pod `0/1`, the two old pods `1/1`, `ProgressDeadlineExceeded` after 120 s. The undo went back to the old ReplicaSet with no new pods. |
 | 2026-11-16 | Reboot of k8s1, k8s2 and k8s3 at once (`ansible.builtin.reboot`) | Both pods `1/1` with the same names, nodes and IPs, `RESTARTS 1`. Checks 25, 26 and 27 passed. |
-
-## Planned
-
-- Affinity rules that decide where the pods run (item 36).
-- Argo CD applies the app from this repo and undoes a change by hand (item 42).

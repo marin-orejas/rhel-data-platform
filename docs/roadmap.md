@@ -1,8 +1,8 @@
 # Roadmap
 
-I do every step by hand first, then automate it. Every setting must still work after a reboot. Each numbered item is one lesson, ending in a verified and committed result. An item's number is also the number of its script in [`checks/`](../checks/) when the lesson has one. A new topic goes in when the current ones are nearly done.
+I do every step by hand first, then automate it. Every setting must still work after a reboot. Each numbered item is one lesson, ending in a verified and committed result. An item's number is also the number of its script in [`checks/`](../checks/) when the lesson has one. Items 32–36 are the last topic of this project.
 
-Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, phase 2 was the RHCSA practice (now in its own repo), phase 3 is 13–16, phase 4 is 17–24 and phase 5 is 25–44.
+Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, phase 2 was the RHCSA practice (now in its own repo), phase 3 is 13–16, phase 4 is 17–24 and phase 5 is 25–36.
 
 ## Lab (01–04)
 - [x] **01 NUC install.** The NUC runs a registered RHEL 10.2 from a kickstart file, with a static IP, a sudo user, SSH with keys only, time sync, a firewall and Secure Boot.
@@ -51,28 +51,16 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 - [x] **[30 From outside](../checks/30-outside.sh).** MetalLB gives the app an address on the lab network, and a Gateway API route serves it outside the cluster.
 - [x] **[31 Storage](../checks/31-storage.sh).** Each worker has its own data disk, a storage class creates volumes on it, and a volume grows while its pod runs.
 
-## PostgreSQL on Kubernetes (32–35)
+## Kubernetes: PostgreSQL, backups and upgrade (32–36)
 - [ ] **32 CloudNativePG.** CloudNativePG runs PostgreSQL 18 as a primary and a standby on the two workers, and a failover is measured.
-- [ ] **33 TLS for PostgreSQL.** cert-manager issues the PostgreSQL certificates from the lab CA, and clients check them with `verify-full`.
-- [ ] **34 Object store.** db2 runs an S3 object store with TLS, set up by hand first, then as an Ansible role.
-- [ ] **35 Backups and restore.** CloudNativePG archives WAL and backs up to db2, and a dropped table comes back with a timed restore to a set time.
-
-## Kubernetes: safe operations (36–40)
-- [ ] **36 Placement.** Labels, affinity and taints decide where pods run, and a CronJob dumps the `app` database every night.
-- [ ] **37 Metrics and autoscaling.** metrics-server shows what each pod uses, a quota caps the app namespace, and an autoscaler adds pods under load.
-- [ ] **38 Users and rights.** A read-only user signs in with a certificate from the cluster CA, and the CronJob runs with only the rights it needs.
-- [ ] **39 Pod security.** The app namespace enforces the `restricted` pod security level, and every pod in it runs as a non-root user.
-- [ ] **40 etcd backup.** A timer on k8s1 takes an etcd snapshot every night, and a timed restore brings back a deleted namespace.
-
-## Kubernetes: upgrade and automation (41–44)
-- [ ] **41 Upgrade.** kubeadm upgrades the cluster from 1.36 to 1.37 one node at a time while PostgreSQL stays up, with the outage measured.
-- [ ] **42 Argo CD.** Argo CD applies the cluster's apps from this repo, so a change is a commit and a change by hand is undone.
-- [ ] **43 Node role.** An Ansible role prepares the nodes, and a playbook brings a reset worker back into the cluster.
-- [ ] **44 Fresh cluster.** Ansible builds the cluster from fresh clones in one timed run, Argo CD brings the apps back, and a second run changes nothing.
+- [ ] **33 Object store.** db2 runs an S3 object store with TLS, set up by hand first, then as an Ansible role.
+- [ ] **34 Backups and restore.** CloudNativePG archives WAL and backs up to db2, and a dropped table comes back with a timed restore to a set time.
+- [ ] **35 etcd backup.** A timer on k8s1 takes an etcd snapshot every night, and a timed restore brings back a deleted namespace.
+- [ ] **36 Upgrade.** kubeadm upgrades the cluster one node at a time while PostgreSQL stays up, with the outage measured.
 
 ## Learning resources
 - RHEL: [Sander van Vugt (YouTube)](https://www.youtube.com/channel/UComgXoI6pysmetOzuNH_TDQ)
-- Kubernetes: [Kubernetes documentation](https://kubernetes.io/docs/home/), [CloudNativePG documentation](https://cloudnative-pg.io/docs/), [Argo CD documentation](https://argo-cd.readthedocs.io/)
+- Kubernetes: [Kubernetes documentation](https://kubernetes.io/docs/home/), [CloudNativePG documentation](https://cloudnative-pg.io/docs/)
 - Databases: [CMU 15-445 Intro to Database Systems](https://www.youtube.com/playlist?list=PLSE8ODhjZXjYMAgsGH-GtY5rJYZ6zjsd5), [Hussein Nasser, PostgreSQL](https://www.youtube.com/playlist?list=PLQnljOFTspQWGrOqslniFlRcwxyY94cjj), [PostgreSQL 18 documentation](https://www.postgresql.org/docs/18/), [PostgreSQL 14 Internals (Egor Rogov, free)](https://postgrespro.com/community/books/internals)
 - Backups: [pgBackRest User Guide for RHEL](https://pgbackrest.org/user-guide-rhel.html)
 - Reliability: *Database Reliability Engineering* (Laine Campbell, Charity Majors, O'Reilly), [Google SRE book (free)](https://sre.google/sre-book/table-of-contents/)

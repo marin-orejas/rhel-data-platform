@@ -7,7 +7,7 @@ What I learn here:
 - **RHEL 10 administration**: storage, SELinux, firewall, systemd, networking and backups, all on a database server. My RHCSA (EX200) practice is in its own repo, [rhcsa-practice-lab](https://github.com/marin-orejas/rhcsa-practice-lab).
 - **PostgreSQL administration**: backups and point-in-time recovery, replication and failover, roles and TLS.
 - **Automation**: configure db1 and db2 with Ansible, so one playbook builds both from fresh clones.
-- **Kubernetes**: a kubeadm cluster on RHEL 10 with CRI-O and Calico, PostgreSQL on it with CloudNativePG, built with Ansible and kept in step with Argo CD.
+- **Kubernetes**: a kubeadm cluster on RHEL 10 with CRI-O and Calico, and PostgreSQL on it with CloudNativePG, backed up to db2 and kept up through a cluster upgrade.
 
 ## What works now
 
@@ -68,9 +68,7 @@ flowchart LR
 | 21–24 | Ansible, PostgreSQL services: app roles, TLS, Vault, standby, backups, CI | done |
 | 25–28 | Kubernetes, cluster and apps: kubeadm, CRI-O, Calico, Deployments, Kustomize | done |
 | 29–31 | Kubernetes, traffic and storage: Services, network policy, MetalLB, Gateway API, volumes | done |
-| 32–35 | PostgreSQL on Kubernetes: CloudNativePG, cert-manager, an object store, backups | planned |
-| 36–40 | Kubernetes, safe operations: placement, autoscaling, RBAC, pod security, etcd backup | planned |
-| 41–44 | Kubernetes, upgrade and automation: kubeadm upgrade, Argo CD, Ansible, fresh clones | planned |
+| 32–36 | Kubernetes, PostgreSQL, backups and upgrade: CloudNativePG, an object store on db2, backups and restore, etcd snapshots, an upgrade | planned |
 
 I work on Kubernetes now. kubeadm built a cluster from a config file in this repo on three clones of the base image: k8s1 is the control plane, k8s2 and k8s3 are workers, and Calico connects their pods. I use `kubectl` from my desktop through an SSH tunnel over the nuc. An httpd app runs on the cluster as a Deployment with health checks and resource limits, and both a rolling update and a rollback work. Kustomize builds the app from files in this repo, and it takes its settings from a ConfigMap and a Secret that stays out of the repo. Other pods reach the app through a Service by its DNS name, and network policies let in only one client pod. MetalLB gives the app an address on the lab network, and Traefik serves it there through a Gateway API route. Each worker has its own data disk, TopoLVM makes a volume on it for every claim, and a volume grew while its pod ran. Next, CloudNativePG runs PostgreSQL 18 on the two workers.
 

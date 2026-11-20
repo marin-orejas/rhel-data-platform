@@ -72,7 +72,3 @@ flowchart LR
 | 2026-11-17 | Change of a ConfigMap with a fixed name, mounted as a directory | 53 s until the running pod served the new page. `APP_RELEASE` changed only after `kubectl rollout restart`. |
 | 2026-11-17 | New `APP_RELEASE` in `kustomization.yaml`, then `kubectl apply -k` | New ConfigMap `web-config-kk6kk2847d`, a rollout to revision 11 with no restart, `3` in the page and in `APP_RELEASE`. |
 | 2026-11-17 | Live change of `APP_RELEASE` to `4`, then a reboot of k8s1, k8s2 and k8s3 | One FAIL in check 28, the pods still on `3`. After `kubectl apply -k` and the reboot, checks 25 to 28 passed. |
-
-## Planned
-
-- Ansible makes `web-token` from Vault on a fresh cluster (item 44).

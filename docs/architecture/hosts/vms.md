@@ -40,7 +40,7 @@ The clones are made with `virt-clone` while `rhel-base` is shut off ([Clone a VM
 | LVs | `pgdata` 7 GiB on `/pgdata`, XFS | `backup` 3 GiB on `/srv/backup` and `pgdata` 5 GiB on `/pgdata`, both XFS | One per Kubernetes volume, made by [TopoLVM](../kubernetes/storage.md#topolvm) |
 | Mount | `/etc/fstab` by file system UUID | Same as db1 | None in `/etc/fstab`. TopoLVM mounts each volume for its pod. |
 | LVM devices file | `/etc/lvm/devices/system.devices` lists `vda3` and `vdb1`. A new clone of `rhel-base` lists only `vda3`. | Same as db1 | Same as db1 |
-| Rebuild | The data disk stays and goes to the new clone as `vdb` ([Rebuild the db hosts from fresh clones](../../runbooks/rebuild-the-db-hosts-from-fresh-clones.md)). | Same as db1 | Not done yet (item 44) |
+| Rebuild | The data disk stays and goes to the new clone as `vdb` ([Rebuild the db hosts from fresh clones](../../runbooks/rebuild-the-db-hosts-from-fresh-clones.md)). | Same as db1 | Not planned |
 
 ### Kubernetes nodes
 

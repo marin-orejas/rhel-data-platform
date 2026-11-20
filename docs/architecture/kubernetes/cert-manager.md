@@ -26,7 +26,7 @@ Checks: [31](../../../checks/31-storage.sh) · Files: [`kubernetes/cert-manager/
 
 ## Limits
 
-- cert-manager 1.21 supports Kubernetes 1.33 to 1.36, so it is upgraded before the cluster goes to 1.37 (item 41).
+- cert-manager 1.21 supports Kubernetes 1.33 to 1.36, so a cluster upgrade to 1.37 first needs a release that supports it (item 36).
 - One pod each, so while `cert-manager-webhook` is down, the API server refuses new and changed cert-manager resources.
 
 ## Tested
@@ -37,5 +37,4 @@ Checks: [31](../../../checks/31-storage.sh) · Files: [`kubernetes/cert-manager/
 
 ## Planned
 
-- A CA Issuer from the lab CA, and the PostgreSQL certificates for `verify-full` (item 33).
-- plugin-barman-cloud, which needs cert-manager for its own certificates (item 35).
+- plugin-barman-cloud, which needs cert-manager for its own certificates (item 34).
