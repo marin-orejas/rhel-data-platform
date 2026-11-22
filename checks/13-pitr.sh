@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-# Lesson 13 checks: WAL archiving on db1 and the state after the point-in-time restore.
-# Since lesson 14, pgBackRest archives the WAL (checks/14-pgbackrest.sh). The archive by
-# hand on db2 was lost in lesson 24, when the backup disk of db2 was formatted again, so
-# its checks are gone.
-# db1 checks the archiver; db2 checks the server on db1 over the network as remote_test,
-# like checks/07. Run as the owner, no sudo needed:
-#   for h in db1 db2; do echo "== $h"; ssh "$h" bash -s < checks/13-pitr.sh; done
-# Run it after a reboot of both hosts: archiving must come back on its own.
 
 failed=0
 
@@ -29,22 +21,17 @@ server=db1
 port=5433
 role=remote_test
 
-# Give up on a connection after 5 seconds.
 export PGCONNECT_TIMEOUT=5
 
-# Run one query on db1 as remote_test, with the password from ~/.pgpass.
 query() {
     psql -w -h "$server" -p "$port" -U "$role" -d postgres -Atc "$1" 2>/dev/null
 }
 
-# A setting is empty. current_setting() fails when the role may not read it;
-# then the query prints nothing and the check fails instead of passing.
 empty_setting() {
     [ "$(query "SELECT current_setting('$1') || '|'")" = "|" ]
 }
 
 if [ "$(hostname -s)" = db1 ]; then
-    # Archiver
     archiver=$(ps -eo args= | grep '^postgres: archiver')
     check "package postgresql18-contrib is installed (pg_waldump)" rpm -q --quiet postgresql18-contrib
     check "the archiver process runs" [ -n "$archiver" ]
@@ -52,13 +39,11 @@ if [ "$(hostname -s)" = db1 ]; then
 fi
 
 if [ "$(hostname -s)" = db2 ]; then
-    # The server on db1 after the restore
     check "$role logs in to $server:$port" [ "$(query 'SELECT current_user')" = "$role" ]
     check "the server is not in recovery" [ "$(query 'SELECT pg_is_in_recovery()')" = f ]
     check "archive_mode is on" [ "$(query 'SHOW archive_mode')" = on ]
     check "the last archive attempt succeeded" [ "$(query 'SELECT last_archived_time IS NOT NULL AND (last_failed_time IS NULL OR last_failed_time < last_archived_time) FROM pg_stat_archiver')" = t ]
 
-    # No recovery settings left behind
     check "restore_command is not set" empty_setting restore_command
     check "recovery_target_time is not set" empty_setting recovery_target_time
 fi
