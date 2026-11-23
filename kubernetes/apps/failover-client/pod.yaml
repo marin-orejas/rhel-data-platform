@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: failover-client
+  namespace: pg
+  labels:
+    app: failover-client
+spec:
+  restartPolicy: Never
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              cnpg.io/cluster: pg
+              cnpg.io/instanceRole: primary
+          topologyKey: kubernetes.io/hostname
+  containers:
+    - name: client
+      image: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
+      command: ["bash", "/scripts/failover-client.sh"]
+      env:
+        - name: FAILOVER_CONNINFO
+          value: host=pg-rw dbname=app user=app connect_timeout=2
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-app
+              key: password
+      resources:
+        requests:
+          cpu: 50m
+          memory: 32Mi
+        limits:
+          cpu: 200m
+          memory: 64Mi
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+  volumes:
+    - name: scripts
+      configMap:
+        name: failover-client
