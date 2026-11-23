@@ -1,0 +1,39 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg
+  namespace: pg
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
+  affinity:
+    podAntiAffinityType: required
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  postgresql:
+    parameters:
+      max_wal_size: 256MB
+      wal_keep_size: 128MB
+      max_slot_wal_keep_size: 256MB
+  storage:
+    storageClass: topolvm
+    size: 1Gi
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: pg-app
+  managed:
+    roles:
+      - name: report
+        login: true
+        inRoles:
+          - pg_read_all_data
+        passwordSecret:
+          name: pg-report
