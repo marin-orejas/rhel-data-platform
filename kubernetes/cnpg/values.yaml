@@ -1,0 +1,17 @@
+replicaCount: 2
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 0
+    maxUnavailable: 1
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: cloudnative-pg
+        topologyKey: kubernetes.io/hostname
