@@ -23,6 +23,9 @@ spec:
         key: REGION
     wal:
       compression: gzip
+    data:
+      compression: gzip
+  retentionPolicy: "7d"
   instanceSidecarConfiguration:
     env:
       - name: AWS_REQUEST_CHECKSUM_CALCULATION
