@@ -1,0 +1,19 @@
+metadata_dir = "/srv/garage/meta"
+data_dir = "/srv/garage/data"
+db_engine = "sqlite"
+metadata_fsync = true
+data_fsync = true
+
+replication_factor = 1
+
+rpc_bind_addr = "127.0.0.1:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret_file = "/etc/garage/rpc_secret"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "127.0.0.1:3900"
+
+[admin]
+api_bind_addr = "127.0.0.1:3903"
+admin_token_file = "/etc/garage/admin_token"

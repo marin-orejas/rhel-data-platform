@@ -1,0 +1,46 @@
+---
+- name: Install nginx
+  ansible.builtin.dnf:
+    name: nginx
+    state: present
+
+- name: Install the S3 certificate
+  ansible.builtin.copy:
+    dest: /etc/pki/tls/certs/db2-s3.crt
+    content: "{{ garage_tls_cert }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Install the S3 key
+  ansible.builtin.copy:
+    dest: /etc/pki/tls/private/db2-s3.key
+    content: "{{ garage_tls_key }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
+  notify: Reload nginx
+
+- name: Write the nginx site for S3
+  ansible.builtin.copy:
+    src: garage.conf
+    dest: /etc/nginx/conf.d/garage.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Let nginx connect to Garage
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true
+
+- name: Keep nginx enabled and running
+  ansible.builtin.systemd_service:
+    name: nginx
+    enabled: true
+    state: started

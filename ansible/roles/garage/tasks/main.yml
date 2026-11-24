@@ -1,0 +1,9 @@
+---
+- name: Garage server
+  ansible.builtin.import_tasks: server.yml
+
+- name: Layout, bucket and key
+  ansible.builtin.import_tasks: cluster.yml
+
+- name: TLS in front of Garage
+  ansible.builtin.import_tasks: tls.yml

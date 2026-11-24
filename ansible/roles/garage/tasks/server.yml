@@ -1,0 +1,92 @@
+---
+- name: Create the garage group
+  ansible.builtin.group:
+    name: garage
+    gid: "{{ garage_uid }}"
+
+- name: Create the garage user
+  ansible.builtin.user:
+    name: garage
+    uid: "{{ garage_uid }}"
+    group: garage
+    shell: /usr/sbin/nologin
+    create_home: false
+
+- name: Install the Garage binary
+  ansible.builtin.get_url:
+    url: "https://garagehq.deuxfleurs.fr/_releases/v{{ garage_version }}/x86_64-unknown-linux-musl/garage"
+    dest: /usr/local/bin/garage
+    checksum: "sha256:{{ garage_sha256 }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart Garage
+
+- name: Create the secrets directory
+  ansible.builtin.file:
+    path: /etc/garage
+    state: directory
+    owner: root
+    group: garage
+    mode: "0750"
+
+- name: Install the RPC secret
+  ansible.builtin.copy:
+    dest: /etc/garage/rpc_secret
+    content: "{{ garage_rpc_secret }}"
+    owner: garage
+    group: garage
+    mode: "0600"
+  no_log: true
+  diff: false
+  notify: Restart Garage
+
+- name: Install the admin token
+  ansible.builtin.copy:
+    dest: /etc/garage/admin_token
+    content: "{{ garage_admin_token }}"
+    owner: garage
+    group: garage
+    mode: "0600"
+  no_log: true
+  diff: false
+  notify: Restart Garage
+
+- name: Write the Garage config
+  ansible.builtin.copy:
+    src: garage.toml
+    dest: /etc/garage.toml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Garage
+
+- name: Install the Garage service
+  ansible.builtin.copy:
+    src: garage.service
+    dest: /etc/systemd/system/garage.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: garage_unit
+  notify: Restart Garage
+
+- name: Give /srv/garage to the garage user
+  ansible.builtin.file:
+    path: /srv/garage
+    state: directory
+    owner: garage
+    group: garage
+    mode: "0750"
+
+- name: Keep Garage enabled and running
+  ansible.builtin.systemd_service:
+    name: garage
+    enabled: true
+    state: started
+    daemon_reload: "{{ garage_unit is changed }}"
+
+- name: Wait for the Garage RPC port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 3901

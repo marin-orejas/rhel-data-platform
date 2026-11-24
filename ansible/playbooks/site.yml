@@ -5,6 +5,9 @@
 - name: Data disks
   ansible.builtin.import_playbook: storage.yml
 
+- name: Object store
+  ansible.builtin.import_playbook: garage.yml
+
 - name: PostgreSQL
   ansible.builtin.import_playbook: postgresql.yml
 

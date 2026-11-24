@@ -1,0 +1,8 @@
+---
+garage_version: 2.5.0
+garage_sha256: "2ff667286217cd73ebcb1c03af993822365000441dfe31a80cb64c5189a9dea8"
+garage_uid: 1501
+garage_zone: dc1
+garage_capacity: 4G
+garage_bucket: pg-backups
+garage_key_name: cnpg

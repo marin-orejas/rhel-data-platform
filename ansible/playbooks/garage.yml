@@ -1,0 +1,6 @@
+---
+- name: Object store on db2
+  hosts: db2
+  become: true
+  roles:
+    - garage
