@@ -4,3 +4,4 @@ namespace: pg
 resources:
   - namespace.yaml
   - cluster.yaml
+  - objectstore.yaml

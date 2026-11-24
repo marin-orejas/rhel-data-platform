@@ -1,0 +1,38 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: db2
+  namespace: pg
+spec:
+  configuration:
+    destinationPath: s3://pg-backups/
+    endpointURL: https://db2
+    endpointCA:
+      name: lab-ca
+      key: ca.crt
+    s3AddressingStyle: path
+    s3Credentials:
+      accessKeyId:
+        name: garage-cnpg
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: garage-cnpg
+        key: ACCESS_SECRET_KEY
+      region:
+        name: garage-cnpg
+        key: REGION
+    wal:
+      compression: gzip
+  instanceSidecarConfiguration:
+    env:
+      - name: AWS_REQUEST_CHECKSUM_CALCULATION
+        value: when_required
+      - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+        value: when_required
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
