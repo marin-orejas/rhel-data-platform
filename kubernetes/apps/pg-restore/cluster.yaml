@@ -1,0 +1,30 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-restore
+  namespace: pg
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  storage:
+    storageClass: topolvm
+    size: 1Gi
+  bootstrap:
+    recovery:
+      source: origin
+      recoveryTarget:
+        targetTime: "2026-11-24 20:54:51.827467+00"
+  externalClusters:
+    - name: origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: db2
+          serverName: pg
