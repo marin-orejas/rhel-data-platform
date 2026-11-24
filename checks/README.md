@@ -13,8 +13,9 @@ Run from the repo root on the desktop, without sudo. The column "Runs on" in the
 | db1, db2 | `for h in db1 db2; do echo "== $h"; ssh "$h" bash -s < checks/06-postgres.sh; done` |
 | desktop | `bash checks/17-ansible.sh` |
 
-- 17–26, 31 and 32 log in through Ansible, so the key must be in the agent: `ssh-add ~/.ssh/id_ed25519_ansible`.
+- 17–26 and 31–33 log in through Ansible, so the key must be in the agent: `ssh-add ~/.ssh/id_ed25519_ansible`.
 - 26–32 use `kubectl` through a tunnel to the API server, open in a second terminal: `ssh -N -L 6443:192.168.122.21:6443 nuc`.
+- 33 also runs curl on k8s2 over `ssh k8s2`, with the lab CA in `~/lab-ca.crt` there.
 - After a reboot, run 18 a minute after the hosts are up (time sync), and 29 and 30 once CoreDNS is ready again (`kubectl rollout status deployment/coredns -n kube-system`).
 - To see only the failures, add `| grep -Ev '^(PASS|$)'`.
 
@@ -48,3 +49,4 @@ Run from the repo root on the desktop, without sudo. The column "Runs on" in the
 | [30](30-outside.sh) | MetalLB, Traefik and the page at `http://192.168.122.200/` | desktop |
 | [31](31-storage.sh) | The data disks of the workers, TopoLVM, cert-manager and the StatefulSet `writer` | desktop |
 | [32](32-cloudnativepg.sh) | The CloudNativePG operator, the Cluster `pg` with its primary and standby, and the record of the failover | desktop |
+| [33](33-object-store.sh) | Garage and nginx on db2: the disk, the service, TLS, the bucket and its key, and a signed PUT, GET and DELETE from k8s2 | desktop |
