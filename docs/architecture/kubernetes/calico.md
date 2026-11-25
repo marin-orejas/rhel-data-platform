@@ -43,8 +43,8 @@ flowchart LR
 - VXLAN with `bgp: Disabled`, so the nodes run no BGP daemon and need only `4789/udp` between them, not `179/tcp`.
 - `linuxDataplane: Nftables`, like kube-proxy in `nftables` mode, because iptables is deprecated on RHEL 10. Both keep their rules in tables of their own (`ip calico`, `ip kube-proxy`) beside `inet firewalld`.
 - firewalld stays on, although the Calico docs say to disable it, because the role `base` keeps the firewall of every host. The pod network is in [the zone `trusted`](../hosts/system.md#firewall-on-the-kubernetes-nodes), since firewalld drops traffic forwarded between interfaces in no zone, such as `cali*` and `vxlan.calico`.
-- `APIServer` stays, because in 3.33 it runs only `calico-webhooks`, which check Calico resources and fill in their defaults.
-- The upstream manifests go in with `kubectl create`, because the `installations` CRD is about 650 KiB, over the 256 KiB limit of the annotation that `apply` writes. The repo file goes in with `kubectl apply`, so a later change is applied as a diff.
+- `APIServer` stays, because in 3.33 it runs only `calico-webhooks`, which check Calico resources.
+- The upstream manifests go in with `kubectl create`, because `kubectl apply` fails on the `installations` CRD (about 650 KiB). The repo file goes in with `kubectl apply`, so a later change is applied as a diff.
 
 ## Limits
 

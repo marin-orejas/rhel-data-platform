@@ -1,6 +1,6 @@
 # Kubernetes storage
 
-TopoLVM 0.42.1 makes a thick LV in VG `data` on k8s2 or k8s3 for every PersistentVolumeClaim of the StorageClass `topolvm`, the default class of the [Kubernetes cluster](cluster.md). The StatefulSet `writer` runs one pod on each worker, each with its own volume: 2Gi on k8s2 and 1Gi on k8s3.
+TopoLVM 0.42.1 makes a thick LV in VG `data` on k8s2 or k8s3 for every PersistentVolumeClaim of the StorageClass `topolvm`, the default class of the [Kubernetes cluster](cluster.md). The StatefulSet `writer` runs one pod on each worker, each with its own volume: 2Gi on k8s2 and 1Gi on k8s3. The [PostgreSQL cluster `pg`](cloudnativepg.md#cluster-pg) has a 1Gi volume on each worker too.
 
 Checks: [31](../../../checks/31-storage.sh) · Files: [`kubernetes/topolvm/values.yaml`](../../../kubernetes/topolvm/values.yaml), [`kubernetes/apps/writer/`](../../../kubernetes/apps/writer/)
 
@@ -80,12 +80,12 @@ flowchart LR
 
 - [TopoLVM with thick LVs](../../decisions/topolvm-with-thick-lvs.md), because a volume must grow while its pod runs, and local-path-provisioner ignores the size of a volume.
 - `spare-gb: 0`, because the chart's default keeps 10 GiB free in the VG, more than the 5 GiB of VG `data`, and Kubernetes would see no space on either worker.
-- No webhook and no cert-manager for TopoLVM: chart 17.3.1 makes its webhook and certificate only with `webhook.podMutatingWebhook.enabled`, which is off and needed only with `topolvm-scheduler`. The TopoLVM getting-started page still lists cert-manager as a prerequisite.
+- No webhook and no cert-manager for TopoLVM, because chart 17.3.1 makes them only with `webhook.podMutatingWebhook.enabled`, which only `topolvm-scheduler` needs.
 - The CRD has `helm.sh/resource-policy: keep`, because the chart has it in `templates/`, and `helm uninstall` would delete it with every LogicalVolume.
 
 ## Limits
 
-- The two VGs offer Kubernetes 5116Mi each, but the data disks are thin qcow2 images in the pool `default` on the nuc, which had 6.89 GiB free on 2026-11-20 for them and every system disk. When the pool fills, the VMs that write to it pause.
+- The two VGs offer Kubernetes 5116Mi each, but the data disks are thin qcow2 images in the pool `default` on the nuc, which they share with every system disk and the object store disk of db2. When the pool fills, the VMs that write to it pause.
 - A volume lives on one worker. Its pod cannot start while that worker is down, and the data is lost with that worker's data disk.
 - One controller pod, so no volume is made, grown or deleted while it restarts. Pods with volumes keep running.
 - `topolvm-node` restarts when it starts before `topolvm-lvmd-0` on the same worker has made `/run/topolvm/lvmd.sock` (twice in its first minute on k8s3), so check 31 asks for Ready pods, not for 0 restarts.
@@ -97,7 +97,3 @@ flowchart LR
 | Date | Test | Result |
 |---|---|---|
 | 2026-11-20 | `data-writer-0` patched from 1Gi to 2Gi while `writer-0` ran | `2.0G` in `df` in the pod and `2.00g` in `lvs` on k8s2 within about 1 s, `RESTARTS 0`, no gap in the lines every 5 s. A new `writer-0` after `kubectl delete pod` had the same log and 2.0G. |
-
-## Planned
-
-- CloudNativePG keeps PostgreSQL 18 on these volumes, a primary on one worker and a standby on the other (item 32).

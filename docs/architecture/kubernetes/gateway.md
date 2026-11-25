@@ -63,8 +63,8 @@ flowchart LR
 
 ## Why
 
-- Traefik is the Gateway controller, because it runs as one pod and also serves Ingress. Envoy Gateway runs a controller and one Envoy pod per Gateway, on workers with 2.5 GiB each.
-- The Gateway API CRDs go in with `kubectl apply --server-side`, as the Gateway API guide does. The standard HTTPRoute CRD is about 237 KiB, close to the 256 KiB limit of the annotation that a client-side `apply` writes, and the experimental one is over it.
+- Traefik is the Gateway controller, because it runs as one pod and also serves Ingress, and Envoy Gateway needs more pods on workers with 2.5 GiB each.
+- The Gateway API CRDs go in with `kubectl apply --server-side`, as the Gateway API guide does, because the HTTPRoute CRD (about 237 KiB) is close to the limit of a client-side `apply`.
 - The GatewayClass and the Gateway come from the chart (`gatewayClass.enabled` and `gateway.enabled` are on by default), so their settings are in `values.yaml` with the rest of Traefik.
 - The address is fixed by the annotation, so a reinstall of the chart keeps `192.168.122.200`.
 

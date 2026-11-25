@@ -17,7 +17,7 @@ Checks: [15](../../../checks/15-replication.sh), [16](../../../checks/16-failove
 | `.pgpass` of `postgres` | On both hosts, with the `replicator` and `rewind` passwords for the other host, mode 600 |
 | Archiving | db2 has the same `archive_mode = on` and archive command. A standby does not archive. |
 | `pg_rewind` | Possible because data checksums are on, the PostgreSQL 18 default. |
-| Client | `scripts/failover-client.sh`, run by hand on db2. It names both servers with `target_session_attrs=read-write`, so libpq picks the one that accepts writes. |
+| Client | `scripts/failover-client.sh`, run by hand on db2. Its default `FAILOVER_CONNINFO` names both servers with `target_session_attrs=read-write`, so libpq picks the one that accepts writes. |
 
 ## Layout
 

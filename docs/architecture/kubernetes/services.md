@@ -20,7 +20,7 @@ Checks: [29](../../../checks/29-in-cluster.sh), [30](../../../checks/30-outside.
 
 | Part | Setup |
 |---|---|
-| CoreDNS | Two pods with the Corefile of kubeadm, both on k8s1, behind the Service `kube-dns` on `10.96.0.10` |
+| CoreDNS | Two pods with the Corefile of kubeadm, behind the Service `kube-dns` on `10.96.0.10` |
 | Resolver in the pods | `nameserver 10.96.0.10` and the search list `client.svc.cluster.local svc.cluster.local cluster.local` in the client |
 | Names of web | `web.web.svc.cluster.local` and `web.web` resolve to `10.110.25.239` from the client. `web` alone resolves only in the namespace `web`. |
 
@@ -45,7 +45,7 @@ flowchart LR
     end
     gw["Traefik pod<br/>namespace traefik"]
     other["every other pod"]
-    dns["CoreDNS on k8s1<br/>10.96.0.10"]
+    dns["CoreDNS<br/>10.96.0.10"]
     svc["Service web<br/>10.110.25.239:80"]
     subgraph wns["namespace web"]
         pod2["web pod<br/>on k8s2"]
@@ -63,13 +63,13 @@ flowchart LR
 
 - The Service is `ClusterIP`, because only pods in the cluster use the app. A NodePort Service answered on every node, k8s1 too, because firewalld accepts [traffic to Services](../hosts/system.md#firewall-on-the-kubernetes-nodes) on every node.
 - `targetPort` and the ports in `allow-client` and `allow-gateway` use the name `http`, so a new container port is changed only in `deployment.yaml`.
-- `default-deny-ingress` stays beside `allow-client` as the net for pods that no other policy selects. `allow-client` alone already isolates the pods `app: web`, because any policy that selects a pod for Ingress isolates it.
+- `default-deny-ingress` stays beside the allow policies, so a new pod in `web` that no other policy selects takes no connections either.
 - One `from` element holds both selectors, so a pod needs the namespace `client` and the label `app: client` together. Two elements would let in every pod of the namespace `client`.
 - The policies limit only Ingress, because the item lets one client in. An Egress deny would also need a rule for DNS to CoreDNS.
 
 ## Limits
 
-- Both CoreDNS pods run on k8s1, so no name in the cluster resolves while k8s1 is down.
+- The scheduler places the CoreDNS pods, so a drain or a reboot can put both on one node again, as it did on k8s1 until the upgrade. No name in the cluster resolves while that node is down.
 - Any pod with the label `app: client` in `client` gets in, so anyone who can make pods there reaches `web`. A pod made by hand with the label got `200`.
 - No policy limits Egress, so a web pod can still open connections to any other pod.
 

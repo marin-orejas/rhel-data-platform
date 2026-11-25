@@ -1,6 +1,6 @@
 # Kubernetes workloads
 
-The Deployment `web` in the namespace `web` runs two httpd pods on the workers of the [Kubernetes cluster](cluster.md), with health checks and CPU and memory limits, and the Deployment `client` in the namespace `client` runs one idle pod that tests the traffic to them. Their files are in `kubernetes/apps/web/` and `kubernetes/apps/client/`, and `kubectl apply -k` from the desktop builds them with Kustomize and puts them on the cluster. The web pods take their [settings](app-settings.md) from a ConfigMap and a Secret, and the client reaches them through the [Service `web`](services.md). The StatefulSet `writer`, which tests the volumes, is on the page [Kubernetes storage](storage.md#statefulset-writer).
+The Deployment `web` in the namespace `web` runs two httpd pods on the workers of the [Kubernetes cluster](cluster.md), and the Deployment `client` in the namespace `client` runs one idle pod that tests the traffic to them. The web pods take their [settings](app-settings.md) from a ConfigMap and a Secret, and the client reaches them through the [Service `web`](services.md). The StatefulSet `writer` is on the page [Kubernetes storage](storage.md#statefulset-writer).
 
 Checks: [27](../../../checks/27-deployment.sh), [29](../../../checks/29-in-cluster.sh) · Files: [`kubernetes/apps/web/`](../../../kubernetes/apps/web/), [`kubernetes/apps/client/`](../../../kubernetes/apps/client/)
 
