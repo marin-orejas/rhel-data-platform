@@ -15,9 +15,9 @@ check() {
 
 hosts="k8s1 k8s2 k8s3"
 server=https://127.0.0.1:6443
-version=v1.36.6
+version=v1.36.7
 pod_network=10.244.0.0/16
-runtime=cri-o://1.36.8
+runtime=cri-o://1.36.9
 static_pods="etcd kube-apiserver kube-controller-manager kube-scheduler"
 apiserver_cert=/etc/kubernetes/pki/apiserver.crt
 calico=v3.33.1

@@ -14,8 +14,8 @@ check() {
 }
 
 hosts="k8s1 k8s2 k8s3"
-packages="cri-o-1.36.8 kubelet-1.36.6 kubeadm-1.36.6 kubectl-1.36.6 cri-tools-1.36.0 kubernetes-cni-1.9.1"
-locked="cri-o-1.36.8 kubelet-1.36.6 kubeadm-1.36.6 kubectl-1.36.6"
+packages="cri-o-1.36.9 kubelet-1.36.7 kubeadm-1.36.7 kubectl-1.36.7 cri-tools-1.36.0 kubernetes-cni-1.9.1"
+locked="cri-o-1.36.9 kubelet-1.36.7 kubeadm-1.36.7 kubectl-1.36.7"
 exclude="exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni"
 pause=registry.k8s.io/pause:3.10.2
 control_ports="10250/tcp 10257/tcp 10259/tcp 2379-2380/tcp 4789/udp 5473/tcp 6443/tcp 7946/tcp 7946/udp"
