@@ -22,6 +22,8 @@ spec:
       env:
         - name: FAILOVER_CONNINFO
           value: host=pg-rw dbname=app user=app connect_timeout=2
+        - name: FAILOVER_TABLE
+          value: etcd_restore_test
         - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
