@@ -13,8 +13,8 @@ Run from the repo root on the desktop, without sudo. The column "Runs on" in the
 | db1, db2 | `for h in db1 db2; do echo "== $h"; ssh "$h" bash -s < checks/06-postgres.sh; done` |
 | desktop | `bash checks/17-ansible.sh` |
 
-- 17–26 and 31–35 log in through Ansible, so the key must be in the agent: `ssh-add ~/.ssh/id_ed25519_ansible`.
-- 26–32, 34 and 35 use `kubectl` through a tunnel to the API server, open in a second terminal: `ssh -N -L 6443:192.168.122.21:6443 nuc`.
+- 17–26 and 31–36 log in through Ansible, so the key must be in the agent: `ssh-add ~/.ssh/id_ed25519_ansible`.
+- 26–32 and 34–36 use `kubectl` through a tunnel to the API server, open in a second terminal: `ssh -N -L 6443:192.168.122.21:6443 nuc`.
 - 33 and 34 also run curl on k8s2 over `ssh k8s2`, with the lab CA in `~/lab-ca.crt` there.
 - After a reboot, run 18 a minute after the hosts are up (time sync), and 29 and 30 once CoreDNS is ready again (`kubectl rollout status deployment/coredns -n kube-system`).
 - To see only the failures, add `| grep -Ev '^(PASS|$)'`.
@@ -52,3 +52,4 @@ Run from the repo root on the desktop, without sudo. The column "Runs on" in the
 | [33](33-object-store.sh) | Garage and nginx on db2: the disk, the service, TLS, the bucket and its key, and a signed PUT, GET and DELETE from k8s2 | desktop |
 | [34](34-backups.sh) | plugin-barman-cloud, WAL archiving and the backups of the Cluster `pg` to db2, and the table brought back by the restore to a set time | desktop |
 | [35](35-etcd-backup.sh) | etcdctl and etcdutl on k8s1, the nightly etcd snapshot and its timer, and what the restore of a deleted namespace left | desktop |
+| [36](36-upgrade.sh) | The cluster after the kubeadm upgrade to 1.36.7: the control plane images, the renewed certificates, the Cluster `pg` on its new timeline and the table the client wrote through it | desktop |
