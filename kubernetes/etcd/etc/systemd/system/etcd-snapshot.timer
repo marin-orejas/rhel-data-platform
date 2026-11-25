@@ -1,0 +1,9 @@
+[Unit]
+Description=Take an etcd snapshot every night
+
+[Timer]
+OnCalendar=*-*-* 01:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

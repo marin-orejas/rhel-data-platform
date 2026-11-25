@@ -1,0 +1,11 @@
+[Unit]
+Description=Take an etcd snapshot to /srv/etcd-backup
+After=kubelet.service
+StartLimitIntervalSec=15min
+StartLimitBurst=10
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/etcd-snapshot.sh
+Restart=on-failure
+RestartSec=1min
