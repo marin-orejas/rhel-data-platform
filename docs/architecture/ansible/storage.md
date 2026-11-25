@@ -2,7 +2,7 @@
 
 The system role `storage` keeps the data disks of db1 and db2 as `inventory/host_vars/` describes them. Tasks before it in `playbooks/storage.yml` activate the data VG on a fresh clone and stop on an inactive LV, and a task after it sets the SELinux labels.
 
-Checks: [19](../../../checks/19-storage-postgresql.sh), [24](../../../checks/24-fresh-clones.sh) · Files: [`ansible/playbooks/storage.yml`](../../../ansible/playbooks/storage.yml)
+Checks: [19](../../../checks/19-storage-postgresql.sh), [24](../../../checks/24-fresh-clones.sh), [33](../../../checks/33-object-store.sh) · Files: [`ansible/playbooks/storage.yml`](../../../ansible/playbooks/storage.yml)
 
 ## Setup
 
@@ -25,7 +25,7 @@ Checks: [19](../../../checks/19-storage-postgresql.sh), [24](../../../checks/24-
 ## Limits
 
 - The system role formats an existing LV that is not active, despite `storage_safe_mode`, because blivet sees no file system on it. The guard stops the play first, so the role runs only through `playbooks/storage.yml`.
-- The tasks before the role name the VG `data`, as both hosts do in `inventory/host_vars/`. A pool with another name gets no import and no guard.
+- The tasks before the role name only the VG `data`, so on a fresh clone of db2 the VG `objects` gets no import and no guard. The role could then format LV `garage` like the inactive LV above, and no rebuild has tested it yet.
 
 ## Tested
 

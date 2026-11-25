@@ -1,6 +1,6 @@
 # pgBackRest
 
-pgBackRest backs up the cluster on db1 and archives every WAL segment to the NFS share on db2, for a restore to any time in the last 7 to 14 days. The backups run only on db1, and a playbook tests the newest one on db2. The repository was made again on 2026-11-12, and its oldest backup is from that day.
+pgBackRest backs up the cluster on db1 and archives every WAL segment to the NFS share on db2, for a restore to any time in the last 7 to 14 days. The backups run only on db1, and a playbook tests the newest one on db2.
 
 Checks: [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh), [23](../../../checks/23-standby-backup-roles.sh), [24](../../../checks/24-fresh-clones.sh) · Managed by: [Role pgbackrest](../ansible/pgbackrest.md), [Role postgresql](../ansible/postgresql.md)
 

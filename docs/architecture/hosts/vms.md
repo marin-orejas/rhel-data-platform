@@ -1,8 +1,8 @@
 # VMs
 
-db1, db2 and the Kubernetes nodes k8s1, k8s2 and k8s3 are clones of the base VM image `rhel-base`. db1, db2, k8s2 and k8s3 keep their data on a second disk with its own volume group. The nodes have no swap and run CRI-O with the Kubernetes 1.36 packages.
+db1, db2 and the Kubernetes nodes k8s1, k8s2 and k8s3 are clones of the base VM image `rhel-base`. db1, db2, k8s2 and k8s3 keep their data on a second disk with its own volume group, and db2 has a third disk for the object store. At the end of the project k8s1–k8s3 and db2 run, and db1 has been off since 2026-11-14.
 
-Checks: [05](../../../checks/05-storage.sh), [10](../../../checks/10-nfs.sh), [15](../../../checks/15-replication.sh), [24](../../../checks/24-fresh-clones.sh), [25](../../../checks/25-nodes.sh), [26](../../../checks/26-cluster.sh), [31](../../../checks/31-storage.sh) · Managed by: [System role storage](../ansible/storage.md) · Files: [`kickstart/rhel-base-vm.ks`](../../../kickstart/rhel-base-vm.ks), [`kubernetes/nodes/`](../../../kubernetes/nodes/)
+Checks: [05](../../../checks/05-storage.sh), [10](../../../checks/10-nfs.sh), [15](../../../checks/15-replication.sh), [24](../../../checks/24-fresh-clones.sh), [25](../../../checks/25-nodes.sh), [26](../../../checks/26-cluster.sh), [31](../../../checks/31-storage.sh), [33](../../../checks/33-object-store.sh) · Managed by: [System role storage](../ansible/storage.md) · Files: [`kickstart/rhel-base-vm.ks`](../../../kickstart/rhel-base-vm.ks), [`kubernetes/nodes/`](../../../kubernetes/nodes/)
 
 ## Setup
 
@@ -42,6 +42,18 @@ The clones are made with `virt-clone` while `rhel-base` is shut off ([Clone a VM
 | LVM devices file | `/etc/lvm/devices/system.devices` lists `vda3` and `vdb1`. A new clone of `rhel-base` lists only `vda3`. | Same as db1 | Same as db1 |
 | Rebuild | The data disk stays and goes to the new clone as `vdb` ([Rebuild the db hosts from fresh clones](../../runbooks/rebuild-the-db-hosts-from-fresh-clones.md)). | Same as db1 | Not planned |
 
+### Object store disk
+
+db2 has a third disk for [Garage](../backups/object-store.md).
+
+| Part | Setup |
+|---|---|
+| Image | `db2-objects.qcow2`, 5 GiB thin qcow2 in the pool `default`, `vdc` on db2 |
+| LVM | PV `/dev/vdc1`, VG `objects` |
+| LV | `garage`, all of the VG, XFS |
+| Mount | `/srv/garage` from `/etc/fstab` by file system UUID |
+| LVM devices file | Lists `vdc1` beside `vda3` and `vdb1`. |
+
 ### Kubernetes nodes
 
 The same on k8s1, k8s2 and k8s3, set up by hand. Copies of the two repo files, `k8s.conf`, the pause drop-in and the NetworkManager drop-in are in `kubernetes/nodes/`, under the same paths.
@@ -54,9 +66,9 @@ The same on k8s1, k8s2 and k8s3, set up by hand. Copies of the two repo files, `
 | NetworkManager | `/etc/NetworkManager/conf.d/calico.conf` leaves the Calico interfaces (`cali*`, `vxlan.calico` and the others from the Calico docs) unmanaged. |
 | Repo `kubernetes` | `https://pkgs.k8s.io/core:/stable:/v1.36/rpm/`. Its `exclude=` line hides `kubelet`, `kubeadm`, `kubectl`, `cri-tools` and `kubernetes-cni` unless `dnf` runs with `--disableexcludes=kubernetes`. |
 | Repo `cri-o` | `https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v1.36/rpm/` |
-| Packages | `container-selinux` from AppStream, `cri-o` 1.36.8, `kubelet`, `kubeadm` and `kubectl` 1.36.6, `cri-tools` 1.36.0, `kubernetes-cni` 1.9.1 |
+| Packages | `container-selinux` from AppStream, `cri-o` 1.36.9, `kubelet`, `kubeadm` and `kubectl` 1.36.7, `cri-tools` 1.36.0, `kubernetes-cni` 1.9.1 |
 | Version locks | `dnf versionlock` holds `cri-o`, `kubelet`, `kubeadm` and `kubectl` at these versions. |
-| Pause image | `/etc/crio/crio.conf.d/20-pause-image.conf` sets `pause_image = "registry.k8s.io/pause:3.10.2"`, the image kubeadm 1.36.6 expects. |
+| Pause image | `/etc/crio/crio.conf.d/20-pause-image.conf` sets `pause_image = "registry.k8s.io/pause:3.10.2"`, the image kubeadm 1.36 expects. |
 | CRI-O service | `crio` enabled and running |
 | Kubelet service | `kubelet` enabled and running, with the config from `kubeadm init` on k8s1 and `kubeadm join` on the workers ([Kubernetes cluster](../kubernetes/cluster.md)) |
 
@@ -91,6 +103,10 @@ db2: /dev/vdb (10 GiB)
     └─ LV pgdata  5 GiB  xfs → /pgdata
        about 2 GiB left free to practise extending an LV
 
+db2: /dev/vdc (5 GiB)
+└─ vdc1  whole disk  LVM  → VG objects
+    └─ LV garage  whole VG  xfs → /srv/garage
+
 k8s2, k8s3: /dev/vdb (5 GiB)
 └─ vdb1  whole disk  LVM  → VG data
     └─ one LV per Kubernetes volume  xfs → its pod
@@ -99,7 +115,7 @@ k8s2, k8s3: /dev/vdb (5 GiB)
 ## Why
 
 - [A separate data disk per VM](../../decisions/a-separate-data-disk-per-vm.md), because VG `rhel` has only about 420 MiB free, and a full data disk cannot fill `/`.
-- A clone gets a new hostname, machine ID, SSH host keys and registration before its first SSH login, because it copies all four from `rhel-base`. systemd and the journal use the machine ID as the unique ID of the system, the same host keys on every clone would make them interchangeable to SSH, and each registered system needs its own identity.
+- A clone gets a new hostname, machine ID, SSH host keys and registration before its first SSH login, because it copies all four from `rhel-base`.
 - The nodes have no swap, because the kubelet does not start when it finds swap. The LV is removed, not only turned off, so no boot can turn it on again.
 - No file in `/etc/modules-load.d/`: the kernel loads `overlay` at the first overlay mount, and `br_netfilter` matters only for a bridge network, which CRI-O ships disabled.
 - k8s1 has 3 GiB, because at 2.5 GiB it ran so short of memory after a reboot that it stopped answering ([Tested](#tested)). It has no swap to fall back on, and the API server grows with every CRD.
@@ -107,6 +123,7 @@ k8s2, k8s3: /dev/vdb (5 GiB)
 ## Limits
 
 - No role keeps the node setup yet. A rebuilt node needs the packages, the locks and the files from `kubernetes/nodes/` by hand again.
+- A rebuild of db2 that keeps the object store disk is not tested ([System role storage, Limits](../ansible/storage.md#limits)).
 - kdump reserves 256 MiB on every VM (`crashkernel=`). With the kernel's own share, a worker shows about 2139 MiB of its 2.5 GiB in `MemTotal`, and k8s1 2578 MiB of its 3 GiB.
 
 ## Tested

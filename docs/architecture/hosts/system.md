@@ -2,7 +2,7 @@
 
 Every host runs SELinux in enforcing mode, firewalld, key-only SSH, a tuned profile of its own and a persistent journal. db1, db2 and k8s1–k8s3 also have the group `dba`, with a shared directory on db1.
 
-Checks: [05](../../../checks/05-storage.sh), [08](../../../checks/08-tuned-dba.sh), [10](../../../checks/10-nfs.sh), [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh), [18](../../../checks/18-base-role.sh), [25](../../../checks/25-nodes.sh) · Managed by: [Role base](../ansible/base.md), [Role nfs](../ansible/nfs.md) · Files: [`tuned/`](../../../tuned/)
+Checks: [05](../../../checks/05-storage.sh), [08](../../../checks/08-tuned-dba.sh), [10](../../../checks/10-nfs.sh), [13](../../../checks/13-pitr.sh), [14](../../../checks/14-pgbackrest.sh), [18](../../../checks/18-base-role.sh), [25](../../../checks/25-nodes.sh), [33](../../../checks/33-object-store.sh) · Managed by: [Role base](../ansible/base.md), [Role nfs](../ansible/nfs.md), [Role garage](../ansible/garage.md) · Files: [`tuned/`](../../../tuned/)
 
 ## Setup
 
@@ -17,6 +17,8 @@ SELinux is enforcing on every host.
 | Module `pg_archive_nfs` | Version 1.1 on db1. The archiver (`postgresql_t`) may create, write and rename files on the NFS share (`nfs_t`), not delete them. |
 | Module source | Built with [Build an SELinux module from denials](../../runbooks/build-an-selinux-module.md), loaded by the role `nfs` |
 | `/srv/backup` on db2 | `var_t`, the default for `/srv`. The NFS export booleans are on by default. |
+| `/srv/garage` on db2 | `var_t`, the default for `/srv` |
+| `httpd_can_network_connect` on db2 | On and persistent, so nginx (`httpd_t`) may connect to Garage on `127.0.0.1:3900`. |
 
 ### Firewall
 
@@ -24,7 +26,7 @@ Every host runs firewalld with the zone `public`.
 
 | Part | nuc | db1 | db2 |
 |---|---|---|---|
-| Allowed | `ssh`, `cockpit` and the other defaults of the zone | `ssh`, `cockpit`, `dhcpv6-client`, `5433/tcp` | `ssh`, `cockpit`, `dhcpv6-client`, `nfs` (NFSv4 only, no `showmount -e`), `5433/tcp` |
+| Allowed | `ssh`, `cockpit` and the other defaults of the zone | `ssh`, `cockpit`, `dhcpv6-client`, `5433/tcp` | `ssh`, `cockpit`, `dhcpv6-client`, `nfs` (NFSv4 only, no `showmount -e`), `https`, `5433/tcp` |
 | Other zones | `virbr0` in the zone `libvirt` | None | None |
 
 ### Firewall on the Kubernetes nodes

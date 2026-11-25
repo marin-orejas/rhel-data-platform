@@ -1,6 +1,6 @@
 # Ansible playbooks
 
-The playbooks in `playbooks/` run the roles on the group `db`, and `bootstrap.yml` and `base.yml` also on the group `k8s`. `site.yml` builds db1 and db2 from fresh clones, and `restore-test.yml` restores the newest pgBackRest backup on db2 and compares it with the standby. GitHub Actions checks the code on every push.
+The playbooks in `playbooks/` run the roles on the group `db`, `garage.yml` only on db2, and `bootstrap.yml` and `base.yml` also on the group `k8s`. `site.yml` builds db1 and db2 from fresh clones, and `restore-test.yml` restores the newest pgBackRest backup on db2 and compares it with the standby. GitHub Actions checks the code on a push that changes `ansible/` or the workflow.
 
 Checks: [23](../../../checks/23-standby-backup-roles.sh), [24](../../../checks/24-fresh-clones.sh), [25](../../../checks/25-nodes.sh) · Files: [`ansible/playbooks/`](../../../ansible/playbooks/), [`.github/workflows/ansible.yml`](../../../.github/workflows/ansible.yml)
 
@@ -11,9 +11,10 @@ Checks: [23](../../../checks/23-standby-backup-roles.sh), [24](../../../checks/2
 | Part | Setup |
 |---|---|
 | `bootstrap.yml` | The users tasks of the role `base`, run once on a fresh clone with `-u makilele -K`. They make the user `ansible` that the other playbooks log in as. |
-| `site.yml` | Imports the six playbooks below in this order, with one `PLAY RECAP` for all hosts. |
+| `site.yml` | Imports the seven playbooks below in this order, with one `PLAY RECAP` for all hosts. |
 | `base.yml` | Role `base` on groups `db` and `k8s` ([Role base](base.md)) |
 | `storage.yml` | System role `storage` on group `db`, with tasks before it for the data VG and after it for the SELinux labels ([System role storage](storage.md)) |
+| `garage.yml` | Role `garage` on db2 ([Role garage](garage.md)) |
 | `postgresql.yml` | Role `postgresql` on group `db` ([Role postgresql](postgresql.md)) |
 | `nfs.yml` | Role `nfs` on group `db` ([Role nfs](nfs.md)) |
 | `pgbackrest.yml` | Role `pgbackrest` on group `db` ([Role pgbackrest](pgbackrest.md)) |
@@ -45,7 +46,7 @@ What the test proves: [pgBackRest, Setup](../backups/pgbackrest.md#setup).
 
 ## Why
 
-- `base` comes first in `site.yml` and the backups last, because each role needs what an earlier one made: `/pgdata` for `postgresql`, the user `postgres` for the pgBackRest repository, and the share for `archive-push` on db1.
+- `base` comes first in `site.yml` and the backups last, because each role needs what an earlier one made: `/pgdata` for `postgresql`, `/srv/garage` for `garage`, the user `postgres` for the pgBackRest repository, and the share for `archive-push` on db1.
 - `bootstrap.yml` is a playbook of its own, so `site.yml` never needs a password.
 - The read of the copy repeats with `until` until it connects, because `pg_ctl -w` returns as soon as the copy starts its recovery. With `hot_standby=off` the copy accepts connections only after the replay and the promote, so the first read already sees the end state.
 
