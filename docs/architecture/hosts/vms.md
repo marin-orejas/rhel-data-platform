@@ -113,7 +113,7 @@ k8s2, k8s3: /dev/vdb (5 GiB)
 
 | Date | Test | Result |
 |---|---|---|
-| 2026-10-07 | `lvextend -r -L 7G data/pgdata` while a `psql` session was open ([runbook](../../runbooks/grow-a-data-volume.md)) | `pgdata` grew from 5 GiB to 7 GiB. The session stayed, and the fstab UUID did not change. |
+| 2026-10-07 | `lvextend -r -L 7G data/pgdata` while a `psql` session was open ([runbook](../../runbooks/grow-an-lv-on-the-data-disk.md)) | `pgdata` grew from 5 GiB to 7 GiB. The session stayed, and the fstab UUID did not change. |
 | 2026-11-14 | Reboot of k8s1 after the swap LV and its kernel arguments were removed | No swap, 0 failed units, initrd 1.844 s. The boot does not wait for the removed LV. |
 | 2026-11-14 | `kubeadm init phase preflight` on k8s1 | Exit 0 with two warnings: firewalld is active, and CRI-O used `pause:3.10.1`, not `3.10.2`. The pause drop-in was written after this run. |
 | 2026-11-20 | Reboot of k8s1, k8s2 and k8s3 at once (`ansible.builtin.reboot`), k8s1 at 2.5 GiB, then at 3 GiB | At 2.5 GiB k8s1 stopped answering ssh and port 6443 about 6 min 30 s after the boot, until `virsh reset`. After it `kube-apiserver` used 651 MiB, with 474 of 2139 MiB `available`. At 3 GiB checks 25 to 31 passed. |

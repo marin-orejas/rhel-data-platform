@@ -1,4 +1,4 @@
-# Grow a data volume while PostgreSQL runs
+# Grow an LV on the data disk while PostgreSQL runs
 
 ## When to use
 

@@ -14,7 +14,7 @@ Each VM gets a second thin qcow2 disk of 10 GiB with its own volume group `data`
 ## Consequences
 
 - A full data disk makes PostgreSQL fail its writes, but the root file system and the host keep working. Tested on 2026-10-07: the `INSERT` failed with `No space left on device`.
-- The VG keeps free space, so the LV can grow while PostgreSQL runs ([Grow a data volume](../runbooks/grow-a-data-volume.md)). XFS cannot shrink, so it grows in small steps.
+- The VG keeps free space, so the LV can grow while PostgreSQL runs ([Grow an LV on the data disk](../runbooks/grow-an-lv-on-the-data-disk.md)). XFS cannot shrink, so it grows in small steps.
 - Without the disk, the server does not start, and no cluster can be created on the root disk by mistake.
 - One more disk to attach and set up on every new VM.
 
