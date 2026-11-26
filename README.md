@@ -1,6 +1,6 @@
 # RHEL Data Platform
 
-![Status: in progress](https://img.shields.io/badge/status-in%20progress-bf8700?style=flat-square)
+![Status: complete](https://img.shields.io/badge/status-complete-0969da?style=flat-square)
 [![License](https://img.shields.io/github/license/marin-orejas/rhel-data-platform?style=flat-square)](LICENSE)
 
 PostgreSQL platform on RHEL 10 in a KVM home lab, with replication, backups, Ansible and Kubernetes.
@@ -10,17 +10,18 @@ It is a learning project that builds a foundation for RHCSA, RHCE with Ansible a
 
 ```mermaid
 flowchart LR
-    desk["Desktop (Fedora 44)<br/>git, Ansible, kubectl, helm"]
+    desk["Desktop (Fedora 44)<br/>git, Ansible, kubectl, Helm"]
     subgraph nuc["NUC (RHEL 10.2)"]
         base["rhel-base<br/>base VM image"]
         db1["db1<br/>PostgreSQL primary"]
         db2["db2<br/>backup storage<br/>PostgreSQL standby"]
-        k8s["k8s1, k8s2, k8s3<br/>Kubernetes cluster"]
+        k8s["k8s1, k8s2, k8s3<br/>Kubernetes cluster<br/>PostgreSQL on CloudNativePG"]
         base -. clone .-> db1
         base -. clone .-> db2
         base -. clone .-> k8s
         db1 -- "streaming replication" --> db2
         db1 -- "backups (NFS)" --> db2
+        k8s -- "backups (S3)" --> db2
     end
     desk -- SSH --> nuc
 ```
@@ -28,10 +29,10 @@ flowchart LR
 ## Highlights
 
 - db2 stayed at most 0.33 s behind db1 during a 1,000,000-row insert.
-- db2 took over from a failed db1 by hand in 5 min 51 s, with no rows lost.
-- A restore to a set time with pgBackRest brought back a dropped table with 1.1 s of outage.
+- CloudNativePG failed over in 72.9 s when a worker lost power, against 5 min 51 s by hand, with no rows lost.
+- A restore to a set time brought back a dropped table, with 1.1 s of outage by pgBackRest and none on CloudNativePG.
 - One Ansible playbook builds db1 and db2 from fresh clones, db1 in 3 min 46 s.
-- A 3-node kubeadm cluster serves an app through MetalLB and a Gateway API route.
+- kubeadm upgraded the 3-node cluster one node at a time, with PostgreSQL writes stopped at most 20.3 s and no rows lost.
 
 ## Lab
 
@@ -44,7 +45,7 @@ The [host pages](docs/architecture/hosts/) describe the nuc, the VMs and their s
 | nuc | RHEL 10.2 KVM host with Cockpit, no monitor | i3-1315U / 16 GB | 120 GB SSD |
 | rhel-base | Base VM image, only for cloning | 2 CPU / 2 GB | 20 GB |
 | db1 | PostgreSQL primary | 2 CPU / 3 GB | 20 GB + 10 GB data |
-| db2 | Backup storage (NFS), PostgreSQL standby | 2 CPU / 3 GB | 20 GB + 10 GB data |
+| db2 | Backup storage (NFS, S3), PostgreSQL standby | 2 CPU / 3 GB | 20 GB + 10 GB data + 5 GB S3 |
 | k8s1 | Kubernetes control plane with CRI-O | 2 CPU / 3 GB | 20 GB |
 | k8s2 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB + 5 GB data |
 | k8s3 | Kubernetes worker with CRI-O | 2 CPU / 2.5 GB | 20 GB + 5 GB data |
@@ -63,6 +64,7 @@ db1 and db2 run SELinux in enforcing mode.
 | Backups | Dumps from a systemd timer, an NFS share mounted with autofs |
 | Full disk | Volume grown while a `psql` session stayed open |
 | Emergency boot | db2 booted into emergency mode from GRUB |
+| Object store | Garage S3 on its own disk, TLS through nginx, an SELinux boolean |
 
 ## PostgreSQL
 
@@ -91,6 +93,7 @@ The [Ansible pages](docs/architecture/ansible/) describe each role, and GitHub A
 | `nfs` | Backup share on db2 |
 | `pgbackrest` | pgBackRest backups to the NFS share |
 | `pgdump` | Nightly dumps |
+| `garage` | S3 object store on db2, nginx with TLS, keys in Ansible Vault |
 
 ## Kubernetes
 
@@ -99,23 +102,24 @@ I use `kubectl` and Helm from my desktop through an SSH tunnel over the nuc.
 
 | Part | Result |
 |---|---|
-| Cluster | kubeadm, CRI-O, Calico for the pod network |
-| App | httpd Deployment with health checks and resource limits |
-| Updates | Rolling update and rollback |
+| Cluster | kubeadm, CRI-O and Calico, upgraded node by node, an etcd snapshot restored with 45.9 s of API outage |
+| App | httpd Deployment with health checks, a rolling update and rollback |
 | Settings | Kustomize, a ConfigMap, a Secret kept out of the repo |
 | In-cluster access | Service with a DNS name, network policies for a single client pod |
 | Outside access | MetalLB address on the lab network, Traefik with a Gateway API route |
 | Storage | TopoLVM volume on the data disk of each worker, grown while its pod ran |
+| PostgreSQL | CloudNativePG primary and standby, failover in 72.9 s, switchover on a drain in 20.3 s |
+| Backups | WAL archive and nightly backups to S3 on db2, a dropped table back in 67 s |
 
 ## Tech stack
 
 | Layer | Tools |
 |---|---|
 | Host | RHEL 10, KVM, libvirt, Cockpit, Kickstart |
-| System | LVM, XFS, SELinux, firewalld, systemd, tuned, autofs, NFS |
-| Database | PostgreSQL 18, pgBackRest |
+| System | LVM, XFS, SELinux, firewalld, systemd, tuned, autofs, NFS, nginx, Garage |
+| Database | PostgreSQL 18, pgBackRest, Barman Cloud |
 | Automation | Ansible, Ansible Vault, Bash, GitHub Actions |
-| Kubernetes | kubeadm, CRI-O, Calico, Kustomize, Helm, MetalLB, Traefik, TopoLVM |
+| Kubernetes | kubeadm, CRI-O, Calico, Kustomize, Helm, MetalLB, Traefik, TopoLVM, CloudNativePG |
 | Workstation | Fedora 44, OpenSSH, kubectl |
 
 ## Project structure
@@ -123,28 +127,13 @@ I use `kubectl` and Helm from my desktop through an SSH tunnel over the nuc.
 | Folder | Contents |
 |---|---|
 | [`ansible/`](ansible/) | Roles, playbooks, inventory |
-| [`checks/`](checks/) | 25 check scripts, named by lesson number |
+| [`checks/`](checks/) | 30 check scripts, numbered by the lessons of the [roadmap](docs/roadmap.md) |
 | [`kickstart/`](kickstart/) | Kickstart files for the nuc and the base image |
 | [`kubernetes/`](kubernetes/) | kubeadm config, app manifests, Helm values |
 | [`docs/architecture/`](docs/architecture/) | What is built, a folder per area |
 | [`docs/runbooks/`](docs/runbooks/) | Tested procedures, step by step |
 | [`docs/decisions/`](docs/decisions/) | Why the lab is built this way |
 | [`docs/journal/`](docs/journal/) | My notes, a file per lesson day |
-
-## Roadmap
-
-Each topic has 3 to 5 lessons, listed in the [full roadmap](docs/roadmap.md).
-
-| Topic | Status |
-|---|---|
-| Lab (01–04) | done |
-| One PostgreSQL host (05–08) | done |
-| Backups, NFS and failures by hand (09–12) | done |
-| PostgreSQL recovery and failover (13–16) | done |
-| Ansible: the hosts as code and PostgreSQL services (17–24) | done |
-| Kubernetes: cluster and apps (25–28) | done |
-| Kubernetes: traffic and storage (29–31) | done |
-| Kubernetes: CloudNativePG, backups and upgrade (32–36) | planned |
 
 ## License
 

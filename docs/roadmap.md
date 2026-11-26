@@ -52,11 +52,11 @@ Journal entries name the old phases: phase 0 is 01–04, phase 1 is 05–12, pha
 - [x] **[31 Storage](../checks/31-storage.sh).** Each worker has its own data disk, a storage class creates volumes on it, and a volume grows while its pod runs.
 
 ## Kubernetes: PostgreSQL, backups and upgrade (32–36)
-- [ ] **32 CloudNativePG.** CloudNativePG runs PostgreSQL 18 as a primary and a standby on the two workers, and a failover is measured.
-- [ ] **33 Object store.** db2 runs an S3 object store with TLS, set up by hand first, then as an Ansible role.
-- [ ] **34 Backups and restore.** CloudNativePG archives WAL and backs up to db2, and a dropped table comes back with a timed restore to a set time.
-- [ ] **35 etcd backup.** A timer on k8s1 takes an etcd snapshot every night, and a timed restore brings back a deleted namespace.
-- [ ] **36 Upgrade.** kubeadm upgrades the cluster one node at a time while PostgreSQL stays up, with the outage measured.
+- [x] **[32 CloudNativePG](../checks/32-cloudnativepg.sh).** CloudNativePG runs PostgreSQL 18 as a primary and a standby on the two workers, and a failover is measured.
+- [x] **[33 Object store](../checks/33-object-store.sh).** db2 runs an S3 object store with TLS, set up by hand first, then as an Ansible role.
+- [x] **[34 Backups and restore](../checks/34-backups.sh).** CloudNativePG archives WAL and backs up to db2, and a dropped table comes back with a timed restore to a set time.
+- [x] **[35 etcd backup](../checks/35-etcd-backup.sh).** A timer on k8s1 takes an etcd snapshot every night, and a timed restore brings back a deleted namespace.
+- [x] **[36 Upgrade](../checks/36-upgrade.sh).** kubeadm upgrades the cluster one node at a time while PostgreSQL stays up, with the outage measured.
 
 ## Learning resources
 - RHEL: [Sander van Vugt (YouTube)](https://www.youtube.com/channel/UComgXoI6pysmetOzuNH_TDQ)
