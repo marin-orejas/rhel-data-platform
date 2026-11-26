@@ -35,7 +35,7 @@ When a change destroyed data in the cluster on db1, such as a dropped table, and
    sudo systemctl start postgresql
    ```
 
-5. **db1**: remove the recovery settings, so that a later recovery or a replica does not inherit the old target.
+5. **db1**: remove the recovery settings, so that a later recovery or a standby does not inherit the old target.
 
    ```bash
    sudo -iu postgres psql -c "ALTER SYSTEM RESET restore_command;"

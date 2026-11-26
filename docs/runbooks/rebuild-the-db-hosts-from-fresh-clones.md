@@ -10,6 +10,7 @@ When the system disk of db1 or db2 is lost or broken but its data disk is intact
 - The data disk of db1 holds the cluster. The roles set no passwords, so `replicator`, `rewind` and the app logins come from it.
 - `rhel-base` is shut off, and the DHCP reservations of db1 and db2 exist ([VMs, Clones](../architecture/hosts/vms.md#clones)).
 - The desktop has the Vault password file and the key `~/.ssh/id_ed25519_ansible` ([Ansible control node](../architecture/ansible/control-node.md)).
+- The steps were tested before db2 had its object store disk `vdc`. On a fresh clone of db2 the VG `objects` gets no import ([System role storage, Limits](../architecture/ansible/storage.md#limits)), so a rebuild of db2 with it is not tested.
 
 ## Steps
 
@@ -99,4 +100,4 @@ When the system disk of db1 or db2 is lost or broken but its data disk is intact
 - After the reboot, every script in [`checks/`](../../checks/) passes on the host its header names. [`checks/24-fresh-clones.sh`](../../checks/24-fresh-clones.sh) reads what makes each clone its own host, and its `site.yml --check` must give `changed=0`.
 - From `ansible/`, `ansible-playbook playbooks/restore-test.yml` restores the newest backup on db2 and finds the same data as on the standby.
 
-Last tested: 2026-11-13 on db1 and db2, db1 built in 3:46, the second run `changed=0` in 1:38, all checks pass after the reboot.
+Last tested: 2026-11-13 on db1 and db2, db1 built in 3 min 46 s, the second run `changed=0` in 1 min 38 s, all checks pass after the reboot.
